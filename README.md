@@ -14,6 +14,8 @@ CRose is an integrated data platform designed for manufacturing and modern agric
 
 ## 🚀 Quick Start
 
+> ## Note: Versions prior to 1.0 are preview versions and are not recommended for production use.
+
 ### Deployment
 
 ```

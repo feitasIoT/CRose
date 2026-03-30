@@ -1,13 +1,23 @@
+import base64
 import json
+import math
+import logging
+
 
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 
 
+_logger = logging.getLogger(__name__)
+
+SPREADSHEET_VERSION = "18.5.1"
+SPREADSHEET_SHEET_ID = "Sheet1"
+
+
 class DataModel(models.Model):
     _name = 'fts.data.model'
     _description = 'Data Model'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _inherit = ['mail.thread', 'mail.activity.mixin', 'spreadsheet.mixin']
 
     name = fields.Char(string='编号', required=True, copy=False, readonly=True, default=lambda self: _('New'))
     partner_id = fields.Many2one('res.partner', string='需求方', required=True)
@@ -198,33 +208,10 @@ class DataModel(models.Model):
             用户查询数据时往往不知道自己选择的条件会有多少数据，然而spreadsheet能够打开的行数是有限的（<10000）
             所以，提供一个测试方法返回数据条数，以便用户根据条数调整自己的条件。
         """
-        self.ensure_one()
-        if not self.query_start_time:
-            raise ValidationError("请选择开始时间")
-        if not self.query_end_time:
-            self.query_end_time = fields.Datetime.now()
-        if not self.query_interval or self.query_interval <= 0:
-            raise ValidationError("请输入有效的间隔时间（秒）")
-
         try:
-            iotdb_ip = "192.168.10.20"
-            iotdb_port = "6667"
-            iotdb_username = "root"
-            iotdb_password = "root"
-
-            start_ts = int(self.query_start_time.timestamp() * 1000)
-            end_ts = int(self.query_end_time.timestamp() * 1000)
-
-            from iotdb.Session import Session
-            session = Session(iotdb_ip, iotdb_port, iotdb_username, iotdb_password)
-            session.open(False)
-
-            sql = f"SELECT COUNT(*) FROM root.** WHERE time >= {start_ts} AND time <= {end_ts}"
-            result = session.execute_query_statement(sql)
-            df = result.todf()
-            count = int(df.iloc[0, 0]) if len(df) > 0 else 0
-
-            session.close()
+            _, _, count_sql, _ = self._build_iotdb_sql()
+            count_df = self._execute_iotdb_query(count_sql)
+            count = int(count_df.iloc[0, 0]) if len(count_df) > 0 else 0
 
             return {
                 "type": "ir.actions.client",
@@ -241,9 +228,25 @@ class DataModel(models.Model):
             raise ValidationError(f"查询失败: {str(e)}")
 
     def action_open_spreadsheet(self):
-        """
-            请求数据，生成并打开spreadsheet
-        """
+        try:
+            _, _, _, result_sql = self._build_iotdb_sql()
+            result_df = self._execute_iotdb_query(result_sql)
+            self.spreadsheet_binary_data = self._build_spreadsheet_binary_data(result_df)
+        except Exception as e:
+            raise ValidationError(f"生成电子表格失败: {str(e)}")
+        return {
+            "type": "ir.actions.client",
+            "tag": "feitas_iot.action_open_spreadsheet",
+            "params": {
+                "resId": self.id,
+                "readonly": True,
+            },
+        }
+
+    def _get_writable_record_name_field(self):
+        return "name"
+
+    def _build_iotdb_sql(self):
         self.ensure_one()
         if not self.query_start_time:
             raise ValidationError("请选择开始时间")
@@ -252,39 +255,107 @@ class DataModel(models.Model):
         if not self.query_interval or self.query_interval <= 0:
             raise ValidationError("请输入有效的间隔时间（秒）")
 
+        start_dt = fields.Datetime.to_datetime(self.query_start_time)
+        end_dt = fields.Datetime.to_datetime(self.query_end_time)
+        start_ts = int(start_dt.timestamp() * 1000)
+        end_ts = int(end_dt.timestamp() * 1000)
+
+        where_clause = f"time >= {start_ts} AND time <= {end_ts}"
+        result_sql = f"SELECT ** FROM root.** WHERE {where_clause} LIMIT 10000"
+        count_sql = f"SELECT COUNT(*) FROM root.** WHERE {where_clause}"
+        return start_ts, end_ts, count_sql, result_sql
+
+    def _get_iotdb_connection_params(self):
+        return "192.168.0.104", "6667", "root", "root"
+
+    def _execute_iotdb_query(self, sql):
+        if not isinstance(sql, str):
+            raise ValidationError("查询语句必须是字符串")
+        iotdb_ip, iotdb_port, iotdb_username, iotdb_password = self._get_iotdb_connection_params()
+        from iotdb.Session import Session
+
+        session = Session(iotdb_ip, iotdb_port, iotdb_username, iotdb_password)
+        session.open(False)
         try:
-            iotdb_ip = "192.168.10.20"
-            iotdb_port = "6667"
-            iotdb_username = "root"
-            iotdb_password = "root"
-
-            start_ts = int(self.query_start_time.timestamp() * 1000)
-            end_ts = int(self.query_end_time.timestamp() * 1000)
-
-            from iotdb.Session import Session
-            session = Session(iotdb_ip, iotdb_port, iotdb_username, iotdb_password)
-            session.open(False)
-
-            sql = f"SELECT COUNT(*) FROM root.** WHERE time >= {start_ts} AND time <= {end_ts}"
             result = session.execute_query_statement(sql)
-            df = result.todf()
-            count = int(df.iloc[0, 0]) if len(df) > 0 else 0
+            return result.todf()
+        finally:
+            try:
+                session.close()
+            except Exception:
+                pass
 
-            session.close()
+    def _build_spreadsheet_binary_data(self, dataframe):
+        lang = self.env["res.lang"]._lang_get(self.env.user.lang)
+        locale = lang._odoo_lang_to_spreadsheet_locale()
+        headers = [str(col) for col in list(dataframe.columns)]
+        cells = {}
+        for col_idx, header in enumerate(headers):
+            xc = f"{self._column_to_name(col_idx)}1"
+            cells[xc] = header
 
-            return {
-                "type": "ir.actions.client",
-                "tag": "display_notification",
-                "params": {
-                    "title": "查询完成",
-                    "message": f'在指定时间范围内共有 {count} 条数据',
-                    "type": "success",
-                    "sticky": False,
-                },
-            }
+        for row_idx, row in enumerate(dataframe.itertuples(index=False), start=2):
+            for col_idx, value in enumerate(row):
+                xc = f"{self._column_to_name(col_idx)}{row_idx}"
+                cells[xc] = self._to_spreadsheet_text(value)
 
-        except Exception as e:
-            raise ValidationError(f"查询失败: {str(e)}")
+        sheet = {
+            "id": SPREADSHEET_SHEET_ID,
+            "name": "Sheet1",
+            "colNumber": max(26, len(headers)),
+            "rowNumber": max(100, len(dataframe) + 1),
+            "cells": cells,
+            "styles": {},
+            "formats": {},
+            "borders": {},
+            "cols": {},
+            "rows": {},
+            "merges": [],
+            "conditionalFormats": [],
+            "dataValidationRules": [],
+            "figures": [],
+            "tables": [],
+            "isVisible": True,
+        }
+        _logger.warning(str(sheet))
+        #{'id': 'sheet1', 'name': 'Sheet1', 'colNumber': 26, 'rowNumber': 100, 'cells': {'A1': 'Time', 'B1': 'root.__system.password_history._root.password', 'C1': 'root.__system.password_history._root.oldPassword', 'D1': 'root.factory01.machine01.high', 'E1': 'root.factory01.machine01.total', 'F1': 'root.factory01.machine01.task', 'G1': 'root.factory01.machine01.low', 'H1': 'root.factory01.machine01.pass', 'I1': 'root.factory01.machine01.spec', 'A2': '1772719740000', 'B2': '', 'C2': '', 'D2': '22.0', 'E2': '58.0', 'F2': 'BK26-38', 'G2': '5.0', 'H2': '53.0', 'I2': 'WPC710三层', 'A3': '1773063060000', 'B3': '', 'C3': '', 'D3': '0.0', 'E3': '0.0', 'F3': 'BK26-38', 'G3': '0.0', 'H3': '0.0', 'I3': 'WPC710三层', 'A4': '1773065040000', 'B4': '', 'C4': '', 'D4': '0.0', 'E4': '0.0', 'F4': 'BK26-38', 'G4': '0.0', 'H4': '0.0', 'I4': 'WPC710三层', 'A5': '1774774316043', 'B5': 'HIM~1��լ�n{��t���VV^�svw�', 'C5': '', 'D5': '', 'E5': '', 'F5': '', 'G5': '', 'H5': '', 'I5': ''}, 'styles': {}, 'formats': {}, 'borders': {}, 'cols': {}, 'rows': {}, 'merges': [], 'conditionalFormats': [], 'dataValidationRules': [], 'figures': [], 'tables': [], 'isVisible': True} 
+        data = {
+            "version": SPREADSHEET_VERSION,
+            "sheets": [sheet],
+            "styles": {},
+            "formats": {},
+            "borders": {},
+            "settings": {"locale": locale},
+            "revisionId": "START_REVISION",
+            "uniqueFigureIds": True,
+            "pivots": {},
+            "pivotNextId": 1,
+            "customTableStyles": {},
+        }
+        return base64.b64encode(json.dumps(data).encode()).decode()
+
+    def _to_spreadsheet_text(self, value):
+        if value is None:
+            return ""
+        if isinstance(value, bool):
+            return "TRUE" if value else "FALSE"
+        if isinstance(value, float) and math.isnan(value):
+            return ""
+        if hasattr(value, "isoformat"):
+            return value.isoformat()
+        text = str(value)
+        return "".join(ch for ch in text if ch >= " " or ch in "\t\n\r")
+
+    def _column_to_name(self, index):
+        name = ""
+        current = index
+        while True:
+            current, remainder = divmod(current, 26)
+            name = chr(65 + remainder) + name
+            if current == 0:
+                break
+            current -= 1
+        return name
 
 
 class DataApp(models.Model):
@@ -295,5 +366,3 @@ class DataApp(models.Model):
     value = fields.Text(string="值", required=True)
     model_id = fields.Many2one("fts.data.model", string="数据模型", required=True, ondelete="cascade")
     flow_id = fields.Many2one("fts.nr.flow", string="流程", ondelete="set null")
-
-

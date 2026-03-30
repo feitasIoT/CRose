@@ -16,7 +16,7 @@
     """,
     "category": "Tools",
     "author": "Feitas",
-    "depends": ["base", "web", "mail"],
+    "depends": ["base", "web", "mail", "spreadsheet"],
     "data": [
         "data/crons.xml",
         "data/data.xml",
@@ -48,9 +48,14 @@
         
     ],
     'assets': {
+        'spreadsheet.o_spreadsheet': [
+            'feitas_iot/static/src/bundle/actions/*.js',
+            'feitas_iot/static/src/bundle/actions/*.xml',
+        ],
         'web.assets_backend': [
             'feitas_iot/static/src/js/editor_embed.js',
             'feitas_iot/static/src/js/overview_dashboard.js',
+            'feitas_iot/static/src/js/data_model_spreadsheet_action_loader.js',
             'feitas_iot/static/src/xml/editor_templates.xml',
             'feitas_iot/static/src/xml/overview_templates.xml',
             'feitas_iot/static/src/scss/instance_kanban.scss',

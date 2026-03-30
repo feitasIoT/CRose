@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates>
+    <div t-name="feitas_iot.DataModelSpreadsheetAction" class="o_spreadsheet_action d-flex flex-column" style="height: 100%;">
+        <t t-if="model">
+            <SpreadsheetComponent model="model"/>
+        </t>
+    </div>
+</templates>
