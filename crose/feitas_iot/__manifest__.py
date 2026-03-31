@@ -16,6 +16,7 @@
     """,
     "category": "Tools",
     "author": "Feitas",
+    "license": "LGPL-3",
     "depends": ["base", "web", "mail", "spreadsheet"],
     "data": [
         "data/crons.xml",

@@ -17,9 +17,17 @@ class CroseNrPackage(models.Model):
     ], string="环境", default='staging', required=True)
     component_id = fields.Many2one('crose.component', string='所属组件', required=True, ondelete='cascade')
 
-    _sql_constraints = [
-        ('name_version_unique', 'unique(name, version, component_id)', '同一组件下包名和版本组合必须唯一！')
-    ]
+    @api.constrains('name', 'version', 'component_id')
+    def _check_name_version_unique(self):
+        for record in self:
+            existing = self.search_count([
+                ('name', '=', record.name),
+                ('version', '=', record.version),
+                ('component_id', '=', record.component_id.id),
+                ('id', '!=', record.id),
+            ])
+            if existing:
+                raise UserError('同一组件下包名和版本组合必须唯一！')
 
     def _copy_package_to_prod(self, staging_storage, prod_storage, package_name, version, copied_packages=None):
         if copied_packages is None:

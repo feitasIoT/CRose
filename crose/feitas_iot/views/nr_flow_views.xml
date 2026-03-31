@@ -32,7 +32,7 @@
                                     <field name="name"/>
                                 </strong>
                                 <span class="badge text-bg-warning" t-if="record.heat.raw_value">
-                                    <i class="fa fa-fire me-1"/> <field name="heat"/>
+                                    <i class="fa fa-fire me-1" title="Heat"/><field name="heat"/>
                                 </span>
                             </div>
                             <div class="mb-2">
