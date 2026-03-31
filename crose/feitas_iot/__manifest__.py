@@ -1,18 +1,18 @@
 {
-    "name": "CRose物联网平台",
+    "name": "CRose IoT Platform",
     "version": "1.0",
-    "summary": "China Rose(月季)，我出生地的市花，也是我儿时...",
+    "summary": "CRose IoT platform for building connected applications",
     "description": """
-    CRose物联网平台让物联网变得更简单、更智能。
-    ============================================
-    更简单
-    ----------
-    - 可视化的流程编辑器，无需编程即可创建物联网应用
-    - 支持多种协议，包括MQTT、HTTP、CoAP等
-    更智能
-    ----------
-    - 支持AI模型，包括TensorFlow、PyTorch等
-    - 支持NPM包管理，无需手动安装依赖
+    CRose makes IoT development simpler and smarter.
+    ===============================================
+    Simpler
+    -------
+    - Build IoT applications with a visual flow editor
+    - Support multiple protocols, including MQTT, HTTP, and CoAP
+    Smarter
+    -------
+    - Support AI models such as TensorFlow and PyTorch
+    - Support NPM package management without manual dependency installation
     """,
     "category": "Tools",
     "author": "Feitas",

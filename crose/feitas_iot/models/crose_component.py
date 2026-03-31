@@ -2,36 +2,36 @@ import json
 import os
 import requests
 import socket
-from odoo import models, fields, api
+from odoo import models, fields, api, _
 
 class CroseComponent(models.Model):
     _name = "crose.component"
-    _description = "系统组件"
+    _description = "System Component"
 
-    name = fields.Char(string="组件名称", required=True)
+    name = fields.Char(string=_("Component Name"), required=True)
     component_type = fields.Selection([
-        ('mqtt', 'MQTT 服务'),
+        ('mqtt', 'MQTT Service'),
         ('iotdb', 'IoTDB'),
-        ('ai', 'AI 服务'),
-        ('npm', 'NPM 仓库'),
+        ('ai', 'AI Service'),
+        ('npm', 'NPM Registry'),
         ('redis', 'Redis'),
         ('nodered', 'Node-RED')
-    ], string="组件类型", required=True)
+    ], string=_("Component Type"), required=True)
     status = fields.Selection([
-        ('online', '在线'),
-        ('offline', '离线'),
-        ('error', '错误')
-    ], string="状态", default='offline', readonly=True)
-    host = fields.Char(string="主机")
-    port = fields.Integer(string="端口")
-    url = fields.Char(string="URL地址")
-    metadata = fields.Text(string="元数据")
-    last_check_time = fields.Datetime(string="最后检查时间", readonly=True)
-    error_reason = fields.Text(string="错误原因", readonly=True)
+        ('online', 'Online'),
+        ('offline', 'Offline'),
+        ('error', 'Error')
+    ], string=_("Status"), default='offline', readonly=True)
+    host = fields.Char(string=_("Host"))
+    port = fields.Integer(string=_("Port"))
+    url = fields.Char(string=_("URL"))
+    metadata = fields.Text(string=_("Metadata"))
+    last_check_time = fields.Datetime(string=_("Last Check Time"), readonly=True)
+    error_reason = fields.Text(string=_("Error Reason"), readonly=True)
 
     @api.onchange('component_type')
     def _onchange_component_type(self):
-        """根据组件类型设置默认元数据和端口"""
+        """Set default metadata and port based on the component type."""
         if not self.component_type:
             return
 
@@ -44,7 +44,6 @@ class CroseComponent(models.Model):
             'nodered': {'admin_path': '/admin'}
         }
         
-        # 设置默认端口
         port_defaults = {
             'mqtt': 1883,
             'iotdb': 6667,
@@ -53,7 +52,7 @@ class CroseComponent(models.Model):
             'nodered': 1880
         }
 
-        # 设置默认主机名 (基于 docker-compose 服务名)
+        # Default host names based on docker-compose service names
         host_defaults = {
             'mqtt': 'gmqtt',
             'iotdb': 'iotdb',
@@ -71,7 +70,6 @@ class CroseComponent(models.Model):
         if self.component_type in host_defaults and not self.host:
             self.host = host_defaults[self.component_type]
             
-        # 自动生成默认 URL
         if not self.url:
             if self.component_type == 'npm':
                 self.url = f"http://{host_defaults.get('npm')}:{port_defaults.get('npm')}"
@@ -93,11 +91,10 @@ class CroseComponent(models.Model):
             self.write({
                 'status': 'error', 
                 'last_check_time': fields.Datetime.now(),
-                'error_reason': f'未找到组件类型 {self.component_type} 的检查方法'
+                'error_reason': _('No status check method found for component type %(type)s', type=self.component_type)
             })
 
     def _check_status_mqtt(self):
-        # Example: Check gmqtt metrics endpoint
         try:
             metadata_dict = {}
             if self.metadata:
@@ -114,7 +111,7 @@ class CroseComponent(models.Model):
                 self.write({
                     'status': 'offline', 
                     'last_check_time': fields.Datetime.now(),
-                    'error_reason': f'HTTP 状态码异常: {response.status_code}'
+                    'error_reason': _('Unexpected HTTP status code: %(code)s', code=response.status_code)
                 })
         except Exception as e:
             self.write({
@@ -124,7 +121,6 @@ class CroseComponent(models.Model):
             })
 
     def _check_status_iotdb(self):
-        # Example: Check IoTDB RPC port
         try:
             with socket.create_connection((self.host, self.port), timeout=5):
                 self.write({'status': 'online', 'last_check_time': fields.Datetime.now(), 'error_reason': False})
@@ -132,14 +128,13 @@ class CroseComponent(models.Model):
             self.write({
                 'status': 'offline', 
                 'last_check_time': fields.Datetime.now(),
-                'error_reason': f'无法连接到 {self.host}:{self.port} - {str(e)}'
+                'error_reason': _('Unable to connect to %(host)s:%(port)s - %(error)s', host=self.host, port=self.port, error=str(e))
             })
 
     def _check_status_ai(self):
-        # Example: Check AI service health endpoint
         try:
             if not self.url:
-                raise ValueError("未配置 AI 服务 URL")
+                raise ValueError(_("AI service URL is not configured."))
             response = requests.get(self.url, timeout=5)
             if response.status_code == 200:
                 self.write({'status': 'online', 'last_check_time': fields.Datetime.now(), 'error_reason': False})
@@ -147,7 +142,7 @@ class CroseComponent(models.Model):
                 self.write({
                     'status': 'offline', 
                     'last_check_time': fields.Datetime.now(),
-                    'error_reason': f'AI 服务响应异常: {response.status_code}'
+                    'error_reason': _('Unexpected AI service response: %(code)s', code=response.status_code)
                 })
         except Exception as e:
             self.write({
@@ -157,10 +152,9 @@ class CroseComponent(models.Model):
             })
 
     def _check_status_npm(self):
-        # Example: Check Verdaccio main page
         try:
             if not self.url:
-                raise ValueError("未配置 NPM 仓库 URL")
+                raise ValueError(_("NPM registry URL is not configured."))
             response = requests.get(self.url, timeout=5)
             if response.status_code == 200:
                 self.write({'status': 'online', 'last_check_time': fields.Datetime.now(), 'error_reason': False})
@@ -168,7 +162,7 @@ class CroseComponent(models.Model):
                 self.write({
                     'status': 'offline', 
                     'last_check_time': fields.Datetime.now(),
-                    'error_reason': f'NPM 仓库响应异常: {response.status_code}'
+                    'error_reason': _('Unexpected NPM registry response: %(code)s', code=response.status_code)
                 })
         except Exception as e:
             self.write({
@@ -178,7 +172,6 @@ class CroseComponent(models.Model):
             })
 
     def _check_status_redis(self):
-        # Example: Check Redis PING command
         try:
             import redis
             r = redis.Redis(host=self.host, port=self.port, socket_connect_timeout=5)
@@ -188,7 +181,7 @@ class CroseComponent(models.Model):
                 self.write({
                     'status': 'offline', 
                     'last_check_time': fields.Datetime.now(),
-                    'error_reason': 'Redis PING 响应失败'
+                    'error_reason': _('Redis PING failed')
                 })
         except Exception as e:
             self.write({
@@ -200,7 +193,7 @@ class CroseComponent(models.Model):
     def _check_status_nodered(self):
         try:
             if not self.url:
-                raise ValueError("未配置 Node-RED URL")
+                raise ValueError(_("Node-RED URL is not configured."))
             response = requests.get(self.url, timeout=5)
             if response.status_code == 200:
                 self.write({'status': 'online', 'last_check_time': fields.Datetime.now(), 'error_reason': False})
@@ -208,7 +201,7 @@ class CroseComponent(models.Model):
                 self.write({
                     'status': 'offline', 
                     'last_check_time': fields.Datetime.now(),
-                    'error_reason': f'Node-RED 响应异常: {response.status_code}'
+                    'error_reason': _('Unexpected Node-RED response: %(code)s', code=response.status_code)
                 })
         except Exception as e:
             self.write({
@@ -220,7 +213,7 @@ class CroseComponent(models.Model):
     def action_view_packages(self):
         self.ensure_one()
         return {
-            'name': '安装包',
+            'name': _('Packages'),
             'res_model': 'crose.nr.package',
             'type': 'ir.actions.act_window',
             'view_mode': 'list,form',

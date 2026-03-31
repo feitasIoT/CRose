@@ -5,7 +5,7 @@
             <field name="name">fts.nr.flow.param.tree</field>
             <field name="model">fts.nr.flow.param</field>
             <field name="arch" type="xml">
-                <list string="应用参数" editable="bottom">
+                <list string="Application Parameters" editable="bottom">
                     <field name="name"/>
                     <field name="type"/>
                     <field name="value"/>
@@ -20,7 +20,7 @@
             <field name="name">fts.nr.flow.param.form</field>
             <field name="model">fts.nr.flow.param</field>
             <field name="arch" type="xml">
-                <form string="应用参数">
+                <form string="Application Parameter">
                     <sheet>
                         <group>
                             <group>

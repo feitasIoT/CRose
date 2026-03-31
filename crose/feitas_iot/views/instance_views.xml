@@ -1,22 +1,22 @@
 <odoo>
     <data>
 
-        <!-- 列表视图 -->
+        <!-- List view -->
         <record id="view_fts_instance_tree" model="ir.ui.view">
             <field name="name">fts.nr.instance.tree</field>
             <field name="model">fts.nr.instance</field>
             <field name="arch" type="xml">
-                <list string="实例">
+                <list>
                     <field name="instance_type" />
                     <field name="name"/>
                     <field name="ip_address"/>
                     <field name="port"/>
                     <field name="status" widget="badge" decoration-success="status == 'online'" decoration-warning="status == 'error'" decoration-muted="status == 'offline'"/>
-                    <button name="action_restart" type="object" icon="fa-refresh" title="重启"/>
-                    <button name="action_open_editor" type="object" icon="fa-external-link" title="打开" />
-                    <button name="action_view_flows" type="object" icon="fa-th-large" title="应用"/>
-                    <button name="action_view_logs" type="object" icon="fa-file-text-o" title="日志"/>
-                    <button name="action_test" type="object" icon="fa-flask" title="测试"/>
+                    <button name="action_restart" type="object" icon="fa-refresh" title="Restart" />
+                    <button name="action_open_editor" type="object" icon="fa-external-link" title="Open"  />
+                    <button name="action_view_flows" type="object" icon="fa-th-large" title="Applications" />
+                    <button name="action_view_logs" type="object" icon="fa-file-text-o" title="Logs" />
+                    <button name="action_test" type="object" icon="fa-flask" title="Test" />
                 </list>
             </field>
         </record>
@@ -49,9 +49,9 @@
                                             <field name="instance_type"/>
                                         </span>
                                         <div class="feitas_iot_instance_kanban_actions d-flex align-items-center gap-1">
-                                            <button type="object" name="action_open_editor" class="btn btn-link btn-sm p-0 oe_kanban_action" title="打开" icon="fa-external-link"/>
-                                            <button type="object" name="action_view_flows" class="btn btn-link btn-sm p-0 oe_kanban_action" title="应用" icon="fa-th-large"/>
-                                            <button type="object" name="action_view_logs" class="btn btn-link btn-sm p-0 oe_kanban_action" title="日志" icon="fa-file-text-o"/>
+                                            <button type="object" name="action_open_editor" class="btn btn-link btn-sm p-0 oe_kanban_action" title="Open" icon="fa-external-link"/>
+                                            <button type="object" name="action_view_flows" class="btn btn-link btn-sm p-0 oe_kanban_action" title="Applications" icon="fa-th-large"/>
+                                            <button type="object" name="action_view_logs" class="btn btn-link btn-sm p-0 oe_kanban_action" title="Logs" icon="fa-file-text-o"/>
                                         </div>
                                     </div>
                                 </div>
@@ -62,38 +62,33 @@
             </field>
         </record>
 
-        <!-- 表单视图 -->
+        <!-- Form view -->
         <record id="view_fts_instance_form" model="ir.ui.view">
             <field name="name">fts.nr.instance.form</field>
             <field name="model">fts.nr.instance</field>
             <field name="arch" type="xml">
-                <form string="实例">
+                <form string="Instance">
                     <header>
-                        <!-- 顶部按钮包括：创建/create、启动/start、停止/stop、备份/backup、销毁/destroy -->
-                        <!-- 阶段1：尚未创建，显示创建按钮 -->
-                        <!-- 阶段2：已经创建，显示启动、停止、备份、销毁按钮，启动和停止、备份、销毁互斥，停止后才能备份或销毁。 -->
-                        <button name="action_start" type="object" string="启动" class="btn-primary" invisible="instance_type != 'remote'"/>
-                        <button name="action_apply_flows" type="object" string="应用"/>
+                        <button name="action_start" type="object" string="Start" class="btn-primary" invisible="instance_type != 'remote'"/>
+                        <button name="action_apply_flows" type="object" string="Apply"/>
+                        <button name="action_open_editor" type="object" string="Editor" />
                         <field name="status" widget="statusbar" options="{'clickable': '1'}"/>
                     </header>
                     <sheet>
                         <group>
-                            <group string="实例">
+                            <group string="Instance">
                                 <field name="instance_type"/>
                                 <field name="name"/>
                                 <field name="port"/>
                             </group>
-                            <group string="代理">
+                            <group string="Agent">
                                 <field name="edge_agent_id"/>
                                 <field name="ip_address"/>
                                 <field name="npm_registry_id"/>
                             </group>
                         </group>
-                        <group>
-                            
-                        </group>
                         <notebook>
-                            <page string="流程">
+                            <page string="Flows">
                                 <field name="flow_ids">
                                     <list editable="bottom">
                                         <field name="flow_id" domain="[('is_template', '=', True)]"/>
@@ -111,19 +106,19 @@
             <field name="name">fts.nr.instance.search</field>
             <field name="model">fts.nr.instance</field>
             <field name="arch" type="xml">
-                <search string="Instances">
+                <search>
                     <field name="name"/>
                     <field name="ip_address"/>
                     <field name="instance_type"/>
                     <group>
-                        <filter string="实例类型" name="group_by_instance_type" context="{'group_by': 'instance_type'}"/>
+                        <filter string="Instance Type" name="group_by_instance_type" context="{'group_by': 'instance_type'}"/>
                     </group>
                 </search>
             </field>
         </record>
 
         <record id="action_fts_nr_instance_sync_flows" model="ir.actions.server">
-            <field name="name">同步流程列表</field>
+            <field name="name">Synchronize Flow List</field>
             <field name="model_id" ref="model_fts_nr_instance"/>
             <field name="binding_model_id" ref="model_fts_nr_instance"/>
             <field name="binding_type">action</field>

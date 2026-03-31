@@ -1,21 +1,21 @@
 import json
 import shutil
 import os
-from odoo import models, fields, api
+from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 
 
 class CroseNrPackage(models.Model):
     _name = "crose.nr.package"
-    _description = "Node-RED安装包"
+    _description = "Node-RED Package"
 
-    name = fields.Char(string="包名称", required=True)
-    version = fields.Char(string="版本", required=True)
+    name = fields.Char(string=_("Package Name"), required=True)
+    version = fields.Char(string=_("Version"), required=True)
     environment = fields.Selection([
         ('staging', 'Staging'),
         ('prod', 'Production')
-    ], string="环境", default='staging', required=True)
-    component_id = fields.Many2one('crose.component', string='所属组件', required=True, ondelete='cascade')
+    ], string=_("Environment"), default='staging', required=True)
+    component_id = fields.Many2one('crose.component', string=_('Component'), required=True, ondelete='cascade')
 
     @api.constrains('name', 'version', 'component_id')
     def _check_name_version_unique(self):
@@ -27,7 +27,7 @@ class CroseNrPackage(models.Model):
                 ('id', '!=', record.id),
             ])
             if existing:
-                raise UserError('同一组件下包名和版本组合必须唯一！')
+                raise UserError(_('The combination of package name and version must be unique within the same component.'))
 
     def _copy_package_to_prod(self, staging_storage, prod_storage, package_name, version, copied_packages=None):
         if copied_packages is None:
@@ -41,7 +41,7 @@ class CroseNrPackage(models.Model):
         prod_pkg_dir = os.path.join(prod_storage, package_name)
 
         if not os.path.exists(staging_pkg_dir):
-            raise UserError(f"Staging 环境中找不到包目录: {staging_pkg_dir}")
+            raise UserError(_("Package directory not found in the Staging environment: %(path)s", path=staging_pkg_dir))
 
         os.makedirs(prod_pkg_dir, exist_ok=True)
 
@@ -52,7 +52,7 @@ class CroseNrPackage(models.Model):
         prod_package_json = os.path.join(prod_pkg_dir, 'package.json')
 
         if not os.path.exists(staging_tgz):
-            raise UserError(f"Staging 环境中找不到包文件: {staging_tgz}")
+            raise UserError(_("Package file not found in the Staging environment: %(path)s", path=staging_tgz))
 
         shutil.copy2(staging_tgz, prod_tgz)
 
@@ -134,7 +134,7 @@ class CroseNrPackage(models.Model):
     def action_publish(self):
         for pkg in self:
             if pkg.environment != 'staging':
-                raise UserError(f"包 {pkg.name} v{pkg.version} 不在 staging 环境，无法发布！")
+                raise UserError(_("Package %(name)s v%(version)s is not in the Staging environment and cannot be published.", name=pkg.name, version=pkg.version))
 
             staging_storage = self.env['crose.component']._get_staging_storage_path(pkg.component_id)
             prod_storage = self.env['crose.component']._get_prod_storage_path(pkg.component_id)

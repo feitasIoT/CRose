@@ -5,7 +5,7 @@
             <field name="name">fts.ai.model.list</field>
             <field name="model">fts.ai.model</field>
             <field name="arch" type="xml">
-                <list string="AI模型">
+                <list string="AI Models">
                     <field name="name"/>
                     <field name="is_active" widget="boolean_toggle"/>
                     <field name="local_path"/>
@@ -17,31 +17,31 @@
             <field name="name">fts.ai.model.form</field>
             <field name="model">fts.ai.model</field>
             <field name="arch" type="xml">
-                <form string="AI模型">
+                <form string="AI Model">
                     <header>
-                        <button name="action_deploy_model" string="部署并激活模型" type="object" class="btn-primary" icon="fa-cloud-upload"/>
+                        <button name="action_deploy_model" string="Deploy and Activate Model" type="object" class="btn-primary" icon="fa-cloud-upload"/>
                     </header>
                     <sheet>
                         <div class="oe_title">
                             <label for="name" class="oe_edit_only"/>
                             <h1>
-                                <field name="name" placeholder="例如: paraphrase-multilingual-MiniLM-L12-v2"/>
+                                <field name="name" placeholder="For example: paraphrase-multilingual-MiniLM-L12-v2"/>
                             </h1>
                         </div>
                         <group>
-                            <group string="模型配置">
+                            <group string="Model Configuration">
                                 <field name="model_file" filename="model_filename"/>
                                 <field name="is_active" readonly="1"/>
                             </group>
-                            <group string="本地状态">
+                            <group string="Local Status">
                                 <field name="local_path" readonly="1"/>
                             </group>
                         </group>
                         <div class="alert alert-info" role="alert" invisible="not is_active">
-                            <i class="fa fa-info-circle"/> 该模型当前已激活，可被系统调用。
+                            <i class="fa fa-info-circle"/> This model is currently active and can be used by the system.
                         </div>
                         <div class="alert alert-warning" role="alert" invisible="is_active">
-                            <i class="fa fa-exclamation-triangle"/> 该模型尚未激活，请上传压缩包并点击“部署模型”按钮。
+                            <i class="fa fa-exclamation-triangle"/> This model is not active yet. Upload the archive and click "Deploy and Activate Model".
                         </div>
                     </sheet>
                 </form>
@@ -52,7 +52,7 @@
             <field name="name">fts.ai.dataset.list</field>
             <field name="model">fts.ai.dataset</field>
             <field name="arch" type="xml">
-                <list string="数据集">
+                <list string="Datasets">
                     <field name="name"/>
                 </list>
             </field>
@@ -62,7 +62,7 @@
             <field name="name">fts.ai.dataset.form</field>
             <field name="model">fts.ai.dataset</field>
             <field name="arch" type="xml">
-                <form string="数据集">
+                <form string="Dataset">
                     <sheet>
                         <group>
                             <field name="name"/>
@@ -76,7 +76,7 @@
             <field name="name">fts.ai.training.list</field>
             <field name="model">fts.ai.training</field>
             <field name="arch" type="xml">
-                <list string="模型训练">
+                <list string="Model Training">
                     <field name="name"/>
                 </list>
             </field>
@@ -86,7 +86,7 @@
             <field name="name">fts.ai.training.form</field>
             <field name="model">fts.ai.training</field>
             <field name="arch" type="xml">
-                <form string="模型训练">
+                <form string="Model Training">
                     <sheet>
                         <group>
                             <field name="name"/>

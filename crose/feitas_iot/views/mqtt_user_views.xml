@@ -22,10 +22,10 @@
                     <field name="name"/>
                     <field name="partner_id"/>
                     <field name="broker_id"/>
-                    <filter string="激活" name="active" domain="[('status', '=', 'active')]"/>
-                    <filter string="停用" name="pause" domain="[('status', '=', 'pause')]"/>
+                    <filter string="Active" name="active" domain="[('status', '=', 'active')]"/>
+                    <filter string="Paused" name="pause" domain="[('status', '=', 'pause')]"/>
                     <group>
-                        <filter string="状态" name="status" context="{'group_by': 'status'}"/>
+                        <filter string="Status" name="status" context="{'group_by': 'status'}"/>
                         <filter string="MQTT Broker" name="broker" context="{'group_by': 'broker_id'}"/>
                     </group>
                 </search>

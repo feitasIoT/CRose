@@ -13,7 +13,7 @@ class McpToolRegistry(models.AbstractModel):
 
     @api.model
     def list_tools(self):
-        """返回MCP格式的可用工具列表"""
+        """Return the available tools in MCP format."""
         return [
             {
                 "name": "list_agents",
@@ -57,7 +57,7 @@ class McpToolRegistry(models.AbstractModel):
         raise ValueError(f"Tool {name} not found")
 
     def _tool_list_agents(self):
-        """返回所有IoT Edge Agent的列表,FIXME：这个工具没啥用"""
+        """Return the list of all IoT Edge Agents."""
         agents = self.env['fts.edge.agent'].search([])
         result = []
         for agent in agents:

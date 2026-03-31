@@ -9,7 +9,7 @@
         </record>
     </data>
 
-    <!-- 系统组件 -->
+    <!-- System components -->
     <record id="component_mqtt_broker" model="crose.component">
         <field name="name">MQTT Broker</field>
         <field name="component_type">mqtt</field>

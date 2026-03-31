@@ -5,7 +5,7 @@
             <field name="name">crose.nr.package.tree</field>
             <field name="model">crose.nr.package</field>
             <field name="arch" type="xml">
-                <list string="Node-RED安装包">
+                <list string="Node-RED Packages">
                     <field name="name"/>
                     <field name="version"/>
                     <field name="environment" widget="badge" decoration-info="environment == 'staging'" decoration-success="environment == 'prod'"/>
@@ -25,8 +25,8 @@
                     <filter string="Staging" name="filter_staging" domain="[('environment', '=', 'staging')]"/>
                     <filter string="Production" name="filter_prod" domain="[('environment', '=', 'prod')]"/>
                     <group>
-                        <filter string="组件" name="group_component" context="{'group_by': 'component_id'}"/>
-                        <filter string="环境" name="group_environment" context="{'group_by': 'environment'}"/>
+                        <filter string="Component" name="group_component" context="{'group_by': 'component_id'}"/>
+                        <filter string="Environment" name="group_environment" context="{'group_by': 'environment'}"/>
                     </group>
                 </search>
             </field>
@@ -36,10 +36,10 @@
             <field name="name">crose.nr.package.form</field>
             <field name="model">crose.nr.package</field>
             <field name="arch" type="xml">
-                <form string="Node-RED安装包">
+                <form string="Node-RED Package">
                     <header>
-                        <button name="action_publish" type="object" string="发布" class="oe_highlight"
-                                invisible="environment == 'prod'" confirm="确定要将此包从 Staging 发布到 Production 环境吗？"/>
+                        <button name="action_publish" type="object" string="Publish" class="oe_highlight"
+                                invisible="environment == 'prod'" confirm="Are you sure you want to publish this package from Staging to Production?"/>
                         <field name="environment" widget="statusbar"/>
                     </header>
                     <sheet>
@@ -59,7 +59,7 @@
         </record>
 
         <record id="action_crose_nr_package" model="ir.actions.act_window">
-            <field name="name">安装包</field>
+            <field name="name">Packages</field>
             <field name="res_model">crose.nr.package</field>
             <field name="view_mode">list,form</field>
             <field name="context">{'search_default_filter_staging': 1}</field>

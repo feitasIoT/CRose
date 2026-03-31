@@ -39,7 +39,7 @@
 
         <!-- Server Action to Sync Topics -->
         <record id="action_sync_mqtt_topics" model="ir.actions.server">
-            <field name="name">同步 MQTT 主题</field>
+            <field name="name">Synchronize MQTT Topics</field>
             <field name="model_id" ref="model_fts_mqtt_topic"/>
             <field name="binding_model_id" ref="model_fts_mqtt_topic"/>
             <field name="binding_view_types">list,form</field>

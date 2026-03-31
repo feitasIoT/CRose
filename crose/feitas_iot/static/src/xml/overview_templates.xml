@@ -3,7 +3,7 @@
     <t t-name="feitas_iot.OverviewDashboard">
         <div class="o_action p-4">
             <div class="mb-3">
-                <h2 class="m-0">概览</h2>
+                <h2 class="m-0">Overview</h2>
             </div>
             <div class="row g-3">
                 <div class="col-12 col-lg-6">
@@ -11,11 +11,11 @@
                         <div class="col-12 col-md-6">
                             <div class="border rounded p-3 bg-white h-100">
                                 <div class="d-flex align-items-center justify-content-between mb-2">
-                                    <h5 class="m-0">平台</h5>
-                                    <i class="fa fa-question-circle text-muted" title="显示平台关键组件的运行状态，包括 MQTT Broker、Npm Registry 和本地实例的在线情况。" style="cursor: pointer;"></i>
+                                    <h5 class="m-0">Platform</h5>
+                                    <i class="fa fa-question-circle text-muted" title="Show the runtime status of key platform components, including the MQTT Broker, NPM Registry, and local instances." style="cursor: pointer;"></i>
                                 </div>
                                 <t t-if="state.loading">
-                                    <div class="text-muted">加载中...</div>
+                                    <div class="text-muted">Loading...</div>
                                 </t>
                                 <t t-elif="state.error">
                                     <div class="text-danger" t-esc="state.error"/>
@@ -41,11 +41,11 @@
                         <div class="col-12 col-md-6">
                             <div class="border rounded p-3 bg-white h-100">
                                 <div class="d-flex align-items-center justify-content-between mb-2">
-                                    <h5 class="m-0">统计</h5>
-                                    <i class="fa fa-question-circle text-muted" title="统计平台的核心资源数量，如边缘代理、应用实例和 MQTT 主题。" style="cursor: pointer;"></i>
+                                    <h5 class="m-0">Statistics</h5>
+                                    <i class="fa fa-question-circle text-muted" title="Show the number of key platform resources, such as edge agents, application instances, and MQTT topics." style="cursor: pointer;"></i>
                                 </div>
                                 <t t-if="state.loading">
-                                    <div class="text-muted">加载中...</div>
+                                    <div class="text-muted">Loading...</div>
                                 </t>
                                 <t t-elif="state.error">
                                     <div class="text-danger" t-esc="state.error"/>
@@ -57,19 +57,19 @@
     
                                     <div class="d-flex gap-2 feitas_iot_dashboard_kpis">
                                         <div class="border rounded p-2 bg-light feitas_iot_dashboard_kpi">
-                                            <div class="text-muted small">代理数</div>
+                                            <div class="text-muted small">Agents</div>
                                             <div class="feitas_iot_dashboard_kpi_value">
                                                 <t t-esc="agentCount"/>
                                             </div>
                                         </div>
                                         <div class="border rounded p-2 bg-light feitas_iot_dashboard_kpi">
-                                            <div class="text-muted small">实例数</div>
+                                            <div class="text-muted small">Instances</div>
                                             <div class="feitas_iot_dashboard_kpi_value">
                                                 <t t-esc="instanceCount"/>
                                             </div>
                                         </div>
                                         <div class="border rounded p-2 bg-light feitas_iot_dashboard_kpi">
-                                            <div class="text-muted small">主题数</div>
+                                            <div class="text-muted small">Topics</div>
                                             <div class="feitas_iot_dashboard_kpi_value">
                                                 <t t-esc="topicCount"/>
                                             </div>
@@ -84,16 +84,16 @@
                     <div class="d-flex flex-column gap-3">
                         <div class="border rounded p-3 bg-white">
                             <div class="d-flex align-items-center justify-content-between mb-2">
-                                <h5 class="m-0">待办</h5>
-                                <i class="fa fa-question-circle text-muted" title="这里列出需要处理的待办事项。" style="cursor: pointer;"></i>
+                                <h5 class="m-0">To Do</h5>
+                                <i class="fa fa-question-circle text-muted" title="This section lists pending items that need attention." style="cursor: pointer;"></i>
                             </div>
-                            <div class="text-muted">暂无待办</div>
+                            <div class="text-muted">No pending items</div>
                         </div>
 
                         <div class="border rounded p-3 bg-white">
                             <div class="d-flex align-items-center justify-content-between mb-2">
-                                <h5 class="m-0">消息</h5>
-                                <i class="fa fa-question-circle text-muted" title="这里显示系统的最新动态消息。" style="cursor: pointer;"></i>
+                                <h5 class="m-0">Messages</h5>
+                                <i class="fa fa-question-circle text-muted" title="This section shows the latest system activity." style="cursor: pointer;"></i>
                             </div>
                             <t t-if="state.logs and state.logs.length">
                                 <div class="d-flex flex-column gap-2">
@@ -110,7 +110,7 @@
                                 </div>
                             </t>
                             <t t-else="">
-                                <div class="text-muted">暂无动态</div>
+                                <div class="text-muted">No recent activity</div>
                             </t>
                         </div>
                     </div>

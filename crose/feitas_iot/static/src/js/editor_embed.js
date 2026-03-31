@@ -5,6 +5,7 @@ import { Dialog } from "@web/core/dialog/dialog";
 import { rpc } from "@web/core/network/rpc";
 import { Component, onWillStart, onWillUnmount, useRef, useState } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
+import { _t } from "@web/core/l10n/translation";
 
 class NodeREDEmbed extends Component {
     static template = "feitas_iot.NodeREDEmbed";
@@ -97,7 +98,7 @@ class NodeREDLogsDialog extends Component {
     }
 
     get title() {
-        return this.props.title || "日志";
+        return this.props.title || _t("Logs");
     }
 
     get logText() {
@@ -211,7 +212,7 @@ const feitasIotBrokerStatusToastService = {
         };
         const onBrokerStatus = (payload) => {
             notification.add(payload.message || "", {
-                title: payload.title || "Broker 状态变更",
+                title: payload.title || _t("Broker Status Changed"),
                 type: typeByStatus[payload.new_status] || "info",
             });
         };

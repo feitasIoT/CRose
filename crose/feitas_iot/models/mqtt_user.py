@@ -1,4 +1,4 @@
-from odoo import models, fields, api
+from odoo import models, fields, api, _
 
 
 class FtsMqttUser(models.Model):
@@ -8,26 +8,25 @@ class FtsMqttUser(models.Model):
     name = fields.Char(string="Name", required=True)
     password = fields.Char(string="Password", required=True)
     broker_id = fields.Many2one("crose.component", string="MQTT Broker", required=True, domain=[('component_type', '=', 'mqtt')])
-    partner_id = fields.Many2one("res.partner", string="联系人")
+    partner_id = fields.Many2one("res.partner", string=_("Contact"))
 
     status = fields.Selection(
         [
-            ("active", "激活"),
-            ("pause", "停用")
+            ("active", "Active"),
+            ("pause", "Paused")
         ],
-        string="状态",
+        string=_("Status"),
         default="active",
     )
 
     _name_partner_unique = models.Constraint(
         'unique(name, partner_id)',
-        '用户名和联系人的组合必须唯一！'
+        _('The combination of username and contact must be unique!')
     )
 
     @api.model_create_multi
     def create(self, vals_list):
         records = super(FtsMqttUser, self).create(vals_list)
-        # 增加 skip_broker_sync 上下文判断，防止从接口同步回来时又发起创建请求
         if not self.env.context.get('skip_broker_sync'):
             for record in records:
                 if record.broker_id and record.name and record.password:

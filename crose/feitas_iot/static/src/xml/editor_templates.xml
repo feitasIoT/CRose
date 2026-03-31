@@ -12,7 +12,7 @@
     <t t-name="feitas_iot.NodeREDLogsAction">
         <div class="o_action p-3">
             <div class="d-flex flex-column gap-2">
-                <div t-if="state.loading" class="text-muted">加载中...</div>
+                <div t-if="state.loading" class="text-muted">Loading...</div>
                 <div t-if="state.error" class="text-danger" t-esc="state.error"/>
                 <pre
                     t-ref="log"
@@ -20,7 +20,7 @@
                     t-esc="logText"
                 />
                 <div class="d-flex justify-content-end gap-2">
-                    <button class="btn btn-secondary" t-on-click="onClear">清空</button>
+                    <button class="btn btn-secondary" t-on-click="onClear">Clear</button>
                 </div>
             </div>
         </div>
@@ -29,7 +29,7 @@
     <t t-name="feitas_iot.NodeREDLogsDialog">
         <Dialog title="title" size="'xl'">
             <div class="d-flex flex-column gap-2">
-                <div t-if="state.loading" class="text-muted">加载中...</div>
+                <div t-if="state.loading" class="text-muted">Loading...</div>
                 <div t-if="state.error" class="text-danger" t-esc="state.error"/>
                 <pre
                     t-ref="log"
@@ -38,8 +38,8 @@
                 />
             </div>
             <t t-set-slot="footer">
-                <button class="btn btn-secondary" t-on-click="onClear">清空</button>
-                <button class="btn btn-primary" t-on-click="() => props.close()">关闭</button>
+                <button class="btn btn-secondary" t-on-click="onClear">Clear</button>
+                <button class="btn btn-primary" t-on-click="() => props.close()">Close</button>
             </t>
         </Dialog>
     </t>

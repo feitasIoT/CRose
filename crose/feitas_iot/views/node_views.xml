@@ -5,7 +5,7 @@
             <field name="name">fts.nr.node.tree</field>
             <field name="model">fts.nr.node</field>
             <field name="arch" type="xml">
-                <list string="节点">
+                <list string="Nodes">
                     <field name="name"/>
                     <field name="instance_id"/>
                     <field name="flow_id"/>
@@ -19,7 +19,7 @@
             <field name="name">fts.nr.node.form</field>
             <field name="model">fts.nr.node</field>
             <field name="arch" type="xml">
-                <form string="节点">
+                <form string="Node">
                     <sheet>
                         <group>
                             <group>
@@ -34,11 +34,11 @@
                             </group>
                         </group>
                         <notebook>
-                            <page string="内容">
+                            <page string="Content">
                                 <field name="content" widget="code" options="{'mode': 'javascript'}" nolabel="1"/>
                             </page>
 
-                            <page string="配置">
+                            <page string="Configuration">
                                 <field name="item_ids">
                                     <list editable="bottom">
                                         <field name="name"/>

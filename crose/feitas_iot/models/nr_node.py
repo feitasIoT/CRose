@@ -1,21 +1,21 @@
 import json
 
-from odoo import models, fields, api
+from odoo import models, fields, api, _
 
 
 class FtsNrNode(models.Model):
     _name = "fts.nr.node"
     _description = "Node-RED Node"
 
-    name = fields.Char(string="名称", required=True)
+    name = fields.Char(string=_("Name"), required=True)
     nr_id = fields.Char(string="Node ID", required=True)
-    node_type = fields.Char(string="类型")
-    content = fields.Text(string="内容")
+    node_type = fields.Char(string=_("Type"))
+    content = fields.Text(string=_("Content"))
 
-    flow_id = fields.Many2one("fts.nr.flow", string="流程", required=True, ondelete="cascade")
+    flow_id = fields.Many2one("fts.nr.flow", string=_("Flow"), required=True, ondelete="cascade")
     instance_id = fields.Many2one(
         "fts.nr.instance",
-        string="实例",
+        string=_("Instance"),
         related="flow_id.instance_id",
         store=True,
         readonly=True,
@@ -25,33 +25,30 @@ class FtsNrNode(models.Model):
         "fts_nr_node_config_rel",
         "node_id",
         "config_node_id",
-        string="配置节点",
+        string=_("Config Nodes"),
     )
-    item_ids = fields.One2many("fts.node.item", "node_id", string="配置项")
+    item_ids = fields.One2many("fts.node.item", "node_id", string=_("Configuration Items"))
 
     def action_sync_to_knowledge(self):
-        """批量同步节点数据到知识库并向量化"""
+        """Synchronize selected nodes to the knowledge base and vectorize them."""
         Knowledge = self.env['fts.knowledge']
         created_records = Knowledge.browse()
         for record in self:
-            # 构造知识库记录
             vals = {
                 'name': f"Node: {record.name}",
                 'description': f"Type: {record.node_type}",
                 'json_source': record.content,
             }
-            # 创建并收集记录
             created_records |= Knowledge.create(vals)
-        
-        # 批量向量化
+
         created_records.action_vectorize()
-        
+
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
-                'title': '同步成功',
-                'message': f'已同步 {len(self)} 个节点到知识库并完成向量化',
+                'title': _('Synchronization Successful'),
+                'message': _('Synchronized %(count)s nodes to the knowledge base and completed vectorization.', count=len(self)),
                 'sticky': False,
             }
         }

@@ -1,7 +1,7 @@
 <odoo>
     <data>
 
-        <!-- 搜索视图 -->
+        <!-- Search view -->
         <record id="view_fts_nr_flow_search" model="ir.ui.view">
             <field name="name">fts.nr.flow.search</field>
             <field name="model">fts.nr.flow</field>
@@ -10,13 +10,13 @@
                     <field name="name"/>
                     <field name="tag_ids"/>
                     <group>
-                        <filter string="实例" name="group_by_instance" context="{'group_by': 'instance_id'}"/>
+                        <filter string="Instance" name="group_by_instance" context="{'group_by': 'instance_id'}"/>
                     </group>
                 </search>
             </field>
         </record>
 
-        <!-- 看板视图 -->
+        <!-- Kanban view -->
         <record id="view_fts_nr_flow_kanban" model="ir.ui.view">
             <field name="name">fts.nr.flow.kanban</field>
             <field name="model">fts.nr.flow</field>
@@ -61,7 +61,7 @@
                     <field name="instance_id"/>
                     <field name="nr_id"/>
                     <field name="type"/>
-                    <button name="action_view_nodes" type="object" icon="fa-sitemap" title="节点"/>
+                    <button name="action_view_nodes" type="object" icon="fa-sitemap" title="Nodes"/>
                 </list>
             </field>
         </record>
@@ -91,17 +91,17 @@
                             
                         </group>
                         <notebook>
-                            <page string="说明">
+                            <page string="Description">
                                 <field name="description" widget="html" nolabel="1"/>
                             </page>
-                            <page string="提示词">
+                            <page string="Prompt">
                                 <field name="prompt" nolabel="1"/>
                             </page>
                             
-                            <page string="内容">
+                            <page string="Content">
                                 <field name="content" widget="code" options="{'mode': 'javascript'}" nolabel="1"/>
                             </page>
-                            <page string="参数">
+                            <page string="Parameters">
                                 <field name="param_ids" nolabel="1">
                                     <list editable="bottom">
                                         <field name="name"/>

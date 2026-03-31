@@ -6,7 +6,7 @@
                 <t t-esc="state.fileName"/>
             </div>
             <button type="button" class="btn btn-primary" t-on-click="downloadSpreadsheet">
-                下载
+                Download
             </button>
         </div>
         <t t-if="model">

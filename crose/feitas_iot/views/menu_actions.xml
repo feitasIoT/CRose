@@ -2,9 +2,9 @@
     <data>
 
 
-        <!-- 动作 -->
+        <!-- Actions -->
         <record id="action_fts_nr_instance" model="ir.actions.act_window">
-            <field name="name">实例</field>
+            <field name="name">Instances</field>
             <field name="res_model">fts.nr.instance</field>
             <field name="view_mode">kanban,list,form</field>
             <field name="context">{'search_default_group_by_instance_type': 1}</field>
@@ -16,26 +16,26 @@
             ]"/>
         </record>
         <record id="action_fts_nr_flow" model="ir.actions.act_window">
-            <field name="name">流程</field>
+            <field name="name">Flows</field>
             <field name="res_model">fts.nr.flow</field>
             <field name="view_mode">kanban,list,form</field>
         </record>
         <record id="action_fts_nr_flow_template" model="ir.actions.act_window">
-            <field name="name">模板应用</field>
+            <field name="name">Template Applications</field>
             <field name="res_model">fts.nr.flow</field>
             <field name="view_mode">kanban,list,form</field>
             <field name="domain">[('is_template', '=', True)]</field>
             <field name="context">{'default_is_template': True}</field>
         </record>
         <record id="action_fts_nr_node" model="ir.actions.act_window">
-            <field name="name">节点</field>
+            <field name="name">Nodes</field>
             <field name="res_model">fts.nr.node</field>
             <field name="view_mode">list,form</field>
         </record>
 
-        <!-- 服务器动作: 同步流程到知识库 -->
+        <!-- Server action: synchronize flows to the knowledge base -->
         <record id="action_sync_flow_to_knowledge" model="ir.actions.server">
-            <field name="name">同步知识库</field>
+            <field name="name">Synchronize Knowledge Base</field>
             <field name="model_id" ref="model_fts_nr_flow"/>
             <field name="binding_model_id" ref="model_fts_nr_flow"/>
             <field name="binding_view_types">list</field>
@@ -46,9 +46,9 @@
             </field>
         </record>
 
-        <!-- 服务器动作: 同步节点到知识库 -->
+        <!-- Server action: synchronize nodes to the knowledge base -->
         <record id="action_sync_node_to_knowledge" model="ir.actions.server">
-            <field name="name">同步知识库</field>
+            <field name="name">Synchronize Knowledge Base</field>
             <field name="model_id" ref="model_fts_nr_node"/>
             <field name="binding_model_id" ref="model_fts_nr_node"/>
             <field name="binding_view_types">list</field>
@@ -59,7 +59,7 @@
             </field>
         </record>
         <record id="action_fts_edge_agent" model="ir.actions.act_window">
-            <field name="name">代理</field>
+            <field name="name">Agents</field>
             <field name="res_model">fts.edge.agent</field>
             <field name="view_mode">kanban,list,form</field>
             <field name="view_ids" eval="[
@@ -71,78 +71,74 @@
         </record>
 
         <record id="action_fts_iot_overview" model="ir.actions.client">
-            <field name="name">概览</field>
+            <field name="name">Overview</field>
             <field name="tag">feitas_iot.overview</field>
         </record>
 
 
-        <!-- 菜单：CRose（月季花） - 实例 -->
+        <!-- Root menu -->
         <menuitem id="menu_fts_iot_root" 
             name="CRose" 
             web_icon="feitas_iot,static/description/icon.png"
             sequence="1"/>
-        <!-- 概览 -->
+        <!-- Overview -->
         <menuitem
             id="menu_fts_iot_overview"
-            name="概览"
+            name="Overview"
             parent="menu_fts_iot_root"
             action="action_fts_iot_overview"
             sequence="2"
         />
-        <!-- 数据中心 -->
-        <!-- 数据中心 / 数据建模 -->
+        <!-- Data Center -->
         <menuitem id="menu_fts_iot_data" 
-            name="数据中心" parent="menu_fts_iot_root" sequence="5"/>
+            name="Data Center" parent="menu_fts_iot_root" sequence="5"/>
         
         
         <record id="action_fts_data_model" model="ir.actions.act_window">
-            <field name="name">数据建模</field>
+            <field name="name">Data Modeling</field>
             <field name="res_model">fts.data.model</field>
             <field name="view_mode">list,form</field>
         </record>
 
         <menuitem
             id="menu_fts_data_model"
-            name="数据建模"
+            name="Data Modeling"
             parent="menu_fts_iot_data"
             action="action_fts_data_model"
             sequence="10"
         />
 
-        <!-- 边缘计算 -->
-        <!-- 边缘计算 / 代理 -->
-        <!-- 边缘计算 / 实例 -->
+        <!-- Edge Computing -->
         <menuitem
             id="menu_fts_iot_edge"
-            name="边缘计算"
+            name="Edge Computing"
             parent="menu_fts_iot_root"
             sequence="10"
         />
         <menuitem
             id="menu_fts_iot_nr_agent"
-            name="代理"
+            name="Agents"
             parent="menu_fts_iot_edge"
             action="action_fts_edge_agent"
             sequence="10"
         />
         <menuitem
             id="menu_fts_iot_nr_instance"
-            name="实例"
+            name="Instances"
             parent="menu_fts_iot_edge"
             action="action_fts_nr_instance"
             sequence="20"
         />
-        <!-- 边缘计算，应该就包含代理、实例两个菜单，下一层内容都以实例为入口 -->
         <menuitem
             id="menu_fts_iot_nr_flow"
-            name="应用"
+            name="Applications"
             parent="menu_fts_iot_edge"
             action="action_fts_nr_flow"
             sequence="30"
         />
         <menuitem
             id="menu_fts_iot_nr_node"
-            name="节点"
+            name="Nodes"
             parent="menu_fts_iot_edge"
             action="action_fts_nr_node"
             sequence="40"
@@ -150,26 +146,24 @@
 
         <menuitem
             id="menu_fts_knowledge"
-            name="知识库"
+            name="Knowledge Base"
             parent="menu_fts_iot_root"
             action="feitas_iot.action_fts_knowledge"
             sequence="15"
         />
 
-        <!-- 模板库 -->
-        <!-- 模板库 / 应用流程 -->
-        <menuitem id="menu_fts_library" name="模板库" parent="menu_fts_iot_root" sequence="35"/>
+        <!-- Template Library -->
+        <menuitem id="menu_fts_library" name="Template Library" parent="menu_fts_iot_root" sequence="35"/>
 
         <menuitem
             id="menu_fts_library_flow"
-            name="应用"
+            name="Applications"
             parent="menu_fts_library"
             action="action_fts_nr_flow_template"
             sequence="10"
         />
 
         <!-- MQTT -->
-        <!-- MQTT / MQTT服务 -->
         <menuitem id="menu_fts_mqtt_root" name="MQTT" parent="menu_fts_iot_root" sequence="40"/>
 
         <record id="action_fts_mqtt_user" model="ir.actions.act_window">
@@ -180,87 +174,81 @@
 
         <menuitem
             id="menu_fts_mqtt_user"
-            name="MQTT用户"
+            name="MQTT Users"
             parent="menu_fts_mqtt_root"
             action="action_fts_mqtt_user"
             sequence="5"
         />
 
-                <!-- 显式菜单项，作为 Action Menu 失效的备选 -->
+        <!-- Explicit menu entry as a fallback when the action menu is unavailable -->
         <menuitem id="menu_fts_mqtt_topic_sync"
-                  name="立即同步主题"
+                  name="Synchronize Topics Now"
                   parent="menu_fts_mqtt_root"
                   action="action_sync_mqtt_topics"
                   sequence="11"/>
 
         <!-- Menu -->
         <menuitem id="menu_fts_mqtt_topic"
-                  name="主题"
+                  name="Topics"
                   parent="menu_fts_mqtt_root"
                   action="action_fts_mqtt_topic"
                   sequence="10"/>
                   
 
-        <!-- 模板库 -->
-        <!-- 模板库 - 什么东西可以成为模板？ -->
-
-
-        <!-- 知识库 -->
-
         <!-- AI -->
-        <menuitem id="menu_fts_ai_root" name="深度学习" parent="menu_fts_iot_root" sequence="50"/>
+        <menuitem id="menu_fts_ai_root" name="Deep Learning" parent="menu_fts_iot_root" sequence="50"/>
 
         <record id="action_fts_ai_model" model="ir.actions.act_window">
-            <field name="name">AI模型</field>
+            <field name="name">AI Models</field>
             <field name="res_model">fts.ai.model</field>
             <field name="view_mode">list,form</field>
         </record>
         <record id="action_fts_ai_dataset" model="ir.actions.act_window">
-            <field name="name">数据集</field>
+            <field name="name">Datasets</field>
             <field name="res_model">fts.ai.dataset</field>
             <field name="view_mode">list,form</field>
         </record>
         <record id="action_fts_ai_training" model="ir.actions.act_window">
-            <field name="name">模型训练</field>
+            <field name="name">Model Training</field>
             <field name="res_model">fts.ai.training</field>
             <field name="view_mode">list,form</field>
         </record>
 
-        <menuitem id="menu_fts_ai_model" name="AI模型" parent="menu_fts_ai_root" action="action_fts_ai_model" sequence="10"/>
-        <menuitem id="menu_fts_ai_dataset" name="数据集" parent="menu_fts_ai_root" action="action_fts_ai_dataset" sequence="20"/>
-        <menuitem id="menu_fts_ai_training" name="模型训练" parent="menu_fts_ai_root" action="action_fts_ai_training" sequence="30"/>
+        <menuitem id="menu_fts_ai_model" name="AI Models" parent="menu_fts_ai_root" action="action_fts_ai_model" sequence="10"/>
+        <menuitem id="menu_fts_ai_dataset" name="Datasets" parent="menu_fts_ai_root" action="action_fts_ai_dataset" sequence="20"/>
+        <menuitem id="menu_fts_ai_training" name="Model Training" parent="menu_fts_ai_root" action="action_fts_ai_training" sequence="30"/>
 
 
-        <!-- 配置 -->
+        <!-- Configuration -->
         <menuitem id="menu_fts_crose_config" 
-            name="配置" parent="menu_fts_iot_root" sequence="100"/>
+            name="Configuration" parent="menu_fts_iot_root" sequence="100"/>
 
         <record id="action_fts_agent_release" model="ir.actions.act_window">
-            <field name="name">代理程序</field>
+            <field name="name">Agent Package</field>
             <field name="res_model">ir.attachment</field>
             <field name="view_mode">list,form</field>
         </record>
 
         <menuitem id="menu_fts_agent_release" 
-            name="代理程序" parent="menu_fts_crose_config" action="action_fts_agent_release" sequence="10"/>
+            name="Agent Package" parent="menu_fts_crose_config" action="action_fts_agent_release" sequence="10"/>
 
         <menuitem
             id="menu_crose_component"
-            name="系统组件"
+            name="System Components"
             parent="menu_fts_crose_config"
             action="action_crose_component"
             sequence="20"
         />
 
         <record id="action_fts_nr_tag" model="ir.actions.act_window">
-            <field name="name">标签</field>
+            <field name="name">Tags</field>
             <field name="res_model">fts.nr.tag</field>
             <field name="view_mode">list</field>
         </record>
 
         <menuitem
             id="menu_fts_nr_tag"
-            name="标签"
+            name="Tags"
             parent="menu_fts_crose_config"
             action="action_fts_nr_tag"
             sequence="30"

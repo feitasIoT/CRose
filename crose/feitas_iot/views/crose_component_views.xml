@@ -5,7 +5,7 @@
             <field name="name">crose.component.tree</field>
             <field name="model">crose.component</field>
             <field name="arch" type="xml">
-                <list string="系统组件">
+                <list string="System Components">
                     <field name="name"/>
                     <field name="component_type"/>
                     <field name="host"/>
@@ -21,20 +21,20 @@
             <field name="name">crose.component.form</field>
             <field name="model">crose.component</field>
             <field name="arch" type="xml">
-                <form string="系统组件">
+                <form string="System Component">
                     <header>
-                        <button name="action_check_status" type="object" string="检查状态" class="oe_highlight"/>
-                        <button name="action_view_packages" type="object" string="查看安装包"
+                        <button name="action_check_status" type="object" string="Check Status" class="oe_highlight"/>
+                        <button name="action_view_packages" type="object" string="View Packages"
                                 invisible="component_type != 'npm'"/>
                         <field name="status" widget="statusbar"/>
                     </header>
                     <sheet>
                         <div class="alert alert-danger mb-2" role="alert" invisible="status == 'online' or not error_reason">
-                            <strong>检查失败:</strong> <field name="error_reason" nolabel="1"/>
+                            <strong>Check failed:</strong> <field name="error_reason" nolabel="1"/>
                         </div>
                         <div class="oe_title">
                             <h1>
-                                <field name="name" placeholder="组件名称"/>
+                                <field name="name" placeholder="Component Name"/>
                             </h1>
                         </div>
                         <group>
@@ -49,7 +49,7 @@
                             </group>
                         </group>
                         <notebook>
-                            <page string="元数据">
+                            <page string="Metadata">
                                 <field name="metadata" widget="code" options="{'mode': 'javascript'}"/>
                             </page>
                         </notebook>
@@ -59,7 +59,7 @@
         </record>
 
         <record id="action_crose_component" model="ir.actions.act_window">
-            <field name="name">系统组件</field>
+            <field name="name">System Components</field>
             <field name="res_model">crose.component</field>
             <field name="view_mode">list,form</field>
         </record>

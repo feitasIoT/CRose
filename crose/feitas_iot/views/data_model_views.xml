@@ -35,7 +35,7 @@
                     <sheet>
                         <div class="oe_button_box" name="button_box">
                             <button name="%(feitas_iot.action_fts_data_address)d" type="action" class="oe_stat_button" icon="fa-sitemap">
-                                <field name="address_ids" widget="statinfo" string="地址"/>
+                                <field name="address_ids" widget="statinfo" string="Addresses"/>
                             </button>
                         </div>
                         <div class="oe_title">
@@ -64,7 +64,7 @@
                             </group>
                         </group>
                         <notebook>
-                            <page name="datas_search" string="数据查询">
+                            <page name="datas_search" string="Data Query">
                                 <group>
                                     <group>
                                         <field name="query_start_time"/>
@@ -72,15 +72,15 @@
                                         <field name="query_interval"/>
                                     </group>
                                     <group>
-                                        <button name="action_test_query" type="object" string="测试" class="oe_highlight"/>
-                                        <button name="action_open_spreadsheet" type="object" string="电子表格" class="oe_highlight"/>
+                                        <button name="action_test_query" type="object" string="Test" class="oe_highlight"/>
+                                        <button name="action_open_spreadsheet" type="object" string="Spreadsheet" class="oe_highlight"/>
                                     </group>
                                 </group>
                             </page>
-                            <page name="datas" string="数据结构">
+                            <page name="datas" string="Data Structure">
                                 <field name="data_structure" widget="code" options="{'mode': 'javascript'}" nolabel="1" colspan="2"/>
                             </page>
-                            <page name="application" string="应用">
+                            <page name="application" string="Applications">
                                 <group style="margin-bottom: 10px !important">
                                     <field name="nr_flow_ids" widget="many2many_tags" style="margin-bottom: 10px !important"/>
                                     <field name="app_param_ids" nolabel="1" colspan="4">
@@ -93,7 +93,7 @@
                                     </field>
                                 </group>
 
-                                <group string="日志">
+                                <group string="Logs">
                                     <field name="log_ids" nolabel="1" colspan="4">
                                         <list>
 

@@ -8,6 +8,7 @@ import requests
 from odoo import http
 from odoo.http import request, content_disposition
 from odoo.exceptions import UserError
+from odoo.tools.translate import _
 
 
 class FeitasIotDownloadController(http.Controller):
@@ -49,15 +50,7 @@ class FeitasIotDownloadController(http.Controller):
 
     @http.route(["/crose/agent/<int:agentid>", "/crose/agent/<int:agentid>/crose_agent.zip"], type="http", auth="public", methods=["GET"], csrf=False)
     def download_bundle(self, agentid, **kwargs):
-        """
-            下载多个文件打包成zip文件
-            :param agent: 边缘代理ID
-            :return: zip文件，文件名：crose_agent.zip，包括：
-                - installer.sh：安装脚本，负责将crose_agent安装为systemd服务并启动，不同边缘系统有不同的安装脚本
-                - config.yaml：配置文件，crose_agent运行所需要的脚本文件，每个agent都不同
-                - crose_agent: crose_agent的主程序，不同边缘系统有不同的实现
-                - croseagent.service：systemd服务，不同边缘系统有不同的文件
-        """
+        """Download multiple files and package them into crose_agent.zip."""
         Agent = request.env["fts.edge.agent"].sudo()
         agent = Agent.browse(agentid)
         if not agent.exists():
@@ -139,24 +132,24 @@ class FeitasIotDownloadController(http.Controller):
     @http.route("/feitas_iot/nodered/logs", type="jsonrpc", auth="user", methods=["POST"], csrf=False)
     def nodered_logs(self, instance_id=None, agent_id=None, cursor=None, limit=200, **kwargs):
         if not instance_id and not agent_id:
-            raise UserError("缺少参数：instance_id 或 agent_id")
+            raise UserError(_("Missing parameter: instance_id or agent_id"))
 
         if instance_id:
             try:
                 instance_id = int(instance_id)
             except Exception:
-                raise UserError("参数错误：instance_id")
+                raise UserError(_("Invalid parameter: instance_id"))
 
             Instance = request.env["fts.nr.instance"]
             rec = Instance.browse(instance_id).exists()
             if not rec:
-                raise UserError("实例不存在")
+                raise UserError(_("Instance does not exist"))
             rec.check_access_rights("read")
             rec.check_access_rule("read")
 
             agent = rec.edge_agent_id
             if not agent:
-                raise UserError("该实例未配置边缘代理，无法读取运行日志。")
+                raise UserError(_("This instance has no edge agent configured, so runtime logs cannot be read."))
             host = (agent.ip_address or "").strip()
             port = int(agent.agent_port or 18080)
             identifier = (rec.name or "").strip() or str(rec.id)
@@ -164,12 +157,12 @@ class FeitasIotDownloadController(http.Controller):
             try:
                 agent_id = int(agent_id)
             except Exception:
-                raise UserError("参数错误：agent_id")
+                raise UserError(_("Invalid parameter: agent_id"))
 
             Agent = request.env["fts.edge.agent"]
             agent = Agent.browse(agent_id).exists()
             if not agent:
-                raise UserError("Agent 不存在")
+                raise UserError(_("Agent does not exist"))
             agent.check_access_rights("read")
             agent.check_access_rule("read")
 
@@ -178,7 +171,7 @@ class FeitasIotDownloadController(http.Controller):
             identifier = "agent"
 
         if not host:
-            raise UserError("未配置 Agent 地址")
+            raise UserError(_("Agent address is not configured"))
 
         url = f"http://{host}:{port}/v1/nodered/logs"
         params = {
@@ -196,7 +189,7 @@ class FeitasIotDownloadController(http.Controller):
             resp.raise_for_status()
             data = resp.json() if resp.content else {}
         except Exception as e:
-            raise UserError(f"读取日志失败：{str(e)}")
+            raise UserError(_("Failed to read logs: %(error)s", error=str(e)))
 
         lines = data.get("lines") if isinstance(data, dict) else None
         if not isinstance(lines, list):

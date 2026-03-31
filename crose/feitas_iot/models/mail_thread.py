@@ -92,7 +92,7 @@ class MailThread(models.AbstractModel):
             if not api_key:
                 _logger.warning("DeepSeek: API Key not configured")
                 record.with_context(skip_ai_reply=True).message_post(
-                    body="系统提示：未配置 DeepSeek API Key，请联系管理员。",
+                    body="System notice: DeepSeek API Key is not configured. Please contact the administrator.",
                     author_id=deepseek_partner.id,
                     message_type='comment',
                     subtype_xmlid='mail.mt_note'

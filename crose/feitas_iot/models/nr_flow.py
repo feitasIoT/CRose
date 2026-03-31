@@ -1,6 +1,6 @@
 import json
 
-from odoo import models, fields, api
+from odoo import models, fields, api, _
 
 
 class FtsNrFlow(models.Model):
@@ -8,59 +8,53 @@ class FtsNrFlow(models.Model):
     _description = "Node-RED Flow"
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
-    name = fields.Char(string="名称", required=True)
+    name = fields.Char(string=_("Name"), required=True)
     nr_id = fields.Char(string="Flow ID", required=True)
-    type = fields.Char(string="类型")
-    # FIXME：流程转应用，是需要填写很多内容，AI大模型需要的内容
-    is_template = fields.Boolean("是模板")
-    content = fields.Text("内容")
+    type = fields.Char(string=_("Type"))
+    is_template = fields.Boolean(_("Is Template"))
+    content = fields.Text(_("Content"))
 
-    instance_id = fields.Many2one("fts.nr.instance", string="实例", ondelete="cascade")
+    instance_id = fields.Many2one("fts.nr.instance", string=_("Instance"), ondelete="cascade")
     data_model_id = fields.Many2one('fts.data.model', string="Data Model")
 
-    tag_ids = fields.Many2many("fts.nr.tag", string="标签")
-    param_ids = fields.One2many("fts.nr.flow.param", "flow_id", string="参数")
-    heat = fields.Integer("热度")
-    description = fields.Html("说明")
-    prompt = fields.Text("提示词")
+    tag_ids = fields.Many2many("fts.nr.tag", string=_("Tags"))
+    param_ids = fields.One2many("fts.nr.flow.param", "flow_id", string=_("Parameters"))
+    heat = fields.Integer(_("Heat"))
+    description = fields.Html(_("Description"))
+    prompt = fields.Text(_("Prompt"))
 
     def action_sync_to_knowledge(self):
-        """批量同步流程数据到知识库并向量化"""
+        """Synchronize selected flows to the knowledge base and vectorize them."""
         Knowledge = self.env['fts.knowledge']
         created_records = Knowledge.browse()
         for record in self:
-            # 构造知识库记录
             vals = {
                 'name': f"Flow: {record.name}",
                 'description': record.description or '',
                 'json_source': record.content,
             }
-            # 创建并收集记录
             created_records |= Knowledge.create(vals)
-        
-        # 批量向量化
+
         created_records.action_vectorize()
-        
+
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
-                'title': '同步成功',
-                'message': f'已同步 {len(self)} 条流程到知识库并完成向量化',
+                'title': _('Synchronization Successful'),
+                'message': _('Synchronized %(count)s flows to the knowledge base and completed vectorization.', count=len(self)),
                 'sticky': False,
             }
         }
 
     def action_view_nodes(self):
-        """
-            打开节点以及节点的关联配置节点(config_node_ids)
-        """
+        """Open flow nodes together with their related config nodes."""
         self.ensure_one()
         action = self.env.ref("feitas_iot.action_fts_nr_node", raise_if_not_found=False)
         if action:
             res = action.read()[0]
-            res["display_name"] = "节点"
-            res["name"] = "节点"
+            res["display_name"] = _("Nodes")
+            res["name"] = _("Nodes")
             Node = self.env["fts.nr.node"]
             nodes = Node.search([("flow_id", "=", self.id)])
             to_process = nodes
