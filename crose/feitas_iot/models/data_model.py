@@ -240,7 +240,6 @@ class DataModel(models.Model):
             "tag": "feitas_iot.action_open_spreadsheet",
             "params": {
                 "resId": self.id,
-                "readonly": True,
             },
         }
 

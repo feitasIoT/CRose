@@ -1,5 +1,6 @@
 import base64
 import io
+import json
 import zipfile
 
 import requests
@@ -121,6 +122,19 @@ class FeitasIotDownloadController(http.Controller):
             ("Content-Disposition", content_disposition("crose_agent.zip")),
         ]
         return request.make_response(data, headers=headers)
+
+    @http.route("/spreadsheet/xlsx", type="http", auth="user", methods=["POST"], csrf=False)
+    def download_spreadsheet_xlsx(self, zip_name=None, files=None, **kwargs):
+        upload = files or request.httprequest.files.get("files")
+        if not upload:
+            return request.not_found()
+        spreadsheet_files = json.loads(upload.read().decode())
+        content = request.env["spreadsheet.mixin"]._zip_xslx_files(spreadsheet_files)
+        headers = [
+            ("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+            ("Content-Disposition", content_disposition(zip_name or "spreadsheet.xlsx")),
+        ]
+        return request.make_response(content, headers=headers)
 
     @http.route("/feitas_iot/nodered/logs", type="jsonrpc", auth="user", methods=["POST"], csrf=False)
     def nodered_logs(self, instance_id=None, agent_id=None, cursor=None, limit=200, **kwargs):

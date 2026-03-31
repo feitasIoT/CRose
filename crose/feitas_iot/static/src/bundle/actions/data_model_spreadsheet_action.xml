@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <templates>
     <div t-name="feitas_iot.DataModelSpreadsheetAction" class="o_spreadsheet_action d-flex flex-column" style="height: 100%;">
+        <div class="d-flex align-items-center justify-content-between border-bottom px-3 py-2 bg-white">
+            <div class="fw-semibold">
+                <t t-esc="state.fileName"/>
+            </div>
+            <button type="button" class="btn btn-primary" t-on-click="downloadSpreadsheet">
+                下载
+            </button>
+        </div>
         <t t-if="model">
             <SpreadsheetComponent model="model"/>
         </t>
