@@ -40,8 +40,8 @@ class DataModel(models.Model):
     ], string=_('TCP Type'))
     slave_id = fields.Integer(string=_('Slave ID'))
     smb_share = fields.Char(string=_('Shared Directory'), help=_('SMB shared directory path, for example: /share'))
-    smb_username = fields.Char(string=_('Username'))
-    smb_password = fields.Char(string=_('Password'))
+    username = fields.Char(string=_('Username'))
+    password = fields.Char(string=_('Password'))
 
     query_start_time = fields.Datetime(string=_('Start Time'))
     query_end_time = fields.Datetime(string=_('End Time'))

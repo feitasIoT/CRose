@@ -47,7 +47,7 @@
                             <group>
                                 <field name="partner_id"/>
                                 <field name="provider_id"/>
-                                <field name="mqtt_topic_id"/>
+                                <field name="mqtt_topic_id" invisible="protocol != 'mqtt'"/>
                                 <field name="nr_instance_id"/>
                                 <field name="description"/>
                             </group>
@@ -55,12 +55,12 @@
                                 <field name="protocol" />
                                 <field name="host" />
                                 <field name="tcp_port" />
-                                <field name="serial_port" />
-                                <field name="tcp_type" />
-                                <field name="slave_id" />
+                                <field name="serial_port" invisible="protocol != 'serial'" />
+                                <field name="tcp_type" invisible="protocol != 'tcp'" />
+                                <field name="slave_id" invisible="protocol != 'modbus'" />
                                 <field name="smb_share" invisible="protocol != 'smb'" />
-                                <field name="smb_username" invisible="protocol != 'smb'" />
-                                <field name="smb_password" invisible="protocol != 'smb'" />
+                                <field name="username" invisible="protocol != 'smb'" />
+                                <field name="password" invisible="protocol != 'smb'" />
                             </group>
                         </group>
                         <notebook>

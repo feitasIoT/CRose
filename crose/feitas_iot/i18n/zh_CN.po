@@ -657,7 +657,7 @@ msgstr "编辑器"
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_data_model__state__effective
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_data_model_search
 msgid "Effective"
-msgstr ""
+msgstr "生效"
 
 #. module: feitas_iot
 #: model:ir.model,name:feitas_iot.model_mail_thread
@@ -956,7 +956,7 @@ msgstr "间隔(秒)"
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_data_model__state__invalid
 msgid "Invalid"
-msgstr ""
+msgstr "失效"
 
 #. module: feitas_iot
 #. odoo-python
@@ -1640,7 +1640,7 @@ msgstr ""
 #. odoo-python
 #: code:addons/feitas_iot/models/data_model.py:0
 #: code:addons/feitas_iot/models/edge_agent.py:0
-#: model:ir.model.fields,field_description:feitas_iot.field_fts_data_model__smb_password
+#: model:ir.model.fields,field_description:feitas_iot.field_fts_data_model__password
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_edge_agent__password
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_mqtt_user__password
 msgid "Password"
@@ -2312,7 +2312,7 @@ msgstr ""
 #. odoo-python
 #: code:addons/feitas_iot/models/data_model.py:0
 #: code:addons/feitas_iot/models/edge_agent.py:0
-#: model:ir.model.fields,field_description:feitas_iot.field_fts_data_model__smb_username
+#: model:ir.model.fields,field_description:feitas_iot.field_fts_data_model__username
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_edge_agent__username
 msgid "Username"
 msgstr "用户名"
