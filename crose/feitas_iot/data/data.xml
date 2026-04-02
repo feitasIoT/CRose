@@ -1,13 +1,13 @@
 <odoo>
-    <data noupdate="1">
-        <record id="seq_fts_data_model" model="ir.sequence">
-            <field name="name">Data Model Sequence</field>
-            <field name="code">fts.data.model</field>
-            <field name="prefix">DM</field>
-            <field name="padding">5</field>
-            <field name="company_id" eval="False"/>
-        </record>
-    </data>
+<data noupdate="1">
+    <record id="seq_fts_data_model" model="ir.sequence">
+        <field name="name">Data Model Sequence</field>
+        <field name="code">fts.data.model</field>
+        <field name="prefix">DM</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+   
 
     <!-- System components -->
     <record id="component_mqtt_broker" model="crose.component">
@@ -82,5 +82,32 @@
         <field name="metadata">{"db": 0}</field>
     </record>
 
+    <record id="component_nas" model="crose.component">
+        <field name="name">NAS</field>
+        <field name="component_type">nas</field>
+        <field name="host">crose-nas</field>
+        <field name="port">80</field>
+        <field name="url"></field>
+        <field name="metadata">{}</field>
+    </record>
 
+    <!-- node-red instance(fts.nr.instance) -->
+    <record id="fts_nr_instance_prod" model="fts.nr.instance">
+        <field name="name">Node-RED Prod</field>
+        <field name="instance_type">local</field>
+        <field name="ip_address">nodered</field>
+        <field name="port">8880</field>
+        <field name="npm_registry_id" ref="component_registr_prod"/>
+    </record>
+
+    <record id="fts_nr_instance_staging" model="fts.nr.instance">
+        <field name="name">Node-RED Staging</field>
+        <field name="instance_type">local</field>
+        <field name="ip_address">nodered-staging</field>
+        <field name="port">8881</field>
+        <field name="npm_registry_id" ref="component_registry_stage"/>
+    </record>
+
+
+ </data>
 </odoo>

@@ -13,6 +13,7 @@ class CroseComponent(models.Model):
         ('mqtt', 'MQTT Service'),
         ('iotdb', 'IoTDB'),
         ('ai', 'AI Service'),
+        ('nas', 'NAS'),
         ('npm', 'NPM Registry'),
         ('redis', 'Redis'),
         ('nodered', 'Node-RED')
