@@ -82,6 +82,72 @@ class CroseComponent(models.Model):
     def action_check_status(self):
         for component in self:
             component._check_status()
+        self._sync_overview_metrics()
+
+    @api.model
+    def _sync_overview_metrics(self):
+        key_name = "host:metrics:current"
+        metrics = {
+            "cpu": "-",
+            "memory": "-",
+            "disk": "-",
+            "network": "-",
+        }
+        redis_comp = self.search([("component_type", "=", "redis"), ("status", "=", "online")], limit=1)
+        if not redis_comp:
+            redis_comp = self.search([("component_type", "=", "redis")], limit=1)
+        if redis_comp:
+            metadata = {}
+            if redis_comp.metadata:
+                try:
+                    metadata = json.loads(redis_comp.metadata)
+                except Exception:
+                    metadata = {}
+            username = metadata.get("username")
+            password = metadata.get("password")
+            db = metadata.get("db", 0)
+            try:
+                db = int(db)
+            except Exception:
+                db = 0
+            try:
+                import redis
+
+                client = redis.Redis(
+                    host=redis_comp.host or "localhost",
+                    port=redis_comp.port or 6379,
+                    username=username,
+                    password=password,
+                    db=db,
+                    decode_responses=True,
+                    socket_connect_timeout=5,
+                )
+                value = None
+                key_type = client.type(key_name)
+                if isinstance(key_type, bytes):
+                    key_type = key_type.decode(errors="ignore")
+                if key_type == "string":
+                    value = client.get(key_name)
+                elif key_type == "hash":
+                    value = client.hgetall(key_name)
+
+                data = value
+                if isinstance(value, str):
+                    try:
+                        data = json.loads(value)
+                    except Exception:
+                        data = {}
+                if isinstance(data, dict):
+                    metrics["cpu"] = data.get("cpu", data.get("CPU", metrics["cpu"]))
+                    metrics["memory"] = data.get("memory", data.get("mem", data.get("MEMORY", metrics["memory"])))
+                    metrics["disk"] = data.get("disk", data.get("DISK", metrics["disk"]))
+                    metrics["network"] = data.get("network", data.get("NETWORK", metrics["network"]))
+            except Exception:
+                pass
+
+        self.env["ir.config_parameter"].sudo().set_param(
+            "feitas_iot.overview.metrics", json.dumps(metrics, ensure_ascii=False)
+        )
 
     def _check_status(self):
         self.ensure_one()

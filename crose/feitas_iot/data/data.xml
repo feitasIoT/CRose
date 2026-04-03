@@ -22,9 +22,9 @@
     <record id="component_nodered" model="crose.component">
         <field name="name">Node-RED</field>
         <field name="component_type">nodered</field>
-        <field name="host">nodered</field>
+        <field name="host">nodered-prod</field>
         <field name="port">1880</field>
-        <field name="url">http://nodered:1880</field>
+        <field name="url">http://nodered-prod:1880</field>
         <field name="metadata">{"admin_path": "/admin"}</field>
     </record>
 
