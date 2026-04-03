@@ -67,23 +67,32 @@ services:
     networks:
       - crose-net
 
-  nodered:
-    image: nodered/node-red-dev:5.0.0-beta.4
+  nodered-prod:
+    build:
+      context: ./node-red
+      dockerfile: Dockerfile
     restart: always
     ports:
-      - "1880:1880"
+      - "8880:1880"
     volumes:
       - ./data/nodered/data:/data
+      - ./data/webdav/dav:/mnt/nas
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /etc/os-release:/host/etc/os-release:ro
     networks:
       - crose-net
 
   nodered-staging:
-    image: nodered/node-red-dev:5.0.0-beta.4
+    build:
+      context: ./node-red
+      dockerfile: Dockerfile
     restart: always
     ports:
-      - "11881:1880"
+      - "8881:1880"
     volumes:
       - ./data/nodered-staging/data:/data
+      - ./data/webdav/dav:/mnt/nas
     networks:
       - crose-net
 
@@ -156,18 +165,17 @@ services:
       - ./data/verdaccio/production/storage:/verdaccio/storage
     networks:
       - crose-net
-
-  crose-nas:
-    image: filebrowser/filebrowser:latest
+  
+  crose-webdav:
+    image: hacdias/webdav
+    container_name: crose-webdav
     ports:
-      - "8081:80"  # 避开冲突，产线 PC 访问这个端口
+      - "8080:6065"
     volumes:
-      - ./data/nas/srv:/srv
-      - ./data/nas/config:/config
-      - ./data/nas/database:/database
-    environment:
-      - FB_BASEURL=/
-    restart: always
+      - ./data/webdav/dav:/data          # 映射到容器内的 /data
+      - ./data/webdav/config/config.yaml:/config.yaml # 需要提供一个基础配置文件
+    command: ["--config", "/config.yaml"]
+    restart: unless-stopped
     networks:
       - crose-net
 
