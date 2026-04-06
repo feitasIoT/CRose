@@ -32,7 +32,8 @@
             <field name="arch" type="xml">
                 <form string="Data Model">
                     <header>
-                        <button name="action_start" type="object" string="Start" class="btn-primary"/>
+                        <button name="action_start" type="object" string="Start" class="btn-primary" invisible="is_demo"/>
+                        <button name="action_start_demo" type="object" string="Start Demo" class="btn-primary" invisible="is_demo != True"/>
                         <field name="state" widget="statusbar" options="{'clickable': '1'}"/>
                     </header>
                     <sheet>
@@ -42,22 +43,25 @@
                             </button>
                         </div>
                         <div class="oe_title">
-                            <h1>
-                                <field name="name"/>
-                            </h1>
+                            
+                            <field name="description"/>
+                            
                         </div>
                         <group>
                             <group>
+                                <field name="name"/>
                                 <field name="partner_id"/>
                                 <field name="provider_id"/>
-                                <field name="data_asset" readonly="1"/>
-                                <field name="topic" readonly="1"/>
+                                <field name="data_asset" readonly="1" groups="base.group_no_one" />
+                                <field name="topic" readonly="1" groups="base.group_no_one" />
+                                <field name="iotdb_topic" readonly="1" groups="base.group_no_one" />
                                 <field name="mqtt_topic_id" invisible="protocol != 'mqtt'"/>
                                 <field name="nr_instance_id"/>
                                 <field name="nr_flow_ids" widget="many2many_tags" style="margin-bottom: 10px !important"/>
-                                <field name="description"/>
+                                
                             </group>
                             <group>
+                                <field name="is_demo" groups="base.group_no_one" />
                                 <field name="protocol" />
                                 <field name="host" />
                                 <field name="tcp_port" />
@@ -101,15 +105,6 @@
                                     </field>
                                 </group>
 
-                                <group string="Logs">
-                                    <field name="log_ids" nolabel="1" colspan="4">
-                                        <list>
-
-                                            <field name="value"/>
-
-                                        </list>
-                                    </field>
-                                </group>
                             </page>
                         </notebook>
                             

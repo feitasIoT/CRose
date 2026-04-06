@@ -64,7 +64,7 @@ class DataModel(models.Model):
     description = fields.Text(string=_('Description'))
     mqtt_topic_id = fields.Many2one('fts.mqtt.topic', string=_('MQTT Topic'))
     nr_instance_id = fields.Many2one('fts.nr.instance', string=_('Runtime Instance'), help=_('Local instance responsible for data processing'))
-    nr_flow_ids = fields.Many2many('fts.nr.flow', 'data_model_nr_flow_rel', string=_('Applications'))
+    nr_flow_ids = fields.Many2many('fts.nr.flow', 'data_model_nr_flow_rel', string=_('Flows'))
     app_ids = fields.One2many("fts.data.app", "model_id", string=_('Applications'))
     app_param_ids = fields.One2many("fts.nr.flow.param", "model_id", string=_('Application Parameters'))
     log_ids = fields.One2many('fts.data.log', 'model_id', string='Logs')
@@ -79,6 +79,8 @@ class DataModel(models.Model):
 
     data_asset = fields.Char(string=_('Data Asset'), compute='_compute_data_asset', store=True)
     topic = fields.Char(string=_('Topic'), compute='_compute_topic', store=True)
+    iotdb_topic = fields.Char(string=_('IoTDB Topic'), compute='_compute_topic', store=True)
+    is_demo = fields.Boolean(string=_('Demo'), default=False)
 
     _sql_constraints = [
         ('name_provider_unique', 'unique(name, provider_id)', _('The combination of Code and Provider must be unique.')),
@@ -94,6 +96,7 @@ class DataModel(models.Model):
         for record in self:
             provider_name = record.provider_id.name or ''
             record.topic = f'/upload/{provider_name}/{record.name}' if record.name else False
+            record.iotdb_topic = f'root.{provider_name}.{record.name}' if record.name else False
 
     def _format_json_text(self, value):
         if value is None:
@@ -272,6 +275,85 @@ class DataModel(models.Model):
             },
         }
 
+    def action_start_demo(self):
+        """
+            Demo mode: do not copy flows. Instead, directly trigger the
+            selected template flows on their associated runtime instance via
+            Node-RED's /inject/:id endpoint.
+
+            Node-RED admin API for manual node trigger:
+                POST /inject/:id  (needsPermission("inject.write"))
+                -> calls node.receive() and returns 200
+        """
+        self.ensure_one()
+        if not self.nr_instance_id:
+            raise ValidationError(_("Please select a runtime instance before starting."))
+        flows = self.nr_flow_ids
+        if not flows:
+            raise ValidationError(_("Please select at least one flow template in Applications."))
+
+        triggered = []
+        failed = []
+        for flow in flows:
+            if not flow.nr_id:
+                failed.append(f"{flow.name} (no Flow ID)")
+                continue
+            node_ids = self._get_inject_node_ids(flow)
+            if not node_ids:
+                failed.append(f"{flow.name} (no inject node found)")
+                continue
+            for node_id in node_ids:
+                ok = self.nr_instance_id._nr_post_json(
+                    f"/inject/{node_id}", {}, timeout=10
+                )
+                if ok is not False:
+                    triggered.append(flow.name)
+                else:
+                    failed.append(f"{flow.name}/node:{node_id}")
+
+        msg = _("Triggered: %(ok)s.", ok=", ".join(triggered) if triggered else "none")
+        if failed:
+            msg += " " + _("Failed: %(fail)s.", fail=", ".join(failed))
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": _("Start Complete"),
+                "message": msg,
+                "type": "warning" if failed else "success",
+                "sticky": False,
+            },
+        }
+
+    def _get_inject_node_ids(self, flow):
+        """
+            Parse flow content JSON and return all node ids that have
+            type == 'inject'. Sub-flows (tabs) are excluded.
+        """
+        if not flow.content:
+            _logger.warning("Flow %s (%s) has empty content", flow.name, flow.id)
+            return []
+        try:
+            data = json.loads(flow.content)
+        except Exception as e:
+            _logger.warning("Flow %s content is not valid JSON: %s", flow.name, e)
+            return []
+        nodes = data
+        if isinstance(data, dict):
+            nodes = data.get("nodes", data.get("flows", data.get("array", [])))
+        if not isinstance(nodes, list):
+            _logger.warning("Flow %s parsed to non-list type %s, content starts: %.200s",
+                            flow.name, type(nodes).__name__, flow.content[:200])
+            return []
+        flow_nr_id = flow.nr_id
+        result = [n["id"] for n in nodes if isinstance(n, dict) and n.get("type") == "inject" and n.get("z") in (None, flow_nr_id)]
+        if not result:
+            types = set((n.get("type") for n in nodes if isinstance(n, dict)))
+            _logger.warning("No inject nodes found in flow %s. Available types: %s", flow.name, types)
+        return result
+
+        
+
     def action_start(self):
         self.ensure_one()
         if not self.nr_instance_id:
@@ -350,6 +432,8 @@ class DataModel(models.Model):
             self.query_end_time = fields.Datetime.now()
         if not self.query_interval or self.query_interval <= 0:
             raise ValidationError(_("Please enter a valid interval in seconds."))
+        if not self.iotdb_topic:
+            raise ValidationError(_("Please configure the IoTDB Topic field before querying."))
 
         start_dt = fields.Datetime.to_datetime(self.query_start_time)
         end_dt = fields.Datetime.to_datetime(self.query_end_time)
@@ -357,8 +441,8 @@ class DataModel(models.Model):
         end_ts = int(end_dt.timestamp() * 1000)
 
         where_clause = f"time >= {start_ts} AND time <= {end_ts}"
-        result_sql = f"SELECT ** FROM root.** WHERE {where_clause} LIMIT 10000"
-        count_sql = f"SELECT COUNT(*) FROM root.** WHERE {where_clause}"
+        result_sql = f"SELECT * FROM {self.iotdb_topic} WHERE {where_clause} LIMIT 10000"
+        count_sql = f"SELECT COUNT(*) FROM {self.iotdb_topic} WHERE {where_clause}"
         return start_ts, end_ts, count_sql, result_sql
 
     def _get_iotdb_connection_params(self):
@@ -422,7 +506,7 @@ class DataModel(models.Model):
         self.ensure_one()
         import redis
         host, port, username, password, db = self._get_redis_connection_params()
-        key_name = "check_db"
+        key_name = "upload/factory01/device01"
         if password:
             client = redis.Redis(host=host, port=port, username=username, password=password, db=db, decode_responses=True)
         else:
