@@ -8,20 +8,20 @@ class FtsMqttUser(models.Model):
     name = fields.Char(string="Name", required=True)
     password = fields.Char(string="Password", required=True)
     broker_id = fields.Many2one("crose.component", string="MQTT Broker", required=True, domain=[('component_type', '=', 'mqtt')])
-    partner_id = fields.Many2one("res.partner", string=_("Contact"))
+    partner_id = fields.Many2one("res.partner", string="Contact")
 
     status = fields.Selection(
         [
             ("active", "Active"),
             ("pause", "Paused")
         ],
-        string=_("Status"),
+        string="Status",
         default="active",
     )
 
     _name_partner_unique = models.Constraint(
         'unique(name, partner_id)',
-        _('The combination of username and contact must be unique!')
+        message="The combination of username and contact must be unique!"
     )
 
     @api.model_create_multi

@@ -11,13 +11,13 @@ class FtsAiModel(models.Model):
     _name = "fts.ai.model"
     _description = "AI Model"
 
-    name = fields.Char(string=_("Name"), required=True)
-    model_file = fields.Binary(_('Model Archive (.zip)'), required=True, help=_('Upload a zip archive created from the folder downloaded from HuggingFace.'))
-    is_active = fields.Boolean(_('Active'), default=False)
-    local_path = fields.Char(_('Local Extract Path'), compute='_compute_local_path')
+    name = fields.Char(string="Name", required=True)
+    model_file = fields.Binary('Model Archive (.zip)', required=True, help='Upload a zip archive created from the folder downloaded from HuggingFace.')
+    is_active = fields.Boolean('Active', default=False)
+    local_path = fields.Char('Local Extract Path', compute='_compute_local_path')
 
     @api.depends('is_active')
-    def _compute_local_path(self):
+    def _compute_local_path(self):  
         for record in self:
             if record.id:
                 record.local_path = os.path.join(self.env['ir.attachment']._storage(), 'ai_models', str(record.id))
@@ -62,11 +62,11 @@ class FtsAiDataset(models.Model):
     _name = "fts.ai.dataset"
     _description = "Dataset"
 
-    name = fields.Char(string=_("Name"), required=True)
+    name = fields.Char(string="Name", required=True)
 
 
 class FtsAiTraining(models.Model):
     _name = "fts.ai.training"
     _description = "Model Training"
 
-    name = fields.Char(string=_("Name"), required=True)
+    name = fields.Char(string="Name", required=True)

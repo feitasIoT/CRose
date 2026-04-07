@@ -7,7 +7,7 @@ class FtsMqttTopic(models.Model):
     name = fields.Char(string="Name", required=True)
     broker_id = fields.Many2one("crose.component", string="MQTT Broker", required=True, domain=[('component_type', '=', 'mqtt')])
     partner_ids = fields.Many2many("res.partner", string="Partners")
-    create_date = fields.Datetime(_("Created On"))
+    create_date = fields.Datetime("Created On")
 
     @api.depends('name', 'broker_id.name')
     def _compute_display_name(self):

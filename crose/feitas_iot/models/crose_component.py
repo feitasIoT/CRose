@@ -8,7 +8,7 @@ class CroseComponent(models.Model):
     _name = "crose.component"
     _description = "System Component"
 
-    name = fields.Char(string=_("Component Name"), required=True)
+    name = fields.Char(string="Component Name", required=True)
     component_type = fields.Selection([
         ('mqtt', 'MQTT Service'),
         ('iotdb', 'IoTDB'),
@@ -17,18 +17,18 @@ class CroseComponent(models.Model):
         ('npm', 'NPM Registry'),
         ('redis', 'Redis'),
         ('nodered', 'Node-RED')
-    ], string=_("Component Type"), required=True)
+    ], string="Component Type", required=True)
     status = fields.Selection([
         ('online', 'Online'),
         ('offline', 'Offline'),
         ('error', 'Error')
-    ], string=_("Status"), default='offline', readonly=True)
-    host = fields.Char(string=_("Host"))
-    port = fields.Integer(string=_("Port"))
-    url = fields.Char(string=_("URL"))
-    metadata = fields.Text(string=_("Metadata"))
-    last_check_time = fields.Datetime(string=_("Last Check Time"), readonly=True)
-    error_reason = fields.Text(string=_("Error Reason"), readonly=True)
+    ], string="Status", default='offline', readonly=True)
+    host = fields.Char(string="Host")
+    port = fields.Integer(string="Port")
+    url = fields.Char(string="URL")
+    metadata = fields.Text(string="Metadata")
+    last_check_time = fields.Datetime(string="Last Check Time", readonly=True)
+    error_reason = fields.Text(string="Error Reason", readonly=True)
 
     @api.onchange('component_type')
     def _onchange_component_type(self):

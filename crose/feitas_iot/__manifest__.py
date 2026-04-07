@@ -4,7 +4,7 @@
     "summary": "CRose IoT platform for building connected applications",
     "description": """
     CRose makes IoT development simpler and smarter.
-    ===============================================
+    =====================================================
     Simpler
     -------
     - Build IoT applications with a visual flow editor

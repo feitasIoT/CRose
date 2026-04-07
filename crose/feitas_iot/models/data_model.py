@@ -22,9 +22,9 @@ class DataModel(models.Model):
     _description = 'Data Model'
     _inherit = ['mail.thread', 'mail.activity.mixin', 'spreadsheet.mixin']
 
-    name = fields.Char(string=_('Code'), required=True, copy=False)
-    partner_id = fields.Many2one('res.partner', string=_('Requester'), required=True)
-    provider_id = fields.Many2one('res.partner', string=_('Provider'), required=True)
+    name = fields.Char(string='Code', required=True, copy=False)
+    partner_id = fields.Many2one('res.partner', string='Requester', required=True)
+    provider_id = fields.Many2one('res.partner', string='Provider', required=True)
     protocol = fields.Selection([
         ('mobus-tcp', 'Modbus-TCP'),
         ('mobus-rtu', 'Modbus-RTU'),
@@ -32,28 +32,28 @@ class DataModel(models.Model):
         ('http', 'HTTP'),
         ('coap', 'CoAP'),
         ('smb', 'SMB2'),
-    ], string=_('Protocol'), required=True)
-    host = fields.Char(string=_('Host'))
-    tcp_port = fields.Integer(string=_('Port'))
-    serial_port = fields.Char(string=_('Serial Port'), default="/dev/ttyUSB0")
+    ], string='Protocol', required=True)
+    host = fields.Char(string='Host')
+    tcp_port = fields.Integer(string='Port')
+    serial_port = fields.Char(string='Serial Port', default="/dev/ttyUSB0")
     tcp_type = fields.Selection([
         ('default', 'Default'),
         ('rtu-buffered', 'RTU Buffered'),
-    ], string=_('TCP Type'))
-    slave_id = fields.Integer(string=_('Slave ID'))
-    smb_share = fields.Char(string=_('Shared Directory'), help=_('SMB shared directory path, for example: /share'))
-    username = fields.Char(string=_('Username'))
-    password = fields.Char(string=_('Password'))
+    ], string='TCP Type')
+    slave_id = fields.Integer(string='Slave ID')
+    smb_share = fields.Char(string='Shared Directory', help='SMB shared directory path, for example: /share')
+    username = fields.Char(string='Username')
+    password = fields.Char(string='Password')
 
     query_type = fields.Selection([
         ('data', 'Time-Series Data'),
         ('log', 'Logs'),
-    ], string=_('Query Type'), default='data', required=True)
-    query_start_time = fields.Datetime(string=_('Start Time'))
-    query_end_time = fields.Datetime(string=_('End Time'))
-    query_interval = fields.Integer(string=_('Interval (Seconds)'), default=60)
+    ], string='Query Type', default='data', required=True)
+    query_start_time = fields.Datetime(string='Start Time')
+    query_end_time = fields.Datetime(string='End Time')
+    query_interval = fields.Integer(string='Interval (Seconds)', default=60)
 
-    redis_key = fields.Char(string=_('Redis Key'), help=_('Fixed Redis key to query, e.g. check_db'))
+    redis_key = fields.Char(string='Redis Key', help='Fixed Redis key to query, e.g. check_db')
 
     @api.onchange('query_start_time')
     def _onchange_query_start_time(self):
@@ -62,30 +62,38 @@ class DataModel(models.Model):
         if self.query_start_time and not self.query_interval:
             self.query_interval = 60
 
-    description = fields.Text(string=_('Description'))
-    mqtt_topic_id = fields.Many2one('fts.mqtt.topic', string=_('MQTT Topic'))
-    nr_instance_id = fields.Many2one('fts.nr.instance', string=_('Runtime Instance'), help=_('Local instance responsible for data processing'))
-    nr_flow_ids = fields.Many2many('fts.nr.flow', 'data_model_nr_flow_rel', string=_('Flows'))
-    app_ids = fields.One2many("fts.data.app", "model_id", string=_('Applications'))
-    app_param_ids = fields.One2many("fts.nr.flow.param", "model_id", string=_('Application Parameters'))
+    description = fields.Text(string='Description')
+    mqtt_topic_id = fields.Many2one('fts.mqtt.topic', string='MQTT Topic')
+    nr_instance_id = fields.Many2one('fts.nr.instance', string='Runtime Instance', help='Local instance responsible for data processing')
+    nr_flow_ids = fields.Many2many('fts.nr.flow', 'data_model_nr_flow_rel', string='Flows')
+    app_ids = fields.One2many("fts.data.app", "model_id", string='Applications')
+    app_param_ids = fields.One2many("fts.nr.flow.param", "model_id", string='Application Parameters')
     log_ids = fields.One2many('fts.data.log', 'model_id', string='Logs')
     address_ids = fields.One2many('fts.data.address', 'model_id', string='Addresses')
-    data_structure = fields.Text(string=_('Data Structure'), required=True)
+    data_structure = fields.Text(string='Data Structure', required=True)
     state = fields.Selection([
         ('draft', 'Draft'),
         ('approval', 'Approval'),
         ('effective', 'Effective'),
         ('invalid', 'Invalid'),
-    ], string=_('Status'), default='draft', required=True)
+    ], string='Status', default='draft', required=True)
 
-    data_asset = fields.Char(string=_('Data Asset'), compute='_compute_data_asset', store=True)
-    topic = fields.Char(string=_('Topic'), compute='_compute_topic', store=True)
-    iotdb_topic = fields.Char(string=_('IoTDB Topic'), compute='_compute_topic', store=True)
-    is_demo = fields.Boolean(string=_('Demo'), default=False)
+    data_asset = fields.Char(string='Data Asset', compute='_compute_data_asset', store=True)
+    topic = fields.Char(string='Topic', compute='_compute_topic', store=True)
+    iotdb_topic = fields.Char(string='IoTDB Topic', compute='_compute_topic', store=True)
+    is_demo = fields.Boolean(string='Demo', default=False)
 
-    _sql_constraints = [
-        ('name_provider_unique', 'unique(name, provider_id)', _('The combination of Code and Provider must be unique.')),
-    ]
+
+    @api.constrains('name', 'provider_id')
+    def _check_name_provider_unique(self):
+        for record in self:
+            existing = self.search_count([
+                ('name', '=', record.name),
+                ('provider_id', '=', record.provider_id.id),
+                ('id', '!=', record.id),
+            ])
+            if existing:
+                raise ValidationError(_('The combination of Code and Provider must be unique.'))
 
     @api.depends('provider_id.name', 'name')
     def _compute_data_asset(self):
@@ -706,7 +714,7 @@ class DataApp(models.Model):
     _name = "fts.data.app"
     _description = "Data App"
 
-    name = fields.Char(string=_("Name"), required=True)
-    value = fields.Text(string=_("Value"), required=True)
-    model_id = fields.Many2one("fts.data.model", string=_("Data Model"), required=True, ondelete="cascade")
-    flow_id = fields.Many2one("fts.nr.flow", string=_("Flow"), ondelete="set null")
+    name = fields.Char(string="Name", required=True)
+    value = fields.Text(string="Value", required=True)
+    model_id = fields.Many2one("fts.data.model", string="Data Model", required=True, ondelete="cascade")
+    flow_id = fields.Many2one("fts.nr.flow", string="Flow", ondelete="set null")

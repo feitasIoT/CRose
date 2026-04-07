@@ -19,43 +19,43 @@ class FtsEdgeAgent(models.Model):
     _description = "Edge Agent"
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
-    name = fields.Char(string=_("Name"), required=True)
-    version = fields.Char(string=_("Version"))
-    is_template = fields.Boolean(string=_("Is Template"))
-    template_id = fields.Many2one("fts.edge.agent", string=_("Template"), domain="[('is_template', '=', True)]")
+    name = fields.Char(string="Name", required=True)
+    version = fields.Char(string="Version")
+    is_template = fields.Boolean(string="Is Template")
+    template_id = fields.Many2one("fts.edge.agent", string="Template", domain="[('is_template', '=', True)]")
 
-    ip_address = fields.Char(string=_("IP Address"))
-    port = fields.Integer(string=_("Port"), default=6080)
-    agent_port = fields.Integer(string=_("Agent Port"), default=18080)
-    os_version = fields.Selection([('rasp', 'Raspberry'), ('ubuntu', 'Ubuntu')], string=_("OS Distribution"))
-    npm_registry_id = fields.Many2one("crose.component", string=_("NPM Registry"), domain=[('component_type', '=', 'npm')])
+    ip_address = fields.Char(string="IP Address")
+    port = fields.Integer(string="Port", default=6080)
+    agent_port = fields.Integer(string="Agent Port", default=18080)
+    os_version = fields.Selection([('rasp', 'Raspberry'), ('ubuntu', 'Ubuntu')], string="OS Distribution")
+    npm_registry_id = fields.Many2one("crose.component", string="NPM Registry", domain=[('component_type', '=', 'npm')])
     # MQTT Config
     mqtt_broker_id = fields.Many2one("crose.component", string="MQTT Broker", domain=[('component_type', '=', 'mqtt')])
-    username = fields.Char(string=_("Username"))
-    password = fields.Char(string=_("Password"))
+    username = fields.Char(string="Username")
+    password = fields.Char(string="Password")
 
     # Instance Config
     instance_id = fields.Many2one(
         "fts.nr.instance", 
-        string=_("Related Instance"), 
+        string="Related Instance", 
         domain=[('instance_type', '=', 'local')],
-        help=_("Only local instances can be selected.")
+        help="Only local instances can be selected."
     )
-    nr_node = fields.Text(string=_("NR Node"))
+    nr_node = fields.Text(string="NR Node")
 
-    config = fields.Text(_("Configuration File"))
-    agent_cmd = fields.Text(_("Command"))
+    config = fields.Text("Configuration File")
+    agent_cmd = fields.Text("Command")
     status = fields.Selection(
         [
             ("online", "Online"),
             ("offline", "Offline"),
             ("error", "Error"),
         ],
-        string=_("Status"),
+        string="Status",
         default="offline",
         required=True,
     )
-    flow_ids = fields.One2many("agent.flow.line", "agent_id", string=_("Flows"))
+    flow_ids = fields.One2many("agent.flow.line", "agent_id", string="Flows")
 
 #-------------onchange--------------
 

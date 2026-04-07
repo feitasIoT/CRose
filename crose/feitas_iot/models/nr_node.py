@@ -7,15 +7,15 @@ class FtsNrNode(models.Model):
     _name = "fts.nr.node"
     _description = "Node-RED Node"
 
-    name = fields.Char(string=_("Name"), required=True)
+    name = fields.Char(string="Name", required=True)
     nr_id = fields.Char(string="Node ID", required=True)
-    node_type = fields.Char(string=_("Type"))
-    content = fields.Text(string=_("Content"))
+    node_type = fields.Char(string="Type")
+    content = fields.Text(string="Content")
 
-    flow_id = fields.Many2one("fts.nr.flow", string=_("Flow"), required=True, ondelete="cascade")
+    flow_id = fields.Many2one("fts.nr.flow", string="Flow", required=True, ondelete="cascade")
     instance_id = fields.Many2one(
         "fts.nr.instance",
-        string=_("Instance"),
+        string="Instance",
         related="flow_id.instance_id",
         store=True,
         readonly=True,
@@ -25,9 +25,9 @@ class FtsNrNode(models.Model):
         "fts_nr_node_config_rel",
         "node_id",
         "config_node_id",
-        string=_("Config Nodes"),
+        string="Config Nodes",
     )
-    item_ids = fields.One2many("fts.node.item", "node_id", string=_("Configuration Items"))
+    item_ids = fields.One2many("fts.node.item", "node_id", string="Configuration Items")
 
     def action_sync_to_knowledge(self):
         """Synchronize selected nodes to the knowledge base and vectorize them."""

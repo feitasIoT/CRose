@@ -13,22 +13,22 @@ class FtsNrInstance(models.Model):
     _description = "IoT Instance"
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
-    name = fields.Char(string=_("Name"), required=True)
-    ip_address = fields.Char(string=_("IP Address"), required=True)
-    port = fields.Integer(string=_("Port"), required=True, default=1880)
-    editor_port = fields.Integer(string=_("Editor Port"))
+    name = fields.Char(string="Name", required=True)
+    ip_address = fields.Char(string="IP Address", required=True)
+    port = fields.Integer(string="Port", required=True, default=1880)
+    editor_port = fields.Integer(string="Editor Port")
     instance_type = fields.Selection(
         [
             ("local", "Local Instance"),
             ("remote", "Remote Instance"),
         ],
-        string=_("Instance Type"),
+        string="Instance Type",
         required=True,
         default="local",
     )
     edge_agent_id = fields.Many2one(
         "fts.edge.agent",
-        string=_("Edge Agent"),
+        string="Edge Agent",
         ondelete="restrict",
         required=False,
     )
@@ -38,12 +38,12 @@ class FtsNrInstance(models.Model):
             ("offline", "Offline"),
             ("error", "Error"),
         ],
-        string=_("Status"),
+        string="Status",
         required=True,
         default="offline",
     )
-    flow_ids = fields.One2many("instance.flow.line", "instance_id", string=_("Flows"))
-    npm_registry_id = fields.Many2one("crose.component", string=_("NPM Registry"), domain=[('component_type', '=', 'npm')])
+    flow_ids = fields.One2many("instance.flow.line", "instance_id", string="Flows")
+    npm_registry_id = fields.Many2one("crose.component", string="NPM Registry", domain=[('component_type', '=', 'npm')])
 
     def update_status(self):
         for instance in self:

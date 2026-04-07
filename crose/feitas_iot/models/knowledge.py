@@ -7,9 +7,9 @@ class FtsKnowledge(models.Model):
     _name = 'fts.knowledge'
     _description = 'Knowledge Base for Node-RED'
 
-    name = fields.Char(string=_('Name'), required=True)
-    description = fields.Text(string=_('Details'))
-    json_source = fields.Text(string=_('JSON Source'))
+    name = fields.Char(string='Name', required=True)
+    description = fields.Text(string='Details')
+    json_source = fields.Text(string='JSON Source')
     
     def action_vectorize(self):
         """Call the AI model to generate and store vectors."""

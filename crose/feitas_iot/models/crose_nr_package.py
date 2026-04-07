@@ -9,13 +9,13 @@ class CroseNrPackage(models.Model):
     _name = "crose.nr.package"
     _description = "Node-RED Package"
 
-    name = fields.Char(string=_("Package Name"), required=True)
-    version = fields.Char(string=_("Version"), required=True)
+    name = fields.Char(string="Package Name", required=True)
+    version = fields.Char(string="Version", required=True)
     environment = fields.Selection([
         ('staging', 'Staging'),
         ('prod', 'Production')
-    ], string=_("Environment"), default='staging', required=True)
-    component_id = fields.Many2one('crose.component', string=_('Component'), required=True, ondelete='cascade')
+    ], string="Environment", default='staging', required=True)
+    component_id = fields.Many2one('crose.component', string='Component', required=True, ondelete='cascade')
 
     @api.constrains('name', 'version', 'component_id')
     def _check_name_version_unique(self):

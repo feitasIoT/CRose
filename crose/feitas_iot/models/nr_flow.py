@@ -8,20 +8,20 @@ class FtsNrFlow(models.Model):
     _description = "Node-RED Flow"
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
-    name = fields.Char(string=_("Name"), required=True)
+    name = fields.Char(string="Name", required=True)
     nr_id = fields.Char(string="Flow ID", required=True)
-    type = fields.Char(string=_("Type"))
-    is_template = fields.Boolean(_("Is Template"))
-    content = fields.Text(_("Content"))
+    type = fields.Char(string="Type")
+    is_template = fields.Boolean("Is Template")
+    content = fields.Text("Content")
 
-    instance_id = fields.Many2one("fts.nr.instance", string=_("Instance"), ondelete="cascade")
+    instance_id = fields.Many2one("fts.nr.instance", string="Instance", ondelete="cascade")
     data_model_id = fields.Many2one('fts.data.model', string="Data Model")
 
-    tag_ids = fields.Many2many("fts.nr.tag", string=_("Tags"))
-    param_ids = fields.One2many("fts.nr.flow.param", "flow_id", string=_("Parameters"))
-    heat = fields.Integer(_("Heat"))
-    description = fields.Html(_("Description"))
-    prompt = fields.Text(_("Prompt"))
+    tag_ids = fields.Many2many("fts.nr.tag", string="Tags")
+    param_ids = fields.One2many("fts.nr.flow.param", "flow_id", string="Parameters")
+    heat = fields.Integer("Heat")
+    description = fields.Html("Description")
+    prompt = fields.Text("Prompt")
 
     def action_sync_to_knowledge(self):
         """Synchronize selected flows to the knowledge base and vectorize them."""
