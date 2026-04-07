@@ -4,6 +4,8 @@
 
 CRose 是一个专为制造业与现代农业打造的集成化数据底座。它封装了从底层的协议采集（Modbus/MQTT）到上层的统计分析、UI展示的全链路能力。
 
+![CRose Overview](./crose.gif)
+
 ## 🌟 为什么选择 CRose？简单但强大！
 
 1. 平台使用docker-compose一键部署。

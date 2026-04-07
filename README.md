@@ -6,6 +6,8 @@
 
 CRose is an integrated data platform designed for manufacturing and modern agriculture. It encapsulates the full stack capabilities from underlying protocol collection (Modbus/MQTT) to upper-level statistical analysis and UI visualization.
 
+![CRose Overview](./crose.gif)
+
 ## 🌟 Why Choose CRose? Simple yet Powerful!
 
 1. One-click deployment with docker-compose.
