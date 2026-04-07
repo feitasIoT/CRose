@@ -31,9 +31,9 @@
                             </t>
                         </div>
                         <div class="btn-group" role="group" aria-label="Time Range">
-                            <button type="button" t-att-class="'btn btn-sm ' + (state.timeRange === 'today' ? 'btn-primary' : 'btn-outline-primary')" t-on-click="() => this.changeTimeRange('today')">今天</button>
-                            <button type="button" t-att-class="'btn btn-sm ' + (state.timeRange === 'week' ? 'btn-primary' : 'btn-outline-primary')" t-on-click="() => this.changeTimeRange('week')">本周</button>
-                            <button type="button" t-att-class="'btn btn-sm ' + (state.timeRange === 'month' ? 'btn-primary' : 'btn-outline-primary')" t-on-click="() => this.changeTimeRange('month')">本月</button>
+                            <button type="button" t-att-class="'btn btn-sm ' + (state.timeRange === 'today' ? 'btn-primary' : 'btn-outline-primary')" t-on-click="() => this.changeTimeRange('today')">Today</button>
+                            <button type="button" t-att-class="'btn btn-sm ' + (state.timeRange === 'week' ? 'btn-primary' : 'btn-outline-primary')" t-on-click="() => this.changeTimeRange('week')">Week</button>
+                            <button type="button" t-att-class="'btn btn-sm ' + (state.timeRange === 'month' ? 'btn-primary' : 'btn-outline-primary')" t-on-click="() => this.changeTimeRange('month')">Month</button>
                         </div>
                     </div>
                 </div>

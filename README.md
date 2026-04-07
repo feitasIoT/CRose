@@ -10,9 +10,30 @@ CRose is an integrated data platform designed for manufacturing and modern agric
 
 ## 🌟 Why Choose CRose? Simple yet Powerful!
 
-1. One-click deployment with docker-compose.
-2. AI intelligently generates Node-RED flows.
-3. Easily manage thousands of edge nodes from a single platform.
+🚀 Out-of-the-box full‑stack platform
+- A single docker-compose up launches the complete stack: Odoo, Node‑RED, IoTDB, Redis, GMqtt, etc.
+- No manual selection, integration, or tuning. Industrial‑grade IoT data collection and management from day one.
+
+📦 Scenario‑based flow template library
+- Built‑in templates for 20+ common acquisition scenarios: Modbus RTU/TCP, OPC UA, MQTT, S7, …
+- Covers typical equipment such as machine tools, injection molding machines, heat treatment furnaces, environmental sensors—no need to handcraft Node‑RED flows from scratch.
+
+🧠 Natural language → auto‑generated acquisition flows
+- Describe your need in everyday language (e.g., “read PLC D100 every 10s and alert if > 80”).
+- The system matches templates, fills parameters, and produces executable Node‑RED flows—lowering the low‑code barrier dramatically.
+
+📊 End‑to‑end observability of data acquisition
+- Collection health board: see whether each datapoint is being collected and validation results.
+- Throughput and storage statistics: total records, messages/sec, time‑series storage footprint.
+- Resource monitoring: CPU/Memory/Network trends on edge nodes and servers to flag bottlenecks early.
+
+🌐 Large‑scale edge fleet management
+- Batch deployment, flow updates, version rollback, configuration drift detection.
+- Designed for hundreds of Raspberry Pis/industrial PCs with fully remote ops.
+
+✅ Native data quality governance
+- Schema checks at ingestion (units, ranges, non‑null, etc.), flagging anomalies.
+- Data quality reports (missing rate, latency distribution, duplication rate) to underpin trustworthy AI analytics.
 
 ## 🚀 Quick Start
 
