@@ -12,12 +12,14 @@ class OverviewDashboard extends Component {
             loading: true,
             error: null,
             components: [],
+            timeRange: "today",
             overview: {
                 stats: { agents: 0, instances: 0, topics: 0 },
                 metrics: { cpu: "-", memory: "-", disk: "-", network: "-" },
                 dashboard: {
                     connectivity: { topology: [], protocol: {} },
                     throughput: {},
+                    metrics_trend: { time_range: "today", points: [] },
                     value_delivery: { kpis: [], trend_points: [] },
                     asset_insight: {},
                 },
@@ -32,7 +34,9 @@ class OverviewDashboard extends Component {
     async fetchData() {
         this.state.loading = true;
         try {
-            const componentData = await rpc("/feitas_iot/get_component_status");
+            const componentData = await rpc("/feitas_iot/get_component_status", {
+                time_range: this.state.timeRange,
+            });
             this.state.components = componentData.components || [];
             if (componentData.overview) {
                 this.state.overview = componentData.overview;
@@ -43,6 +47,14 @@ class OverviewDashboard extends Component {
         } finally {
             this.state.loading = false;
         }
+    }
+
+    async changeTimeRange(range) {
+        if (this.state.timeRange === range) {
+            return;
+        }
+        this.state.timeRange = range;
+        await this.fetchData();
     }
 
     getComponentStats(type) {
@@ -78,6 +90,33 @@ class OverviewDashboard extends Component {
             return 0;
         }
         return Math.round((online * 100) / total);
+    }
+
+    getMetricTrendPath(metricName) {
+        const points = (this.state.overview?.dashboard?.metrics_trend?.points) || [];
+        if (!points.length) {
+            return "";
+        }
+        const values = points
+            .map(p => Number(p?.[metricName]))
+            .filter(v => Number.isFinite(v));
+        if (!values.length) {
+            return "";
+        }
+        const width = 260;
+        const height = 70;
+        const min = Math.min(...values);
+        const max = Math.max(...values);
+        const range = max - min || 1;
+        const normalized = points.map(p => {
+            const v = Number(p?.[metricName]);
+            return Number.isFinite(v) ? v : min;
+        });
+        return normalized.map((v, i) => {
+            const x = normalized.length === 1 ? 0 : (i * width) / (normalized.length - 1);
+            const y = height - ((v - min) / range) * height;
+            return `${x},${y}`;
+        }).join(" ");
     }
 }
 
