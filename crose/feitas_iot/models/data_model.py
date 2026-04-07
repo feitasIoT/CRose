@@ -4,6 +4,7 @@ import json
 import math
 import logging
 import uuid
+from datetime import datetime
 
 
 from odoo import models, fields, api, _
@@ -95,7 +96,7 @@ class DataModel(models.Model):
     def _compute_topic(self):
         for record in self:
             provider_name = record.provider_id.name or ''
-            record.topic = f'/upload/{provider_name}/{record.name}' if record.name else False
+            record.topic = f'upload/{provider_name}/{record.name}' if record.name else False
             record.iotdb_topic = f'root.{provider_name}.{record.name}' if record.name else False
 
     def _format_json_text(self, value):
@@ -261,6 +262,7 @@ class DataModel(models.Model):
             if self.query_type == 'data':
                 _, _, _, result_sql = self._build_iotdb_sql()
                 result_df = self._execute_iotdb_query(result_sql)
+                result_df = self._prepare_iotdb_dataframe(result_df)
             else:
                 redis_value = self._execute_redis_query()
                 result_df = self._build_redis_dataframe(redis_value)
@@ -479,6 +481,73 @@ class DataModel(models.Model):
             except Exception:
                 pass
 
+    def _prepare_iotdb_dataframe(self, dataframe):
+        if dataframe is None or getattr(dataframe, "empty", False):
+            return dataframe
+
+        rename_dict = {}
+        with contextlib.suppress(Exception):
+            parsed = json.loads(self.data_structure or "{}")
+            if isinstance(parsed, dict):
+                rename_dict = {str(k): str(v) for k, v in parsed.items()}
+
+        def _friendly_name(column_name):
+            col = str(column_name)
+            if col in rename_dict:
+                return rename_dict[col]
+            last = col.split(".")[-1]
+            if last in rename_dict:
+                return rename_dict[last]
+            if col.lower() == "time":
+                for key in ("Time", "time", "TIME"):
+                    if key in rename_dict:
+                        return rename_dict[key]
+            return col
+
+        def _format_time_value(value):
+            if value is None:
+                return ""
+            if isinstance(value, float) and math.isnan(value):
+                return ""
+            ts = None
+            if isinstance(value, (int, float)):
+                ts = float(value)
+            elif isinstance(value, str):
+                text = value.strip()
+                if text.isdigit():
+                    ts = float(text)
+                else:
+                    return value
+            else:
+                return value
+            if ts is None:
+                return value
+            if ts > 1e12:
+                dt = datetime.fromtimestamp(ts / 1000.0)
+                return dt.strftime("%Y-%m-%d %H:%M:%S")
+            if ts > 1e9:
+                dt = datetime.fromtimestamp(ts)
+                return dt.strftime("%Y-%m-%d %H:%M:%S")
+            return value
+
+        columns = list(dataframe.columns)
+        for column in columns:
+            if str(column).lower() == "time":
+                dataframe[column] = dataframe[column].map(_format_time_value)
+
+        friendly_columns = [_friendly_name(col) for col in columns]
+        used = {}
+        deduped = []
+        for name in friendly_columns:
+            if name not in used:
+                used[name] = 1
+                deduped.append(name)
+            else:
+                used[name] += 1
+                deduped.append(f"{name}_{used[name]}")
+        dataframe.columns = deduped
+        return dataframe
+
     def _get_redis_connection_params(self):
         redis_comp = self.env["crose.component"].search(
             [("component_type", "=", "redis"), ("status", "=", "online")], limit=1
@@ -506,7 +575,7 @@ class DataModel(models.Model):
         self.ensure_one()
         import redis
         host, port, username, password, db = self._get_redis_connection_params()
-        key_name = "upload/factory01/device01"
+        key_name = self.topic
         if password:
             client = redis.Redis(host=host, port=port, username=username, password=password, db=db, decode_responses=True)
         else:
@@ -541,15 +610,25 @@ class DataModel(models.Model):
     def _build_redis_dataframe(self, redis_value):
         import pandas as pd
 
+        def _parse_item_to_row(item):
+            if isinstance(item, dict):
+                return item
+            if isinstance(item, str):
+                with contextlib.suppress(Exception):
+                    parsed = json.loads(item)
+                    if isinstance(parsed, dict):
+                        return parsed
+            return {"value": item}
+
         if redis_value is None:
-            return pd.DataFrame([{"key": "check_db", "value": ""}])
+            return pd.DataFrame([{}])
         if isinstance(redis_value, dict):
-            rows = [{"field": k, "value": v} for k, v in redis_value.items()]
-            return pd.DataFrame(rows)
+            return pd.DataFrame([redis_value])
         if isinstance(redis_value, (list, tuple, set)):
-            rows = [{"index": idx, "value": item} for idx, item in enumerate(redis_value)]
+            rows = [_parse_item_to_row(item) for item in redis_value]
             return pd.DataFrame(rows)
-        return pd.DataFrame([{"key": "check_db", "value": redis_value}])
+        row = _parse_item_to_row(redis_value)
+        return pd.DataFrame([row])
 
     def _build_spreadsheet_binary_data(self, dataframe):
         lang = self.env["res.lang"]._lang_get(self.env.user.lang)

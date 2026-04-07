@@ -78,7 +78,7 @@
                                 <group>
                                     <group>
                                         <field name="query_type"/>
-                                        <field name="redis_key" invisible="query_type != 'log'"/>
+                                        
                                         <field name="query_start_time" invisible="query_type != 'data'"/>
                                         <field name="query_end_time" invisible="query_type != 'data'"/>
                                         <field name="query_interval" invisible="query_type != 'data'"/>
