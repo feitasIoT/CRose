@@ -19,4 +19,3 @@ class FtsNodeItem(models.Model):
     value = fields.Text(string="Value")
     note = fields.Text(string="Note")
     node_id = fields.Many2one("fts.nr.node", string="Node", required=True, ondelete="cascade")
-

@@ -161,12 +161,12 @@ class DataModel(models.Model):
             username = "".join(filter(str.isalnum, partner.name or ""))
             if not username:
                 username = f"user_{partner.id}"
-            
+
             existing_local = self.env['fts.mqtt.user'].search([
                 ('name', '=', username),
                 ('partner_id', '=', partner.id)
             ], limit=1)
-            
+
             if existing_local:
                 partner.sudo().write({'mqtt_username': username})
                 return
@@ -225,7 +225,7 @@ class DataModel(models.Model):
                         'flow_id': flow.id,
                     }))
                     existing_names.add(param.name)
-        
+
         if new_params_vals:
             self.update({'app_param_ids': new_params_vals})
 
@@ -362,7 +362,7 @@ class DataModel(models.Model):
             _logger.warning("No inject nodes found in flow %s. Available types: %s", flow.name, types)
         return result
 
-        
+
 
     def action_start(self):
         self.ensure_one()
@@ -670,7 +670,7 @@ class DataModel(models.Model):
             "tables": [],
             "isVisible": True,
         }
-        
+
         data = {
             "version": SPREADSHEET_VERSION,
             "sheets": [sheet],

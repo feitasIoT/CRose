@@ -21,7 +21,7 @@ class FtsMqttTopic(models.Model):
     def action_sync_all(self):
         brokers = self.env["crose.component"].search([('component_type', '=', 'mqtt'), ('status', '=', 'online')])
         for broker in brokers:
-            pass 
+            pass
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',

@@ -73,14 +73,14 @@ class McpToolRegistry(models.AbstractModel):
         agent = self.env['fts.edge.agent'].search([('name', '=', agent_name)], limit=1)
         if not agent:
             return f"Error: Agent '{agent_name}' not found."
-        
+
         # Reuse logic from download.py or similar
         host = (agent.ip_address or "").strip()
         port = int(agent.agent_port or 18080)
-        
+
         if not host:
             return "Error: Agent IP not configured."
-            
+
         url = f"http://{host}:{port}/v1/nodered/logs"
         params = {
             "identifier": "agent",
@@ -90,12 +90,12 @@ class McpToolRegistry(models.AbstractModel):
         headers = {}
         if token:
             headers["Authorization"] = f"Bearer {token}"
-            
+
         try:
             resp = requests.get(url, params=params, headers=headers, timeout=5)
             if resp.status_code != 200:
                 return f"Error fetching logs: {resp.status_code} - {resp.text}"
-            
+
             data = resp.json()
             log_lines = data.get("lines", [])
             return "\n".join(log_lines)

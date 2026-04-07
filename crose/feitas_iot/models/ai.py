@@ -17,7 +17,7 @@ class FtsAiModel(models.Model):
     local_path = fields.Char('Local Extract Path', compute='_compute_local_path')
 
     @api.depends('is_active')
-    def _compute_local_path(self):  
+    def _compute_local_path(self):
         for record in self:
             if record.id:
                 record.local_path = os.path.join(self.env['ir.attachment']._storage(), 'ai_models', str(record.id))
@@ -33,7 +33,7 @@ class FtsAiModel(models.Model):
         """Extract the model archive to persistent storage."""
         self.ensure_one()
         base_path = self.local_path
-        
+
         if not os.path.exists(base_path):
             os.makedirs(base_path)
 
@@ -43,7 +43,7 @@ class FtsAiModel(models.Model):
                 zip_ref.extractall(base_path)
         except Exception as e:
             raise exceptions.UserError(_("Failed to extract the model archive: %(error)s", error=e))
-        
+
         self.env['fts.ai.model'].search([('id', '!=', self.id)]).write({'is_active': False})
         self.write({'is_active': True})
         EmbeddingManager.clear_cache()

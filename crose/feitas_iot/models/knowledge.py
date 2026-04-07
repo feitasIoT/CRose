@@ -10,7 +10,7 @@ class FtsKnowledge(models.Model):
     name = fields.Char(string='Name', required=True)
     description = fields.Text(string='Details')
     json_source = fields.Text(string='JSON Source')
-    
+
     def action_vectorize(self):
         """Call the AI model to generate and store vectors."""
         from .utils import EmbeddingManager
@@ -29,7 +29,7 @@ class FtsKnowledge(models.Model):
         """Ensure the database supports the vector extension and column."""
         query = """
             CREATE EXTENSION IF NOT EXISTS vector;
-            ALTER TABLE fts_knowledge 
+            ALTER TABLE fts_knowledge
             ADD COLUMN IF NOT EXISTS vector_data vector(384);
         """
         self.env.cr.execute(query)
@@ -39,9 +39,9 @@ class FtsKnowledge(models.Model):
     def search_similar_flows(self, query_vector, limit=3):
         """Search for similar flows using the pgvector distance operator."""
         vector_str = str(query_vector)
-        
+
         sql = """
-            SELECT id, name, flow_json, 
+            SELECT id, name, flow_json,
                    vector_data <-> %s AS distance
             FROM fts_knowledge
             ORDER BY distance ASC

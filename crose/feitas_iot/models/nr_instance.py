@@ -50,7 +50,7 @@ class FtsNrInstance(models.Model):
             if not instance.ip_address:
                 instance.status = "offline"
                 continue
-            
+
             url = "http://%s:%d" % (instance.ip_address, instance.port)
             try:
                 response = requests.get(url, timeout=3)
@@ -443,7 +443,7 @@ class FtsNrInstance(models.Model):
         if not flow_id:
             return {}
         return self._nr_get_json(f'/flow/{flow_id}')
-    
+
     def api_sync_flow_global(self):
         """
             Get the global flow configuration.
@@ -719,4 +719,3 @@ class FtsNrInstance(models.Model):
             raise UserError(_("Duplicate node IDs exist in the flow, so it cannot be applied."))
 
         return payload
-        

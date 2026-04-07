@@ -44,7 +44,7 @@ class CroseComponent(models.Model):
             'redis': {'db': 0},
             'nodered': {'admin_path': '/admin'}
         }
-        
+
         port_defaults = {
             'mqtt': 1883,
             'iotdb': 6667,
@@ -64,13 +64,13 @@ class CroseComponent(models.Model):
 
         if self.component_type in defaults:
             self.metadata = json.dumps(defaults[self.component_type], indent=4)
-        
+
         if self.component_type in port_defaults and not self.port:
             self.port = port_defaults[self.component_type]
 
         if self.component_type in host_defaults and not self.host:
             self.host = host_defaults[self.component_type]
-            
+
         if not self.url:
             if self.component_type == 'npm':
                 self.url = f"http://{host_defaults.get('npm')}:{port_defaults.get('npm')}"
@@ -156,7 +156,7 @@ class CroseComponent(models.Model):
             check_func()
         else:
             self.write({
-                'status': 'error', 
+                'status': 'error',
                 'last_check_time': fields.Datetime.now(),
                 'error_reason': _('No status check method found for component type %(type)s', type=self.component_type)
             })
@@ -176,13 +176,13 @@ class CroseComponent(models.Model):
                 self.write({'status': 'online', 'last_check_time': fields.Datetime.now(), 'error_reason': False})
             else:
                 self.write({
-                    'status': 'offline', 
+                    'status': 'offline',
                     'last_check_time': fields.Datetime.now(),
                     'error_reason': _('Unexpected HTTP status code: %(code)s', code=response.status_code)
                 })
         except Exception as e:
             self.write({
-                'status': 'error', 
+                'status': 'error',
                 'last_check_time': fields.Datetime.now(),
                 'error_reason': str(e)
             })
@@ -193,7 +193,7 @@ class CroseComponent(models.Model):
                 self.write({'status': 'online', 'last_check_time': fields.Datetime.now(), 'error_reason': False})
         except Exception as e:
             self.write({
-                'status': 'offline', 
+                'status': 'offline',
                 'last_check_time': fields.Datetime.now(),
                 'error_reason': _('Unable to connect to %(host)s:%(port)s - %(error)s', host=self.host, port=self.port, error=str(e))
             })
@@ -207,13 +207,13 @@ class CroseComponent(models.Model):
                 self.write({'status': 'online', 'last_check_time': fields.Datetime.now(), 'error_reason': False})
             else:
                 self.write({
-                    'status': 'offline', 
+                    'status': 'offline',
                     'last_check_time': fields.Datetime.now(),
                     'error_reason': _('Unexpected AI service response: %(code)s', code=response.status_code)
                 })
         except Exception as e:
             self.write({
-                'status': 'error', 
+                'status': 'error',
                 'last_check_time': fields.Datetime.now(),
                 'error_reason': str(e)
             })
@@ -227,13 +227,13 @@ class CroseComponent(models.Model):
                 self.write({'status': 'online', 'last_check_time': fields.Datetime.now(), 'error_reason': False})
             else:
                 self.write({
-                    'status': 'offline', 
+                    'status': 'offline',
                     'last_check_time': fields.Datetime.now(),
                     'error_reason': _('Unexpected NPM registry response: %(code)s', code=response.status_code)
                 })
         except Exception as e:
             self.write({
-                'status': 'error', 
+                'status': 'error',
                 'last_check_time': fields.Datetime.now(),
                 'error_reason': str(e)
             })
@@ -246,13 +246,13 @@ class CroseComponent(models.Model):
                 self.write({'status': 'online', 'last_check_time': fields.Datetime.now(), 'error_reason': False})
             else:
                 self.write({
-                    'status': 'offline', 
+                    'status': 'offline',
                     'last_check_time': fields.Datetime.now(),
                     'error_reason': _('Redis PING failed')
                 })
         except Exception as e:
             self.write({
-                'status': 'error', 
+                'status': 'error',
                 'last_check_time': fields.Datetime.now(),
                 'error_reason': str(e)
             })
@@ -266,13 +266,13 @@ class CroseComponent(models.Model):
                 self.write({'status': 'online', 'last_check_time': fields.Datetime.now(), 'error_reason': False})
             else:
                 self.write({
-                    'status': 'offline', 
+                    'status': 'offline',
                     'last_check_time': fields.Datetime.now(),
                     'error_reason': _('Unexpected Node-RED response: %(code)s', code=response.status_code)
                 })
         except Exception as e:
             self.write({
-                'status': 'error', 
+                'status': 'error',
                 'last_check_time': fields.Datetime.now(),
                 'error_reason': str(e)
             })

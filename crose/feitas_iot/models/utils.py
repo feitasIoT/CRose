@@ -22,7 +22,7 @@ class EmbeddingManager:
     def encode(cls, env, text):
         """Call the remote AI service to generate embeddings."""
         ai_endpoint = env['ir.config_parameter'].sudo().get_param('crose_iot.ai_endpoint', 'http://crose-ai:8000/embed')
-        
+
         try:
             response = requests.post(ai_endpoint, json={'text': text}, timeout=10)
             response.raise_for_status()
