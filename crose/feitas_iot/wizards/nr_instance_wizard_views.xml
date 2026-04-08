@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_fts_nr_instance_wizard_form" model="ir.ui.view">
+        <field name="name">fts.nr.instance.wizard.form</field>
+        <field name="model">fts.nr.instance.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Manage Instance Flows">
+                <group>
+                    <field name="instance_id" readonly="1" invisible="1"/>
+                    <field name="operation" widget="radio" options="{'horizontal': true}"/>
+                </group>
+                <group invisible="operation != 'add'">
+                    <field name="template_flow_ids" colspan="4" widget="many2many_tags">
+                    </field>
+                </group>
+                <group invisible="operation not in ('disable', 'delete')">
+                    <field name="target_flow_ids" colspan="4" widget="many2many_tags">
+                    </field>
+                </group>
+                <footer>
+                    <button name="action_confirm" string="Confirm" type="object" class="btn-primary"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_fts_nr_instance_wizard" model="ir.actions.act_window">
+        <field name="name">Manage Flows</field>
+        <field name="res_model">fts.nr.instance.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

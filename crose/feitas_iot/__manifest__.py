@@ -25,6 +25,8 @@
 
         "security/ir.model.access.csv",
 
+        "wizards/nr_instance_wizard_views.xml",
+
         "views/instance_views.xml",
         "views/editor_views.xml",
         "views/crose_component_views.xml",
@@ -44,9 +46,7 @@
         "views/data_log_views.xml",
         "views/res_partner_views.xml",
         
-
         "views/menu_actions.xml",
-        
     ],
     'assets': {
         'spreadsheet.o_spreadsheet': [

@@ -42,7 +42,8 @@ class FtsNrInstance(models.Model):
         required=True,
         default="offline",
     )
-    flow_ids = fields.One2many("instance.flow.line", "instance_id", string="Flows")
+    flow_ids = fields.One2many("fts.nr.flow", "instance_id", string="Flows")
+    flow_line_ids = fields.One2many("instance.flow.line", "instance_id", string="Flow Lines")
     npm_registry_id = fields.Many2one("crose.component", string="NPM Registry", domain=[('component_type', '=', 'npm')])
 
     def update_status(self):

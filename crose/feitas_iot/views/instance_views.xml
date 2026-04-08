@@ -72,6 +72,7 @@
                     <header>
                         <button name="action_start" type="object" string="Start" class="btn-primary" invisible="instance_type != 'remote'"/>
                         <button name="action_apply_flows" type="object" string="Apply"/>
+                        <button name="%(feitas_iot.action_fts_nr_instance_wizard)d" type="action" string="Manage Flows" class="btn-secondary"/>
                         <button name="action_open_editor" type="object" string="Editor" />
                         <field name="status" widget="statusbar" options="{'clickable': '1'}"/>
                     </header>
@@ -89,15 +90,7 @@
                                 <field name="npm_registry_id"/>
                             </group>
                         </group>
-                        <notebook>
-                            <page string="Flows">
-                                <field name="flow_ids">
-                                    <list editable="bottom">
-                                        <field name="flow_id" domain="[('is_template', '=', True)]"/>
-                                    </list>
-                                </field>
-                            </page>
-                        </notebook>
+                        
                     </sheet>
                     <chatter/>
                 </form>

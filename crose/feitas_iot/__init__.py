@@ -1,4 +1,5 @@
 from . import models
+from . import wizards
 from . import controllers
 
 # Monkey patch Odoo's DEFAULT_MAX_CONTENT_LENGTH to allow larger AI model uploads

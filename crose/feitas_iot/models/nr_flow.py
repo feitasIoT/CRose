@@ -23,6 +23,11 @@ class FtsNrFlow(models.Model):
     description = fields.Html("Description")
     prompt = fields.Text("Prompt")
 
+    state = fields.Selection([
+        ("active", "Active"),
+        ("disabled", "Disabled")
+    ], string="State", default="active")
+
     def action_sync_to_knowledge(self):
         """Synchronize selected flows to the knowledge base and vectorize them."""
         Knowledge = self.env['fts.knowledge']

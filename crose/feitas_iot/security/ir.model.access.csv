@@ -20,3 +20,4 @@ access_fts_data_log,fts.data.log,model_fts_data_log,base.group_user,1,1,1,1
 access_fts_data_address,fts.data.address,model_fts_data_address,base.group_user,1,1,1,1
 access_fts_knowledge,fts.knowledge,model_fts_knowledge,base.group_user,1,1,1,1
 access_crose_nr_package,crose.nr.package,model_crose_nr_package,base.group_user,1,1,1,1
+access_fts_nr_instance_wizard,fts.nr.instance.wizard,model_fts_nr_instance_wizard,base.group_user,1,1,1,1
