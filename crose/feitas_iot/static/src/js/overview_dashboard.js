@@ -17,7 +17,7 @@ class OverviewDashboard extends Component {
                 stats: { agents: 0, instances: 0, topics: 0 },
                 metrics: { cpu: "-", memory: "-", disk: "-", network: "-" },
                 dashboard: {
-                    connectivity: { topology: [], protocol: {} },
+                    connectivity: { protocol: {} },
                     throughput: {},
                     metrics_trend: { time_range: "today", points: [] },
                     value_delivery: { kpis: [], trend_points: [] },

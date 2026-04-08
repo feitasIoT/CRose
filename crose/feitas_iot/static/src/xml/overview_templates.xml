@@ -42,28 +42,23 @@
                     <div class="col-12 col-xl-4">
                         <div class="border rounded p-3 bg-white h-100">
                             <h5 class="m-0 mb-3">Connectivity &amp; Health</h5>
-                            <div class="d-flex flex-wrap gap-2 mb-3">
-                                <t t-foreach="connectivity.topology || []" t-as="node" t-key="node.label">
-                                    <span t-att-class="'badge ' + (node.ok ? 'text-bg-success' : 'text-bg-danger')" t-esc="node.label"/>
-                                </t>
-                            </div>
                             <div class="row g-2 mb-3">
                                 <div class="col-4">
                                     <div class="border rounded p-2 bg-light text-center">
-                                        <div class="text-muted small">Modbus Points</div>
-                                        <div class="fw-semibold fs-5"><t t-esc="protocol.modbus_points || 0"/></div>
+                                        <div class="text-muted small">Total activities</div>
+                                        <div class="fw-semibold fs-5"><t t-esc="protocol.total_activities || 0"/></div>
                                     </div>
                                 </div>
                                 <div class="col-4">
                                     <div class="border rounded p-2 bg-light text-center">
-                                        <div class="text-muted small">MQTT Topics</div>
-                                        <div class="fw-semibold fs-5"><t t-esc="protocol.mqtt_topics || 0"/></div>
+                                        <div class="text-muted small">Success</div>
+                                        <div class="fw-semibold fs-5"><t t-esc="protocol.success || 0"/></div>
                                     </div>
                                 </div>
                                 <div class="col-4">
                                     <div class="border rounded p-2 bg-light text-center">
-                                        <div class="text-muted small">SMB Links</div>
-                                        <div class="fw-semibold fs-5"><t t-esc="protocol.smb_connections || 0"/></div>
+                                        <div class="text-muted small">Failed</div>
+                                        <div class="fw-semibold fs-5"><t t-esc="protocol.failed || 0"/></div>
                                     </div>
                                 </div>
                             </div>

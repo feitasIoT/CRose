@@ -1,7 +1,7 @@
 from odoo import http
 from odoo.http import request
 import json
-from datetime import timedelta
+from datetime import datetime, timedelta
 from odoo import fields
 import contextlib
 
@@ -52,39 +52,66 @@ class OverviewController(http.Controller):
             "network": network,
         }
 
-    def _load_metrics_series_from_redis(self, env, time_range):
-        start_dt, end_dt = self._range_start_dt(time_range)
-        start_ms = int(start_dt.timestamp() * 1000)
-        end_ms = int(end_dt.timestamp() * 1000)
-        points = []
+    def _coerce_activity_record(self, obj, default_time_ms=None):
+        if isinstance(obj, str):
+            with contextlib.suppress(Exception):
+                obj = json.loads(obj)
+        if not isinstance(obj, dict):
+            return None
+        time_ms = self._normalize_time_ms(obj.get("time")) or default_time_ms
+        if not time_ms:
+            processed_at = obj.get("processedAt")
+            if isinstance(processed_at, str) and processed_at.strip():
+                iso_text = processed_at.strip().replace("Z", "+00:00")
+                with contextlib.suppress(Exception):
+                    time_ms = int(datetime.fromisoformat(iso_text).timestamp() * 1000)
+        if not time_ms:
+            return None
+        result = str(obj.get("result", "")).strip().upper()
+        return {"time": time_ms, "result": result}
 
+    def _get_redis_component(self, env):
         redis_comp = env["crose.component"].search([("component_type", "=", "redis"), ("status", "=", "online")], limit=1)
         if not redis_comp:
             redis_comp = env["crose.component"].search([("component_type", "=", "redis")], limit=1)
-        if not redis_comp:
-            return []
+        return redis_comp
 
+    def _build_redis_client(self, redis_comp, db_value):
         metadata = {}
         if redis_comp.metadata:
             with contextlib.suppress(Exception):
                 metadata = json.loads(redis_comp.metadata)
         username = metadata.get("username")
         password = metadata.get("password")
-        db = metadata.get("db", 0)
         with contextlib.suppress(Exception):
-            db = int(db)
-
+            db_value = int(db_value)
         import redis
-
-        client = redis.Redis(
+        return redis.Redis(
             host=redis_comp.host or "localhost",
             port=redis_comp.port or 6379,
             username=username,
             password=password,
-            db=db,
+            db=db_value,
             decode_responses=True,
             socket_connect_timeout=5,
         )
+
+    def _load_metrics_series_from_redis(self, env, time_range):
+        start_dt, end_dt = self._range_start_dt(time_range)
+        start_ms = int(start_dt.timestamp() * 1000)
+        end_ms = int(end_dt.timestamp() * 1000)
+        points = []
+
+        redis_comp = self._get_redis_component(env)
+        if not redis_comp:
+            return []
+
+        metrics_db = 0
+        if redis_comp.metadata:
+            with contextlib.suppress(Exception):
+                metadata = json.loads(redis_comp.metadata)
+                metrics_db = metadata.get("db", 0)
+        client = self._build_redis_client(redis_comp, metrics_db)
 
         key_history = env["ir.config_parameter"].sudo().get_param("feitas_iot.overview.metrics_history_key", "host:metrics:history")
         key_current = env["ir.config_parameter"].sudo().get_param("feitas_iot.overview.metrics_current_key", "host:metrics:current")
@@ -128,6 +155,54 @@ class OverviewController(http.Controller):
 
         points.sort(key=lambda x: x["time"])
         return [p for p in points if start_ms <= p["time"] <= end_ms]
+
+    def _load_upload_activity_stats(self, env, time_range):
+        start_dt, end_dt = self._range_start_dt(time_range)
+        start_ms = int(start_dt.timestamp() * 1000)
+        end_ms = int(end_dt.timestamp() * 1000)
+        stats = {"total_activities": 0, "success": 0, "failed": 0}
+        redis_comp = self._get_redis_component(env)
+        if not redis_comp:
+            return stats
+
+        client = self._build_redis_client(redis_comp, 0)
+
+        def _consume_record(raw_value, default_time_ms=None):
+            rec = self._coerce_activity_record(raw_value, default_time_ms=default_time_ms)
+            if not rec:
+                return
+            if not (start_ms <= rec["time"] <= end_ms):
+                return
+            stats["total_activities"] += 1
+            if rec["result"] == "SUCCESS":
+                stats["success"] += 1
+            elif rec["result"] == "FAIL":
+                stats["failed"] += 1
+
+        for key in client.scan_iter(match="upload:*"):
+            key_type = client.type(key)
+            if isinstance(key_type, bytes):
+                key_type = key_type.decode(errors="ignore")
+            if key_type == "string":
+                _consume_record(client.get(key))
+            elif key_type == "list":
+                for raw in client.lrange(key, 0, -1):
+                    _consume_record(raw)
+            elif key_type == "zset":
+                for raw, score in client.zrange(key, 0, -1, withscores=True):
+                    _consume_record(raw, default_time_ms=self._normalize_time_ms(score))
+            elif key_type == "stream":
+                for stream_id, fields_map in client.xrange(key, count=5000):
+                    default_time = None
+                    if isinstance(stream_id, str) and "-" in stream_id:
+                        with contextlib.suppress(Exception):
+                            default_time = int(stream_id.split("-", 1)[0])
+                    _consume_record(fields_map)
+                    if "data" in fields_map:
+                        _consume_record(fields_map.get("data"), default_time_ms=default_time)
+            elif key_type == "hash":
+                _consume_record(client.hgetall(key))
+        return stats
 
     @http.route('/feitas_iot/get_component_status', type='jsonrpc', auth='user')
     def get_component_status(self, time_range="today"):
@@ -174,23 +249,7 @@ class OverviewController(http.Controller):
             'reports_today': reports_today,
             'latency_ms': env['ir.config_parameter'].sudo().get_param('feitas_iot.overview.latency_ms', '-'),
         }
-        protocol = {
-            'modbus_points': env['fts.data.address'].search_count([('model_id.protocol', 'in', ['mobus-tcp', 'mobus-rtu'])]),
-            'mqtt_topics': env['fts.mqtt.topic'].search_count([]),
-            'smb_connections': env['fts.data.model'].search_count([('protocol', '=', 'smb')]),
-        }
-        online_components = {
-            c['component_type']: c['status'] == 'online'
-            for c in components
-            if c.get('component_type')
-        }
-        topology = [
-            {'label': 'Device Layer', 'ok': env['fts.nr.instance'].search_count([]) > 0},
-            {'label': 'Node-RED', 'ok': online_components.get('nodered', False)},
-            {'label': 'Redis', 'ok': online_components.get('redis', False)},
-            {'label': 'CRose', 'ok': True},
-            {'label': 'UI', 'ok': True},
-        ]
+        protocol = self._load_upload_activity_stats(env, time_range)
         industry_mode = env['ir.config_parameter'].sudo().get_param(
             'feitas_iot.overview.industry_mode', 'manufacturing'
         )
@@ -239,7 +298,6 @@ class OverviewController(http.Controller):
                 'metrics': metrics,
                 'dashboard': {
                     'connectivity': {
-                        'topology': topology,
                         'protocol': protocol,
                     },
                     'throughput': throughput,
