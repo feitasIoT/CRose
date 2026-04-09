@@ -2,8 +2,13 @@
 <templates xml:space="preserve">
     <t t-name="feitas_iot.OverviewDashboard">
         <div class="o_action p-4 feitas_iot_overview">
-            <div class="mb-3">
+            <div class="mb-3 d-flex align-items-center justify-content-between">
                 <h2 class="m-0">Overview</h2>
+                <div class="btn-group ms-auto" role="group" aria-label="Time Range">
+                    <button type="button" t-att-class="'btn btn-sm ' + (state.timeRange === 'today' ? 'btn-primary' : 'btn-outline-primary')" t-on-click="() => this.changeTimeRange('today')">Today</button>
+                    <button type="button" t-att-class="'btn btn-sm ' + (state.timeRange === 'week' ? 'btn-primary' : 'btn-outline-primary')" t-on-click="() => this.changeTimeRange('week')">Week</button>
+                    <button type="button" t-att-class="'btn btn-sm ' + (state.timeRange === 'month' ? 'btn-primary' : 'btn-outline-primary')" t-on-click="() => this.changeTimeRange('month')">Month</button>
+                </div>
             </div>
             <t t-if="state.loading">
                 <div class="text-muted">Loading...</div>
@@ -30,11 +35,7 @@
                                 </div>
                             </t>
                         </div>
-                        <div class="btn-group" role="group" aria-label="Time Range">
-                            <button type="button" t-att-class="'btn btn-sm ' + (state.timeRange === 'today' ? 'btn-primary' : 'btn-outline-primary')" t-on-click="() => this.changeTimeRange('today')">Today</button>
-                            <button type="button" t-att-class="'btn btn-sm ' + (state.timeRange === 'week' ? 'btn-primary' : 'btn-outline-primary')" t-on-click="() => this.changeTimeRange('week')">Week</button>
-                            <button type="button" t-att-class="'btn btn-sm ' + (state.timeRange === 'month' ? 'btn-primary' : 'btn-outline-primary')" t-on-click="() => this.changeTimeRange('month')">Month</button>
-                        </div>
+                        
                     </div>
                 </div>
 
