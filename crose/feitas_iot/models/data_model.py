@@ -463,13 +463,13 @@ class DataModel(models.Model):
             raise ValidationError(_("No online IoTDB component was found. Please create and activate one in System Components first."))
         host = iotdb.host or "iotdb"
         port = iotdb.port or 6667
-        metadata = {}
-        if iotdb.metadata:
-            with contextlib.suppress(Exception):
-                metadata = json.loads(iotdb.metadata)
-        # TODO: password encryption
-        username = metadata.get("username", "root")
-        password = metadata.get("password", "root")
+        account = iotdb.account_ids.filtered(lambda x: (x.username or "").strip() == "crose_app")[:1]
+        if not account:
+            raise ValidationError(_("IoTDB account 'crose_app' was not found on the component."))
+        username = account.username
+        password = account._get_plain_password()
+        if not password:
+            raise ValidationError(_("IoTDB account 'crose_app' has no decryptable password. Please set it again."))
         return host, str(port), username, password
 
     def _execute_iotdb_query(self, sql):

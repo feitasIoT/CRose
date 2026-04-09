@@ -24,6 +24,7 @@
                 <form string="System Component">
                     <header>
                         <button name="action_check_status" type="object" string="Check Status" class="oe_highlight"/>
+                        <button name="action_reset_credentials" type="object" string="重置凭据" class="btn-secondary"/>
                         <button name="action_view_packages" type="object" string="View Packages"
                                 invisible="component_type != 'npm'"/>
                         <field name="status" widget="statusbar"/>
@@ -54,10 +55,11 @@
                             </page>
                             <page string="Accounts">
                                 <field name="account_ids" nolabel="1">
-                                    <list editable="bottom">
+                                    <list>
                                         <field name="component_id" readonly="1"/>
                                         <field name="username"/>
                                         <field name="password_encrypted" password="True"/>
+                                        <field name="is_primary"/>
                                         <field name="role"/>
                                         <field name="modified_by" readonly="1"/>
                                         <field name="modified_at" readonly="1"/>

@@ -1,10 +1,13 @@
-import os
 import json
 import socket
+import base64
 import hashlib
+import secrets
+import string
 import requests
 
 from odoo import models, fields, api, _
+from odoo.exceptions import UserError
 
 
 class CroseComponent(models.Model):
@@ -293,6 +296,109 @@ class CroseComponent(models.Model):
             'target': 'current',
         }
 
+    def _generate_password(self, length=16):
+        alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
+        return "".join(secrets.choice(alphabet) for _ in range(length))
+
+    def _get_iotdb_connection_meta(self):
+        self.ensure_one()
+        host = self.host or "iotdb"
+        port = self.port or 6667
+        return host, int(port)
+
+    def _iotdb_exec_non_query(self, username, password, sql):
+        from iotdb.Session import Session
+
+        host, port = self._get_iotdb_connection_meta()
+        session = Session(host, str(port), username, password)
+        session.open(False)
+        try:
+            session.execute_non_query_statement(sql)
+        finally:
+            try:
+                session.close()
+            except Exception:
+                pass
+
+    def _iotdb_set_user_password(self, login_user, login_password, target_user, new_password):
+        safe_user = (target_user or "").replace("'", "''")
+        safe_pwd = (new_password or "").replace("'", "''")
+        alter_sql = f"ALTER USER {safe_user} SET PASSWORD '{safe_pwd}'"
+        try:
+            self._iotdb_exec_non_query(login_user, login_password, alter_sql)
+            return
+        except Exception as e:
+            error_text = str(e).lower()
+            user_not_found = "not found" in error_text or "701" in error_text
+            if not user_not_found:
+                raise
+        create_sql = f"CREATE USER {safe_user} '{safe_pwd}'"
+        self._iotdb_exec_non_query(login_user, login_password, create_sql)
+
+    def _iotdb_reset_accounts(self, primary_account, accounts_to_reset):
+        current_user = (primary_account.username or "").strip()
+        current_password = primary_account._get_plain_password()
+        if not current_user or not current_password:
+            raise UserError(_("Primary account password is not decryptable. Please set the primary password again."))
+
+        new_password_map = {acc.id: self._generate_password(16) for acc in accounts_to_reset}
+        non_primary = [acc for acc in accounts_to_reset if acc.id != primary_account.id]
+        for account in non_primary:
+            self._iotdb_set_user_password(
+                current_user,
+                current_password,
+                account.username,
+                new_password_map[account.id],
+            )
+            account.write({"password_encrypted": new_password_map[account.id]})
+
+        if primary_account.id in new_password_map:
+            new_primary_pwd = new_password_map[primary_account.id]
+            self._iotdb_set_user_password(
+                current_user,
+                current_password,
+                primary_account.username,
+                new_primary_pwd,
+            )
+            primary_account.write({"password_encrypted": new_primary_pwd})
+
+        return [(acc.username, acc.role, new_password_map[acc.id]) for acc in accounts_to_reset]
+
+    def action_reset_credentials(self):
+        for component in self:
+            if not component.account_ids:
+                raise UserError(_("No account records found for this component."))
+            primary = component.account_ids.filtered(lambda x: x.is_primary)[:1]
+            if not primary:
+                raise UserError(_("Please mark one account as primary before resetting credentials."))
+            accounts_to_reset = component.account_ids.filtered(lambda x: (x.username or "").lower() != "root")
+            if primary.id not in accounts_to_reset.ids:
+                accounts_to_reset |= primary
+            if not accounts_to_reset:
+                raise UserError(_("No account available for credential reset."))
+
+            if component.component_type == "iotdb":
+                generated = component._iotdb_reset_accounts(primary, accounts_to_reset)
+            else:
+                generated = []
+                for account in accounts_to_reset:
+                    plain_password = component._generate_password(16)
+                    account.write({"password_encrypted": plain_password})
+                    generated.append((account.username, account.role, plain_password))
+
+            lines = [f"{username} ({role}): {pwd}" for username, role, pwd in generated]
+            message = _("Credentials reset successfully.") + "\n" + "\n".join(lines)
+            return {
+                "type": "ir.actions.client",
+                "tag": "display_notification",
+                "params": {
+                    "title": _("Reset Complete"),
+                    "message": message,
+                    "type": "success",
+                    "sticky": True,
+                },
+            }
+
     def _get_staging_storage_path(self, component=None):
         return '/mnt/verdaccio-staging'
 
@@ -308,6 +414,7 @@ class CroseComponentAccount(models.Model):
     component_id = fields.Many2one("crose.component", string="Component", required=True, ondelete="cascade")
     username = fields.Char(string="Username", required=True)
     password_encrypted = fields.Char(string="Encrypted Password", required=True)
+    is_primary = fields.Boolean(string="Primary Account")
     role = fields.Selection(
         [
             ("admin", "Admin"),
@@ -326,14 +433,45 @@ class CroseComponentAccount(models.Model):
         ("component_username_unique", "unique(component_id, username)", "The username already exists in this component."),
     ]
 
+    def _get_cipher(self):
+        try:
+            from cryptography.fernet import Fernet
+        except Exception as e:
+            raise UserError(_("Missing dependency cryptography: %(error)s", error=str(e)))
+        secret = (self.env["ir.config_parameter"].sudo().get_param("database.secret") or "").strip()
+        if not secret:
+            raise UserError(_("Missing encryption secret in system parameter database.secret."))
+        key = base64.urlsafe_b64encode(hashlib.sha256(secret.encode("utf-8")).digest())
+        return Fernet(key)
+
+    def _decrypt_password(self, value):
+        if not value:
+            return ""
+        text = str(value).strip()
+        if not text:
+            return ""
+        if text.startswith("enc$"):
+            token = text[4:]
+            try:
+                return self._get_cipher().decrypt(token.encode("utf-8")).decode("utf-8")
+            except Exception:
+                return ""
+        if text.startswith("sha256$"):
+            return ""
+        return text
+
+    def _get_plain_password(self):
+        self.ensure_one()
+        return self._decrypt_password(self.password_encrypted)
+
     def _encrypt_password(self, value):
         if not value:
             return value
         text = str(value)
-        if text.startswith("sha256$"):
+        if text.startswith("enc$"):
             return text
-        digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
-        return f"sha256${digest}"
+        token = self._get_cipher().encrypt(text.encode("utf-8")).decode("utf-8")
+        return f"enc${token}"
 
     @api.model_create_multi
     def create(self, vals_list):

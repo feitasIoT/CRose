@@ -23,6 +23,7 @@
         "data/data.xml",
         "data/ai_partner_data.xml",
 
+        "security/groups.xml",
         "security/ir.model.access.csv",
 
         "wizards/nr_instance_wizard_views.xml",

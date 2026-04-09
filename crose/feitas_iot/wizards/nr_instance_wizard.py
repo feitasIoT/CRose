@@ -1,4 +1,5 @@
 import json
+import requests
 
 from odoo import models, fields, api
 from odoo.exceptions import UserError
@@ -63,7 +64,6 @@ class FtsNrInstanceWizard(models.TransientModel):
         return [f"http://{host}:{port}"]
 
     def _nr_post_json(self, path, body, timeout=15):
-        import requests
 
         headers = {"Node-RED-API-Version": "v2"}
         last_error = None
@@ -81,7 +81,6 @@ class FtsNrInstanceWizard(models.TransientModel):
         raise UserError(f"Node-RED request failed: {last_error}")
 
     def _nr_delete_json(self, path, timeout=15):
-        import requests
 
         headers = {"Node-RED-API-Version": "v2"}
         last_error = None
@@ -189,6 +188,52 @@ class FtsNrInstanceWizard(models.TransientModel):
             "configs": configs,
         }
 
+    def _get_component_account_credentials(self, component_type, username):
+        component = self.env["crose.component"].search(
+            [("component_type", "=", component_type), ("status", "=", "online")],
+            limit=1,
+        )
+        if not component:
+            component = self.env["crose.component"].search([("component_type", "=", component_type)], limit=1)
+        if not component:
+            raise UserError(f"Component '{component_type}' not found.")
+        account = component.account_ids.filtered(lambda x: (x.username or "").strip() == username)[:1]
+        if not account:
+            raise UserError(f"Account '{username}' not found on component '{component.name}'.")
+        password = account._get_plain_password()
+        if not password:
+            raise UserError(f"Account '{username}' has no decryptable password.")
+        return account.username, password
+
+    def _inject_iotdb_mqtt_broker_credentials(self, payload):
+        if not isinstance(payload, dict):
+            return payload
+        username, password = self._get_component_account_credentials("iotdb", "mqtt_client")
+        credentials_map = payload.get("credentials")
+        if not isinstance(credentials_map, dict):
+            credentials_map = {}
+        for section in ("configs", "nodes"):
+            for item in payload.get(section) or []:
+                if not isinstance(item, dict):
+                    continue
+                if item.get("type") != "mqtt-broker":
+                    continue
+                if str(item.get("name") or "").strip().lower() != "iotdb":
+                    continue
+                item_credentials = item.get("credentials") if isinstance(item.get("credentials"), dict) else {}
+                item_credentials["user"] = username
+                item_credentials["password"] = password
+                item["credentials"] = item_credentials
+                node_id = item.get("id")
+                if node_id:
+                    credentials_map[node_id] = {
+                        "user": username,
+                        "password": password,
+                    }
+        if credentials_map:
+            payload["credentials"] = credentials_map
+        return payload
+
     def action_confirm(self):
         self.ensure_one()
         if self.operation == "add":
@@ -197,6 +242,7 @@ class FtsNrInstanceWizard(models.TransientModel):
             created = []
             for tmpl in self.template_flow_ids:
                 payload = self._build_flow_payload(tmpl)
+                payload = self._inject_iotdb_mqtt_broker_credentials(payload)
                 result = self._nr_post_json("/flow", payload)
                 new_nr_id = result.get("id") if isinstance(result, dict) else None
                 if not new_nr_id:

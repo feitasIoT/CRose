@@ -46,6 +46,29 @@
         <field name="metadata">{"dn_rpc_port": 6667,"dn_internal_port": 10730}</field>
     </record>
 
+    <!-- IoTDB预设的账户 -->
+    <record id="component_iotdb_account_root" model="crose.component.account">
+        <field name="component_id" ref="component_iotdb"/>
+        <field name="username">root</field>
+        <field name="password_encrypted">root</field>
+        <field name="is_primary" eval="1"/>
+        <field name="role">admin</field>
+    </record>
+
+    <record id="component_iotdb_account_crose_app" model="crose.component.account">
+        <field name="component_id" ref="component_iotdb"/>
+        <field name="username">crose_app</field>
+        <field name="password_encrypted">crose</field>
+        <field name="role">viewer</field>
+    </record>
+
+    <record id="component_iotdb_account_mqtt_client" model="crose.component.account">
+        <field name="component_id" ref="component_iotdb"/>
+        <field name="username">mqtt_client</field>
+        <field name="password_encrypted">mqtt</field>
+        <field name="role">operator</field>
+    </record>
+
     <record id="component_crose_ai" model="crose.component">
         <field name="name">Crose AI</field>
         <field name="component_type">ai</field>
