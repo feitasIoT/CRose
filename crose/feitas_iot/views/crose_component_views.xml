@@ -52,6 +52,18 @@
                             <page string="Metadata">
                                 <field name="metadata" widget="code" options="{'mode': 'javascript'}"/>
                             </page>
+                            <page string="Accounts">
+                                <field name="account_ids" nolabel="1">
+                                    <list editable="bottom">
+                                        <field name="component_id" readonly="1"/>
+                                        <field name="username"/>
+                                        <field name="password_encrypted" password="True"/>
+                                        <field name="role"/>
+                                        <field name="modified_by" readonly="1"/>
+                                        <field name="modified_at" readonly="1"/>
+                                    </list>
+                                </field>
+                            </page>
                         </notebook>
                     </sheet>
                 </form>

@@ -1,8 +1,11 @@
-import json
 import os
-import requests
+import json
 import socket
+import hashlib
+import requests
+
 from odoo import models, fields, api, _
+
 
 class CroseComponent(models.Model):
     _name = "crose.component"
@@ -27,6 +30,7 @@ class CroseComponent(models.Model):
     port = fields.Integer(string="Port")
     url = fields.Char(string="URL")
     metadata = fields.Text(string="Metadata")
+    account_ids = fields.One2many("crose.component.account", "component_id", string="Accounts")
     last_check_time = fields.Datetime(string="Last Check Time", readonly=True)
     error_reason = fields.Text(string="Error Reason", readonly=True)
 
@@ -294,3 +298,51 @@ class CroseComponent(models.Model):
 
     def _get_prod_storage_path(self, component=None):
         return '/mnt/verdaccio-prod'
+
+
+class CroseComponentAccount(models.Model):
+    _name = "crose.component.account"
+    _description = "Component Account"
+    _order = "write_date desc, id desc"
+
+    component_id = fields.Many2one("crose.component", string="Component", required=True, ondelete="cascade")
+    username = fields.Char(string="Username", required=True)
+    password_encrypted = fields.Char(string="Encrypted Password", required=True)
+    role = fields.Selection(
+        [
+            ("admin", "Admin"),
+            ("operator", "Operator"),
+            ("viewer", "Viewer"),
+            ("custom", "Custom"),
+        ],
+        string="Role",
+        required=True,
+        default="viewer",
+    )
+    modified_by = fields.Many2one("res.users", string="Modified By", related="write_uid", readonly=True)
+    modified_at = fields.Datetime(string="Modified At", related="write_date", readonly=True)
+
+    _sql_constraints = [
+        ("component_username_unique", "unique(component_id, username)", "The username already exists in this component."),
+    ]
+
+    def _encrypt_password(self, value):
+        if not value:
+            return value
+        text = str(value)
+        if text.startswith("sha256$"):
+            return text
+        digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
+        return f"sha256${digest}"
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if "password_encrypted" in vals:
+                vals["password_encrypted"] = self._encrypt_password(vals.get("password_encrypted"))
+        return super().create(vals_list)
+
+    def write(self, vals):
+        if "password_encrypted" in vals:
+            vals["password_encrypted"] = self._encrypt_password(vals.get("password_encrypted"))
+        return super().write(vals)
