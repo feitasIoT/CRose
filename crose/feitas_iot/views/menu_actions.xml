@@ -97,8 +97,34 @@
         <record id="action_fts_data_model" model="ir.actions.act_window">
             <field name="name">Data Modeling</field>
             <field name="res_model">fts.data.model</field>
-            <field name="view_mode">list,form</field>
+            <field name="view_mode">kanban,list,form</field>
+            <field name="view_ids" eval="[
+                (5, 0, 0),
+                (0, 0, {'view_mode': 'kanban', 'view_id': ref('feitas_iot.view_fts_data_model_kanban')}),
+                (0, 0, {'view_mode': 'list', 'view_id': ref('feitas_iot.view_fts_data_model_tree')}),
+                (0, 0, {'view_mode': 'form', 'view_id': ref('feitas_iot.view_fts_data_model_form')})
+            ]"/>
         </record>
+
+        <record id="action_fts_data_asset" model="ir.actions.act_window">
+            <field name="name">Data Assets</field>
+            <field name="res_model">fts.data.asset</field>
+            <field name="view_mode">kanban,list,form</field>
+            <field name="view_ids" eval="[
+                (5, 0, 0),
+                (0, 0, {'view_mode': 'kanban', 'view_id': ref('feitas_iot.view_fts_data_asset_kanban')}),
+                (0, 0, {'view_mode': 'list', 'view_id': ref('feitas_iot.view_fts_data_asset_tree')}),
+                (0, 0, {'view_mode': 'form', 'view_id': ref('feitas_iot.view_fts_data_asset_form')})
+            ]"/>
+        </record>
+
+        <menuitem
+            id="menu_fts_data_asset"
+            name="Data Assets"
+            parent="menu_fts_iot_data"
+            action="action_fts_data_asset"
+            sequence="5"
+        />
 
         <menuitem
             id="menu_fts_data_model"

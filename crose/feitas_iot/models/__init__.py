@@ -6,6 +6,7 @@ from . import edge_agent
 from . import nr_flow
 from . import nr_node
 from . import mqtt_user
+from . import data_asset
 from . import data_model
 from . import data_log
 from . import data_address

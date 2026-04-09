@@ -38,6 +38,7 @@
         "views/node_views.xml",
         
         "views/data_address_views.xml",
+        "views/data_asset_views.xml",
         "views/knowledge_views.xml",
         "views/data_model_views.xml",
         "views/mqtt_topic_views.xml",

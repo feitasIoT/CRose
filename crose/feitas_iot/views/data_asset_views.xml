@@ -1,0 +1,125 @@
+<odoo>
+    <data>
+        <record id="view_fts_data_asset_search" model="ir.ui.view">
+            <field name="name">fts.data.asset.search</field>
+            <field name="model">fts.data.asset</field>
+            <field name="arch" type="xml">
+                <search string="Data Asset">
+                    <field name="name"/>
+                    <field name="partner_id"/>
+                    <field name="position"/>
+                    <field name="model"/>
+                    <field name="health_status"/>
+                    <filter string="Exceptional" name="health_abnormal" domain="[('health_status', '=', 'abnormal')]"/>
+                    <group>
+                        <filter string="Provider" name="group_by_provider" context="{'group_by': 'partner_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_fts_data_asset_tree" model="ir.ui.view">
+            <field name="name">fts.data.asset.tree</field>
+            <field name="model">fts.data.asset</field>
+            <field name="arch" type="xml">
+                <list string="Data Assets">
+                    <field name="name"/>
+                    <field name="partner_id"/>
+                    <field name="position"/>
+                    <field name="model"/>
+                    <field name="health_status" widget="badge" decoration-success="health_status == 'normal'" decoration-danger="health_status == 'abnormal'" decoration-muted="health_status == 'empty'"/>
+                    <field name="model_count"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_fts_data_asset_kanban" model="ir.ui.view">
+            <field name="name">fts.data.asset.kanban</field>
+            <field name="model">fts.data.asset</field>
+            <field name="arch" type="xml">
+                <kanban>
+                    <field name="name"/>
+                    <field name="partner_id"/>
+                    <field name="position"/>
+                    <field name="model"/>
+                    <field name="health_status"/>
+                    <field name="model_count"/>
+                    <templates>
+                        <t t-name="card">
+                            <div class="oe_kanban_global_click o_kanban_record feitas_iot_instance_kanban_card">
+                                <div class="d-flex flex-column gap-2">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span t-att-class="'feitas_iot_status_dot ' + (record.health_status.raw_value === 'normal' ? 'feitas_iot_status_online' : (record.health_status.raw_value === 'abnormal' ? 'feitas_iot_status_error' : 'feitas_iot_status_offline'))"/>
+                                            <strong class="text-truncate">
+                                                <field name="name"/>
+                                            </strong>
+                                        </div>
+                                        <span class="badge text-bg-light">
+                                            <field name="health_status"/>
+                                        </span>
+                                    </div>
+                                    <div class="row g-1">
+                                        <div class="col-6 text-start">
+                                            <div class="small text-muted">Provider</div>
+                                            <div class="small text-truncate"><field name="partner_id"/></div>
+                                        </div>
+                                        <div class="col-6 text-end">
+                                            <div class="small text-muted">Models</div>
+                                            <div class="small fw-semibold"><field name="model_count"/></div>
+                                        </div>
+                                    </div>
+                                    <div class="row g-1">
+                                        <div class="col-6 text-start">
+                                            <div class="small text-muted">Model</div>
+                                            <div class="small text-truncate"><field name="model"/></div>
+                                        </div>
+                                        <div class="col-6 text-end">
+                                            <div class="small text-muted">Position</div>
+                                            <div class="small text-truncate"><field name="position"/></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
+        <record id="view_fts_data_asset_form" model="ir.ui.view">
+            <field name="name">fts.data.asset.form</field>
+            <field name="model">fts.data.asset</field>
+            <field name="arch" type="xml">
+                <form string="Data Asset">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name"/>
+                                <field name="partner_id"/>
+                            </group>
+                            <group>
+                                <field name="position"/>
+                                <field name="model"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="Data Models">
+                                <field name="data_model_ids">
+                                    <list>
+                                        <field name="name"/>
+                                        <field name="partner_id"/>
+                                        <field name="provider_id"/>
+                                        <field name="protocol"/>
+                                        <field name="nr_instance_id"/>
+                                        <field name="state"/>
+                                    </list>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>

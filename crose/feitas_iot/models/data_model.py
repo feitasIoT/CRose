@@ -24,7 +24,8 @@ class DataModel(models.Model):
 
     name = fields.Char(string='Code', required=True, copy=False)
     partner_id = fields.Many2one('res.partner', string='Requester', required=True)
-    provider_id = fields.Many2one('res.partner', string='Provider', required=True)
+    data_asset_id = fields.Many2one('fts.data.asset', string='Data Asset', required=True)
+    provider_id = fields.Many2one('res.partner', string='Provider', related='data_asset_id.partner_id', store=True, readonly=True)
     protocol = fields.Selection([
         ('mobus-tcp', 'Modbus-TCP'),
         ('mobus-rtu', 'Modbus-RTU'),
@@ -77,6 +78,10 @@ class DataModel(models.Model):
         ('effective', 'Effective'),
         ('invalid', 'Invalid'),
     ], string='Status', default='draft', required=True)
+    data_status = fields.Selection([
+        ('normal', 'Normal'),
+        ('abnormal', 'Exceptional'),
+    ], string='Data Status', default='normal', required=True)
 
     data_asset = fields.Char(string='Data Asset', compute='_compute_data_asset', store=True)
     topic = fields.Char(string='Topic', compute='_compute_topic', store=True)

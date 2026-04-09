@@ -5,6 +5,7 @@ access_fts_nr_flow,fts.nr.flow,model_fts_nr_flow,base.group_user,1,1,1,1
 access_fts_nr_node,fts.nr.node,model_fts_nr_node,base.group_user,1,1,1,1
 access_crose_component,crose.component,model_crose_component,base.group_user,1,1,1,1
 access_fts_mqtt_user,fts.mqtt.user,model_fts_mqtt_user,base.group_user,1,1,1,1
+access_fts_data_asset,fts.data.asset,model_fts_data_asset,base.group_user,1,1,1,1
 access_fts_data_model,fts.data.model,model_fts_data_model,base.group_user,1,1,1,1
 access_fts_data_app,fts.data.app,model_fts_data_app,base.group_user,1,1,1,1
 access_fts_mqtt_topic,fts.mqtt.topic,model_fts_mqtt_topic,base.group_user,1,1,1,1
