@@ -75,7 +75,8 @@ services:
     ports:
       - "8880:1880"
     volumes:
-      - ./data/nodered/data:/data
+      - nodered_prod:/data
+      - ./data/nodered/data/settings.js:/data/settings.js
       - ./data/webdav/dav:/mnt/nas
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
@@ -91,8 +92,10 @@ services:
     ports:
       - "8881:1880"
     volumes:
-      - ./data/nodered-staging/data:/data
+      - nodered_staging:/data
+      - ./data/nodered-staging/data/settings.js:/data/settings.js
       - ./data/webdav/dav:/mnt/nas
+      - ./demo/samba:/mnt/samba
     networks:
       - crose-net
 
@@ -184,6 +187,8 @@ volumes:
   ai_models:
   iotdb_datas:
   iotdb_logs:
+  nodered_prod:
+  nodered_staging:
   
 networks:
   crose-net:
