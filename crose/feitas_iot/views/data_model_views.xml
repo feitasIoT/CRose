@@ -35,6 +35,7 @@
                     <header>
                         <button name="action_start" type="object" string="Start" class="btn-primary" invisible="is_demo"/>
                         <button name="action_start_demo" type="object" string="Start Demo" class="btn-primary" invisible="is_demo != True"/>
+                        <button name="action_generate_flow_ai" type="object" string="AI Flow" class="btn-secondary"/>
                         <field name="state" widget="statusbar" options="{'clickable': '1'}"/>
                     </header>
                     <sheet>

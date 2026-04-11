@@ -3,8 +3,10 @@ import contextlib
 import json
 import math
 import logging
+import re
 import uuid
 from datetime import datetime
+import requests
 
 
 from odoo import models, fields, api, _
@@ -431,6 +433,146 @@ class DataModel(models.Model):
                     count=len(created_flows),
                     instance=self.nr_instance_id.display_name,
                 ),
+                "type": "success",
+                "sticky": False,
+            },
+        }
+
+    def _get_llama_factory_component(self):
+        component = self.env["crose.component"].search(
+            [("component_type", "=", "llama_factory"), ("status", "=", "online")],
+            limit=1,
+        )
+        if not component:
+            component = self.env["crose.component"].search([("component_type", "=", "llama_factory")], limit=1)
+        if not component:
+            raise ValidationError(_("No LLaMA-Factory component was found. Please configure it in System Components."))
+        return component
+
+    def _get_llama_factory_endpoint_and_payload(self):
+        self.ensure_one()
+        component = self._get_llama_factory_component()
+        metadata = {}
+        if component.metadata:
+            with contextlib.suppress(Exception):
+                metadata = json.loads(component.metadata)
+        if not isinstance(metadata, dict):
+            metadata = {}
+        endpoint = str(metadata.get("chat_completions_url") or "").strip()
+        if not endpoint:
+            endpoint = (component.url or "").strip()
+            if not endpoint:
+                host = component.host or "localhost"
+                port = component.port or 8001
+                endpoint = f"http://{host}:{port}"
+            endpoint = endpoint.rstrip("/")
+            if endpoint.endswith("/health"):
+                endpoint = endpoint[:-7]
+            endpoint = f"{endpoint}/v1/chat/completions"
+
+        model_name = str(metadata.get("model_name") or "qwen2-1.5b").strip() or "qwen2-1.5b"
+        temperature = metadata.get("temperature", 0.1)
+        with contextlib.suppress(Exception):
+            temperature = float(temperature)
+
+        system_prompt = str(
+            metadata.get("system_prompt")
+            or "你是一个 Node-RED 专家，只输出 JSON 流程。"
+        ).strip()
+        user_prompt = _(
+            "请根据以下数据模型生成可导入 Node-RED 的流程 JSON。"
+            "\n名称: %(name)s"
+            "\n协议: %(protocol)s"
+            "\n运行实例: %(instance)s"
+            "\n主题: %(topic)s"
+            "\nIoTDB Topic: %(iotdb_topic)s"
+            "\n数据结构: %(schema)s"
+            "\n要求: 仅输出 JSON，不要 Markdown。"
+        ) % {
+            "name": self.name or "",
+            "protocol": self.protocol or "",
+            "instance": self.nr_instance_id.display_name if self.nr_instance_id else "",
+            "topic": self.topic or "",
+            "iotdb_topic": self.iotdb_topic or "",
+            "schema": self.data_structure or "{}",
+        }
+        payload = {
+            "model": model_name,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            "temperature": temperature,
+        }
+        return endpoint, payload
+
+    def _extract_json_from_llm_text(self, text):
+        if not isinstance(text, str):
+            return None
+        stripped = text.strip()
+        if stripped.startswith("{") or stripped.startswith("["):
+            with contextlib.suppress(Exception):
+                return json.loads(stripped)
+        match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", stripped, re.IGNORECASE)
+        if match:
+            candidate = match.group(1).strip()
+            with contextlib.suppress(Exception):
+                return json.loads(candidate)
+        first_brace = stripped.find("{")
+        last_brace = stripped.rfind("}")
+        if first_brace >= 0 and last_brace > first_brace:
+            candidate = stripped[first_brace:last_brace + 1]
+            with contextlib.suppress(Exception):
+                return json.loads(candidate)
+        return None
+
+    def action_generate_flow_ai(self):
+        self.ensure_one()
+        if not self.nr_instance_id:
+            raise ValidationError(_("Please select a runtime instance before generating a flow."))
+        endpoint, payload = self._get_llama_factory_endpoint_and_payload()
+        try:
+            response = requests.post(endpoint, json=payload, timeout=60)
+            response.raise_for_status()
+            data = response.json()
+        except Exception as e:
+            raise ValidationError(_("Failed to call LLaMA-Factory: %(error)s", error=str(e)))
+
+        content_text = ""
+        if isinstance(data, dict):
+            choices = data.get("choices")
+            if isinstance(choices, list) and choices:
+                first = choices[0] if isinstance(choices[0], dict) else {}
+                message = first.get("message") if isinstance(first, dict) else {}
+                if isinstance(message, dict):
+                    content_text = message.get("content") or ""
+        parsed_json = self._extract_json_from_llm_text(content_text)
+        if parsed_json is None:
+            raise ValidationError(_("LLaMA-Factory response does not contain valid flow JSON."))
+
+        flow_name = f"{self.name} - AI Flow"
+        if isinstance(parsed_json, dict):
+            flow_name = parsed_json.get("label") or parsed_json.get("name") or flow_name
+        created_flow = self.env["fts.nr.flow"].create(
+            {
+                "name": flow_name,
+                "nr_id": f"{uuid.uuid4().hex[:7]}.{uuid.uuid4().hex[:7]}",
+                "type": "tab",
+                "is_template": False,
+                "content": json.dumps(parsed_json, ensure_ascii=False),
+                "instance_id": self.nr_instance_id.id,
+                "data_model_id": self.id,
+                "prompt": payload["messages"][1]["content"],
+                "description": _("Generated by LLaMA-Factory"),
+            }
+        )
+        self.write({"nr_flow_ids": [(4, created_flow.id)]})
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": _("Generation Complete"),
+                "message": _("Generated flow %(flow)s and linked it to this data model.", flow=created_flow.display_name),
                 "type": "success",
                 "sticky": False,
             },

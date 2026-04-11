@@ -207,4 +207,6 @@ volumes:
   
 networks:
   crose-net:
+    name: crose-net
     driver: bridge
+    

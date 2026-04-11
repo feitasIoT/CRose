@@ -1,0 +1,59 @@
+services:
+  crose-vllm:
+    image: vllm/vllm-openai:latest
+    container_name: crose-vllm
+    runtime: nvidia
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+    ports:
+      - "8002:8000"
+    volumes:
+      - crose-models:/root/.cache/huggingface
+      - crose-loras:/app/lora_adapters:ro
+    # 针对 2060 6GB 的极限优化参数
+    command: >
+      --model Qwen/Qwen2-1.5B-Instruct
+      --quantization awq
+      --enable-lora
+      --max-loras 5
+      --max-lora-rank 64
+      --gpu-memory-utilization 0.6
+      --max-model-len 2048
+      --enforce-eager
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - crose-net
+
+  crose-ai-train:
+    image: hiyouga/llamafactory:latest
+    container_name: crose-ai-train
+    runtime: nvidia
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+    ports:
+      - "8001:8000"
+    volumes:
+      - crose-models:/root/.cache/huggingface    # 模型持久化存储
+      - ./config/ai:/app/ai_config           # 映射配置文件夹
+      - crose-datasets:/app/data # 共享数据集
+      - crose-loras:/app/output # 训练产出直接存入共享卷
+    command: llamafactory-cli api /app/ai_config/inference_qwen.yaml
+    networks:
+      - crose-net
+
+volumes:
+  crose-models: # 基础模型
+  crose-datasets: # 收集到的数据集
+  crose-loras:    # 训练出的插件
+
+networks:
+  crose-net:
+    name: crose-net
+    external: true
+    

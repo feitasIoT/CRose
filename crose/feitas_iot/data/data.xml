@@ -114,6 +114,15 @@
         <field name="metadata">{}</field>
     </record>
 
+    <record id="component_llama_factory" model="crose.component">
+        <field name="name">LLama Factory</field>
+        <field name="component_type">llama_factory</field>
+        <field name="host">crose-ai-engine</field>
+        <field name="port">8000</field>
+        <field name="url">http://crose-ai-engine:8000/health</field>
+        <field name="metadata">{}</field>
+    </record>
+
     <!-- node-red instance(fts.nr.instance) -->
     <record id="fts_nr_instance_prod" model="fts.nr.instance">
         <field name="name">Node-RED Prod</field>
