@@ -129,7 +129,7 @@
         <field name="host">crose-vllm</field>
         <field name="port">8000</field>
         <field name="url">http://crose-vllm:8000/v1/models</field>
-        <field name="metadata">{"health_endpoint": "/v1/models"}</field>
+        <field name="metadata">{"health_endpoint": "/v1/models", "chat_completions_path": "/v1/chat/completions", "model_name": "Qwen/Qwen2-1.5B-Instruct-AWQ", "temperature": 0.1}</field>
     </record>
 
     <!-- node-red instance(fts.nr.instance) -->

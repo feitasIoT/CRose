@@ -438,39 +438,38 @@ class DataModel(models.Model):
             },
         }
 
-    def _get_llama_factory_component(self):
+    def _get_vllm_component(self):
         component = self.env["crose.component"].search(
-            [("component_type", "=", "llama_factory"), ("status", "=", "online")],
+            [("component_type", "=", "vllm"), ("status", "=", "online")],
             limit=1,
         )
         if not component:
-            component = self.env["crose.component"].search([("component_type", "=", "llama_factory")], limit=1)
+            component = self.env["crose.component"].search([("component_type", "=", "vllm")], limit=1)
         if not component:
-            raise ValidationError(_("No LLaMA-Factory component was found. Please configure it in System Components."))
+            raise ValidationError(_("No vLLM component was found. Please configure it in System Components."))
         return component
 
-    def _get_llama_factory_endpoint_and_payload(self):
+    def _get_vllm_endpoint_and_payload(self):
         self.ensure_one()
-        component = self._get_llama_factory_component()
+        component = self._get_vllm_component()
         metadata = {}
         if component.metadata:
             with contextlib.suppress(Exception):
                 metadata = json.loads(component.metadata)
         if not isinstance(metadata, dict):
             metadata = {}
-        endpoint = str(metadata.get("chat_completions_url") or "").strip()
-        if not endpoint:
-            endpoint = (component.url or "").strip()
-            if not endpoint:
-                host = component.host or "localhost"
-                port = component.port or 8001
-                endpoint = f"http://{host}:{port}"
-            endpoint = endpoint.rstrip("/")
-            if endpoint.endswith("/health"):
-                endpoint = endpoint[:-7]
-            endpoint = f"{endpoint}/v1/chat/completions"
+        host = (component.host or "").strip()
+        port = component.port
+        path = str(metadata.get("chat_completions_path") or "").strip()
+        if not host or not port:
+            raise ValidationError(_("vLLM component must provide host and port."))
+        if not path:
+            raise ValidationError(_("vLLM component metadata must provide chat_completions_path."))
+        if not path.startswith("/"):
+            path = f"/{path}"
+        endpoint = f"http://{host}:{port}{path}"
 
-        model_name = str(metadata.get("model_name") or "qwen2-1.5b").strip() or "qwen2-1.5b"
+        model_name = str(metadata.get("model_name") or "Qwen/Qwen2-1.5B-Instruct-AWQ").strip() or "Qwen/Qwen2-1.5B-Instruct-AWQ"
         temperature = metadata.get("temperature", 0.1)
         with contextlib.suppress(Exception):
             temperature = float(temperature)
@@ -530,13 +529,13 @@ class DataModel(models.Model):
         self.ensure_one()
         if not self.nr_instance_id:
             raise ValidationError(_("Please select a runtime instance before generating a flow."))
-        endpoint, payload = self._get_llama_factory_endpoint_and_payload()
+        endpoint, payload = self._get_vllm_endpoint_and_payload()
         try:
             response = requests.post(endpoint, json=payload, timeout=60)
             response.raise_for_status()
             data = response.json()
         except Exception as e:
-            raise ValidationError(_("Failed to call LLaMA-Factory: %(error)s", error=str(e)))
+            raise ValidationError(_("Failed to call vLLM: %(error)s", error=str(e)))
 
         content_text = ""
         if isinstance(data, dict):
@@ -548,7 +547,7 @@ class DataModel(models.Model):
                     content_text = message.get("content") or ""
         parsed_json = self._extract_json_from_llm_text(content_text)
         if parsed_json is None:
-            raise ValidationError(_("LLaMA-Factory response does not contain valid flow JSON."))
+            raise ValidationError(_("vLLM response does not contain valid flow JSON."))
 
         flow_name = f"{self.name} - AI Flow"
         if isinstance(parsed_json, dict):
