@@ -10,6 +10,7 @@
                     <field name="component_type"/>
                     <field name="host"/>
                     <field name="port"/>
+                    <field name="url" optional="show"/>
                     <field name="status" widget="badge" decoration-success="status == 'online'" decoration-danger="status == 'error'" decoration-muted="status == 'offline'"/>
                     <field name="error_reason" optional="show" invisible="status == 'online'"/>
                     <field name="last_check_time"/>

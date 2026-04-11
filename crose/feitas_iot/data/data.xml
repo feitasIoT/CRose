@@ -123,6 +123,15 @@
         <field name="metadata">{}</field>
     </record>
 
+    <record id="component_vllm" model="crose.component">
+        <field name="name">vLLM</field>
+        <field name="component_type">vllm</field>
+        <field name="host">crose-vllm</field>
+        <field name="port">8000</field>
+        <field name="url">http://crose-vllm:8000/v1/models</field>
+        <field name="metadata">{"health_endpoint": "/v1/models"}</field>
+    </record>
+
     <!-- node-red instance(fts.nr.instance) -->
     <record id="fts_nr_instance_prod" model="fts.nr.instance">
         <field name="name">Node-RED Prod</field>

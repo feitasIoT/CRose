@@ -20,6 +20,7 @@ class CroseComponent(models.Model):
         ('iotdb', 'IoTDB'),
         ('ai', 'AI Service'),
         ('llama_factory', 'LLaMA-Factory'),
+        ('vllm', 'vLLM'),
         ('nas', 'NAS'),
         ('npm', 'NPM Registry'),
         ('redis', 'Redis'),
@@ -49,6 +50,7 @@ class CroseComponent(models.Model):
             'iotdb': {'dn_rpc_port': 6667, 'dn_internal_port': 10730},
             'ai': {'health_endpoint': '/health'},
             'llama_factory': {'health_endpoint': '/health'},
+            'vllm': {'health_endpoint': '/v1/models'},
             'npm': {'registry_url': 'http://verdaccio-staging:4873'},
             'redis': {'db': 0},
             'nodered': {'admin_path': '/admin'}
@@ -58,6 +60,7 @@ class CroseComponent(models.Model):
             'mqtt': 1883,
             'iotdb': 6667,
             'llama_factory': 7860,
+            'vllm': 8000,
             'npm': 4873,
             'redis': 6379,
             'nodered': 1880
@@ -69,6 +72,7 @@ class CroseComponent(models.Model):
             'iotdb': 'iotdb',
             'ai': 'crose-ai',
             'llama_factory': 'llama-factory',
+            'vllm': 'crose-vllm',
             'npm': 'verdaccio-staging',
             'nodered': 'nodered'
         }
@@ -91,6 +95,8 @@ class CroseComponent(models.Model):
                 self.url = f"http://{host_defaults.get('ai')}:8000/health"
             elif self.component_type == 'llama_factory':
                 self.url = f"http://{host_defaults.get('llama_factory')}:{port_defaults.get('llama_factory')}/health"
+            elif self.component_type == 'vllm':
+                self.url = f"http://{host_defaults.get('vllm')}:{port_defaults.get('vllm')}/v1/models"
 
     def action_check_status(self):
         for component in self:
@@ -255,6 +261,38 @@ class CroseComponent(models.Model):
                     'status': 'offline',
                     'last_check_time': fields.Datetime.now(),
                     'error_reason': _('Unexpected LLaMA-Factory response: %(code)s', code=response.status_code)
+                })
+        except Exception as e:
+            self.write({
+                'status': 'error',
+                'last_check_time': fields.Datetime.now(),
+                'error_reason': str(e)
+            })
+
+    def _check_status_vllm(self):
+        try:
+            url = (self.url or "").strip()
+            metadata_dict = {}
+            if self.metadata:
+                try:
+                    metadata_dict = json.loads(self.metadata)
+                except Exception:
+                    metadata_dict = {}
+            health_endpoint = (metadata_dict.get("health_endpoint") or "/v1/models").strip() or "/v1/models"
+            if not url:
+                host = (self.host or "crose-vllm").strip()
+                port = self.port or 8000
+                if not health_endpoint.startswith("/"):
+                    health_endpoint = f"/{health_endpoint}"
+                url = f"http://{host}:{port}{health_endpoint}"
+            response = requests.get(url, timeout=8)
+            if response.status_code == 200:
+                self.write({'status': 'online', 'last_check_time': fields.Datetime.now(), 'error_reason': False})
+            else:
+                self.write({
+                    'status': 'offline',
+                    'last_check_time': fields.Datetime.now(),
+                    'error_reason': _('Unexpected vLLM response: %(code)s', code=response.status_code)
                 })
         except Exception as e:
             self.write({
