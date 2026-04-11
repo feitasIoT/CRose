@@ -7,8 +7,8 @@ services:
       - POSTGRES_PASSWORD=odoo
       - POSTGRES_USER=odoo
     volumes:
-      - ./data/db/init/init.sql:/docker-entrypoint-initdb.d/init.sql
-      - ./data/db/data:/var/lib/postgresql/data
+      - ./config/pgvector/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - crose_pgvector:/var/lib/postgresql/data
     networks:
       - crose-net
 
@@ -23,13 +23,13 @@ services:
       - "8069:8069"
     restart: always
     volumes:
-      - ./data/crose/config/odoo.conf:/etc/odoo/odoo.conf
-      - ./data/crose/data:/var/lib/odoo
+      - ./config/crose/odoo.conf:/etc/odoo/odoo.conf
       - ./crose:/mnt/extra-addons/crose
-      - ./data/verdaccio/staging/storage:/mnt/verdaccio-staging:ro
-      - ./data/verdaccio/production/storage:/mnt/verdaccio-prod:rw
+      - crose_odoo:/var/lib/odoo
+      - crose_verdaccio_staging:/mnt/verdaccio-staging:ro
+      - crose_verdaccio_prod:/mnt/verdaccio-prod:rw
     environment:
-      - HOST=db
+      - HOST=crose-db
       - USER=odoo
       - PASSWORD=odoo
       - DB_NAME=crose
@@ -42,7 +42,7 @@ services:
       dockerfile: ./ai/Dockerfile
     restart: always
     volumes:
-      - ai_models:/root/.cache/torch
+      - crose_ai:/root/.cache/torch
     ports:
       - "8000:8000"
     networks:
@@ -61,8 +61,8 @@ services:
       - "8083:8083"
       - "8084:8084"
     volumes:
-      - ./data/gmqtt/conf:/etc/gmqtt
-      - ./data/gmqtt/data:/gmqtt_data
+      - ./config/gmqtt:/etc/gmqtt
+      - crose_gmqtt:/gmqtt_data
     command: ["gmqttd", "start", "-c", "/etc/gmqtt/gmqttd.yml"]
     networks:
       - crose-net
@@ -75,9 +75,9 @@ services:
     ports:
       - "8880:1880"
     volumes:
-      - nodered_prod:/data
-      - ./data/nodered/data/settings.js:/data/settings.js
-      - ./data/webdav/dav:/mnt/nas
+      - ./config/nodered-prod/settings.js:/data/settings.js
+      - crose_nodered_prod:/data
+      - crose_webdav:/mnt/webdav
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
       - /etc/os-release:/host/etc/os-release:ro
@@ -92,9 +92,9 @@ services:
     ports:
       - "8881:1880"
     volumes:
-      - nodered_staging:/data
-      - ./data/nodered-staging/data/settings.js:/data/settings.js
-      - ./data/webdav/dav:/mnt/nas
+      - ./config/nodered-staging/settings.js:/data/settings.js
+      - crose_nodered_staging:/data
+      - crose_webdav:/mnt/webdav
       - ./demo/samba:/mnt/samba
     networks:
       - crose-net
@@ -105,9 +105,17 @@ services:
     restart: always
     ports:
       - "6379:6379"
-    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1", "--loglevel", "warning"]
+    command:
+      - sh
+      - -c
+      - |
+        if [ ! -f /data/users.acl ]; then
+          printf '%s\n' "user default on nopass ~* &* +@all" > /data/users.acl
+        fi
+        exec redis-server /usr/local/etc/redis/redis.conf
     volumes:
-      - ./data/redis/data:/data
+      - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf
+      - crose_redis:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -139,9 +147,9 @@ services:
       - dn_data_region_consensus_port=10760
       - dn_seed_config_node=127.0.0.1:10710
     volumes:
-      - iotdb_datas:/iotdb/data
-      - iotdb_logs:/iotdb/logs
-      - ./data/iotdb/conf/iotdb-system.properties:/iotdb/conf/iotdb-system.properties
+      - crose_iotdb_datas:/iotdb/data
+      - crose_iotdb_logs:/iotdb/logs
+      - ./config/iotdb/iotdb-system.properties:/iotdb/conf/iotdb-system.properties
     networks:
       - crose-net
 
@@ -152,8 +160,8 @@ services:
     ports:
       - "4873:4873"
     volumes:
-      - ./data/verdaccio/staging/conf:/verdaccio/conf
-      - ./data/verdaccio/staging/storage:/verdaccio/storage
+      - ./config/verdaccio/staging:/verdaccio/conf
+      - crose_verdaccio_staging:/verdaccio/storage
     networks:
       - crose-net
 
@@ -164,8 +172,8 @@ services:
     ports:
       - "4874:4873"
     volumes:
-      - ./data/verdaccio/production/conf:/verdaccio/conf
-      - ./data/verdaccio/production/storage:/verdaccio/storage
+      - ./config/verdaccio/production:/verdaccio/conf
+      - crose_verdaccio_prod:/verdaccio/storage
     networks:
       - crose-net
   
@@ -175,8 +183,8 @@ services:
     ports:
       - "8080:6065"
     volumes:
-      - ./data/webdav/dav:/data          # 映射到容器内的 /data
-      - ./data/webdav/config/config.yaml:/config.yaml # 需要提供一个基础配置文件
+      - crose_webdav:/data          # 映射到容器内的 /data
+      - ./config/webdav/config.yaml:/config.yaml # 需要提供一个基础配置文件
     command: ["--config", "/config.yaml"]
     restart: unless-stopped
     networks:
@@ -184,11 +192,18 @@ services:
 
 
 volumes:
-  ai_models:
-  iotdb_datas:
-  iotdb_logs:
-  nodered_prod:
-  nodered_staging:
+  crose_pgvector:
+  crose_odoo:
+  crose_ai:
+  crose_redis:
+  crose_gmqtt:
+  crose_iotdb_datas:
+  crose_iotdb_logs:
+  crose_nodered_prod:
+  crose_nodered_staging:
+  crose_verdaccio_prod:
+  crose_verdaccio_staging:
+  crose_webdav:
   
 networks:
   crose-net:
