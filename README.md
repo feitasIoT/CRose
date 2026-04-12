@@ -1,12 +1,12 @@
 # 🌹 CRose (China Rose) - All-in-One Lightweight Data Engine
 
-[中文版](./README_CN.md)
+[中文版](./readme/README_CN.md)
 
 ## Connect Datas, Deliver Values
 
 CRose is an integrated data platform designed for manufacturing and modern agriculture. It encapsulates the full stack capabilities from underlying protocol collection (Modbus/MQTT) to upper-level statistical analysis and UI visualization.
 
-![CRose Overview](./crose.gif)
+![CRose Overview](./readme/crose.gif)
 
 ## 🌟 Why Choose CRose? Simple yet Powerful!
 
@@ -35,7 +35,7 @@ CRose is an integrated data platform designed for manufacturing and modern agric
 - Schema checks at ingestion (units, ranges, non‑null, etc.), flagging anomalies.
 - Data quality reports (missing rate, latency distribution, duplication rate) to underpin trustworthy AI analytics.
 
-![CRose Framework](./crose_framework_en.jpg)
+![CRose Framework](./readme/crose_framework_en.jpg)
 
 ## 🚀 Quick Start
 

@@ -4,7 +4,7 @@
 
 CRose 是一个专为制造业与现代农业打造的集成化数据底座。它封装了从底层的协议采集（Modbus/MQTT）到上层的统计分析、UI展示的全链路能力。
 
-![CRose Overview](./crose.gif)
+![CRose Overview](./readme/crose.gif)
 
 ## 🌟 为什么选择 CRose？简单但强大！
 
@@ -33,7 +33,7 @@ CRose 是一个专为制造业与现代农业打造的集成化数据底座。�
 1. 采集时自动校验数据 Schema（单位、范围、非空等），标记异常值
 2. 生成数据质量报告（缺失率、延迟分布、重复率），为后续 AI 分析提供可信数据底座
 
-![CRose 架构图](./crose_framework_cn.jpg)
+![CRose 架构图](./readme/crose_framework_cn.jpg)
 
 ## 🚀 快速开始
 
