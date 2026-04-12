@@ -2,7 +2,7 @@
 
 [中文版](./README_CN.md)
 
-## Connect Devices, Deliver Value
+## Connect Datas, Deliver Values
 
 CRose is an integrated data platform designed for manufacturing and modern agriculture. It encapsulates the full stack capabilities from underlying protocol collection (Modbus/MQTT) to upper-level statistical analysis and UI visualization.
 
@@ -34,6 +34,8 @@ CRose is an integrated data platform designed for manufacturing and modern agric
 ✅ Native data quality governance
 - Schema checks at ingestion (units, ranges, non‑null, etc.), flagging anomalies.
 - Data quality reports (missing rate, latency distribution, duplication rate) to underpin trustworthy AI analytics.
+
+![CRose Framework](./crose_framework.jpg)
 
 ## 🚀 Quick Start
 
