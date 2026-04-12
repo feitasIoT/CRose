@@ -157,7 +157,7 @@
         />
         <menuitem
             id="menu_fts_iot_nr_flow"
-            name="Applications"
+            name="Flows"
             parent="menu_fts_iot_edge"
             action="action_fts_nr_flow"
             sequence="30"

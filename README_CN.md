@@ -44,10 +44,12 @@ CRose 是一个专为制造业与现代农业打造的集成化数据底座。�
 ```
 git clone https://github.com/feitasIoT/Crose.git
 cd Crose
-docker-compose up -d --build
+docker compose up -d --build
+# 模型训练
+docker compose -f docker-compose-ai.yml up -d
 ```
 
-你会发现启动了10个容器：
+你会发现启动了很多容器：
 - crose-web
 - crose-ai
 - crose-db
@@ -59,6 +61,8 @@ docker-compose up -d --build
 - verdaccio-prod
 - verdaccio-staging
 - crose-nas
+- crose-ai-train
+- crose-vllm
 
 > 虽然启动了不少容器，但你可以在Crose Web中完成所有操作，无需多虑。
 

@@ -47,9 +47,11 @@ CRose is an integrated data platform designed for manufacturing and modern agric
 git clone https://github.com/feitasIoT/Crose.git
 cd Crose
 docker-compose up -d --build
+# Start AI services
+docker compose -f docker-compose-ai.yml up -d
 ```
 
-You will find 10 containers started:
+You will find many containers started:
 - crose-web
 - crose-ai
 - crose-db
@@ -60,6 +62,8 @@ You will find 10 containers started:
 - nodered-staging
 - verdaccio-prod
 - verdaccio-staging
+- crose-ai-train
+- crose-vllm
 
 > Although many containers are started, you can complete all operations in the Crose Web interface without any concerns.
 
