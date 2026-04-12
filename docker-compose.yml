@@ -62,9 +62,20 @@ services:
       dockerfile: ./ai/Dockerfile
     restart: always
     volumes:
+      - ./ai:/app
       - crose_ai:/root/.cache/torch
+      - ./config/ai:/app/ai_config
+      - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "8000:8000"
+    environment:
+      - CROSE_TRAIN_CONTAINER_NAME=crose-ai-train
+      - CROSE_TRAIN_YAML_DIR=/app/ai_config/generated
+      - CROSE_TRAIN_LOG_DIR=/app/output
+      - CROSE_VLLM_BASE_URL=http://crose-vllm:8000
+      - CROSE_VLLM_CHAT_API_PATH=/v1/chat/completions
+      - CROSE_VLLM_LOAD_ADAPTER_API_PATH=/v1/load_lora_adapter
+      - CROSE_VLLM_UNLOAD_ADAPTER_API_PATH=/v1/unload_lora_adapter
     networks:
       - crose-net
 

@@ -47,9 +47,17 @@ class CroseComponent(models.Model):
         defaults = {
             'mqtt': {'metrics_port': 8082, 'metrics_endpoint': '/metrics', 'tcp_port': 1883, 'ws_port': 8083},
             'iotdb': {'dn_rpc_port': 6667, 'dn_internal_port': 10730},
-            'ai': {'health_endpoint': '/health'},
+            'ai': {
+                'health_endpoint': '/health',
+                'embed_endpoint': '/embed',
+                'train_api_path': '/v1/train',
+                'train_status_api_path': '/v1/train/{job_id}',
+                'load_adapter_api_path': '/v1/vllm/adapters/load',
+                'unload_adapter_api_path': '/v1/vllm/adapters/unload',
+                'infer_api_path': '/v1/vllm/chat'
+            },
             'llama_factory': {'health_endpoint': '/health', 'train_api_path': '/v1/train', 'train_status_api_path': '/v1/train/{job_id}'},
-            'vllm': {'health_endpoint': '/v1/models'},
+            'vllm': {'health_endpoint': '/v1/models', 'chat_completions_path': '/v1/chat/completions', 'temperature': 0.1},
             'npm': {'registry_url': 'http://verdaccio-staging:4873'},
             'redis': {'db': 0},
             'nodered': {'admin_path': '/admin', 'health_endpoint': '/'}

@@ -216,6 +216,11 @@ class FtsAiTraining(models.Model):
     dataset_file_path = fields.Char(string="Dataset File Path", readonly=True, copy=False)
     dataset_key = fields.Char(string="Dataset Key", readonly=True, copy=False)
     output_path = fields.Char(string="Output Path", readonly=True, copy=False)
+    loaded_model_name = fields.Char(string="Loaded Model Alias", readonly=True, copy=False, tracking=True)
+    loaded_model_path = fields.Char(string="Loaded Model Path", readonly=True, copy=False)
+    is_model_loaded = fields.Boolean(string="Model Loaded", default=False, readonly=True)
+    last_inference_at = fields.Datetime(string="Last Inference At", readonly=True, copy=False)
+    last_inference_reply = fields.Text(string="Last Inference Reply", readonly=True, copy=False)
     last_heartbeat = fields.Datetime(string="Last Heartbeat", readonly=True, copy=False)
     log_tail = fields.Text(string="Latest Logs", readonly=True, copy=False)
     error_message = fields.Text(string="Error Message", readonly=True, copy=False)
@@ -225,15 +230,15 @@ class FtsAiTraining(models.Model):
         for record in self:
             record.total_epoch = int(record.epochs or 0)
 
-    def _get_llama_factory_component(self):
+    def _get_training_gateway_component(self):
         component = self.env["crose.component"].search(
-            [("component_type", "=", "llama_factory"), ("status", "=", "online")],
+            [("component_type", "=", "ai"), ("status", "=", "online")],
             limit=1,
         )
         if not component:
-            component = self.env["crose.component"].search([("component_type", "=", "llama_factory")], limit=1)
+            component = self.env["crose.component"].search([("component_type", "=", "ai")], limit=1)
         if not component:
-            raise exceptions.ValidationError(_("No LLaMA-Factory component was found. Please configure it in System Components."))
+            raise exceptions.ValidationError(_("No AI gateway component was found. Please configure component type AI in System Components."))
         return component
 
     def _get_ai_dataset_root(self):
@@ -269,12 +274,13 @@ class FtsAiTraining(models.Model):
             )
 
     def _to_chatml_item(self, message):
+        messages = []
+        if message.system:
+            messages.append({"role": "system", "content": message.system})
+        messages.append({"role": "user", "content": message.user or ""})
+        messages.append({"role": "assistant", "content": message.assistant or ""})
         return {
-            "messages": [
-                {"role": "system", "content": message.system or ""},
-                {"role": "user", "content": message.user or ""},
-                {"role": "assistant", "content": message.assistant or ""},
-            ]
+            "messages": messages,
         }
 
     def _collect_dataset_messages(self):
@@ -306,7 +312,18 @@ class FtsAiTraining(models.Model):
                     info_data = json.load(info_fp) or {}
             except Exception:
                 info_data = {}
-        info_data[dataset_key] = {"file_name": dataset_filename, "formatting": "sharegpt"}
+        info_data[dataset_key] = {
+            "file_name": dataset_filename,
+            "formatting": "openai",
+            "columns": {"messages": "messages"},
+            "tags": {
+                "role_tag": "role",
+                "content_tag": "content",
+                "user_tag": "user",
+                "assistant_tag": "assistant",
+                "system_tag": "system",
+            },
+        }
         tmp_info_path = f"{info_path}.tmp"
         with open(tmp_info_path, "w", encoding="utf-8") as info_fp:
             json.dump(info_data, info_fp, ensure_ascii=False, indent=2)
@@ -328,7 +345,30 @@ class FtsAiTraining(models.Model):
             return endpoint.format(job_id=self.external_job_id)
         return f"{endpoint.rstrip('/')}/{self.external_job_id}"
 
+    def _get_gateway_endpoint(self, component, metadata_key):
+        try:
+            return component._resolve_metadata_endpoint(metadata_key)
+        except Exception as error:
+            raise exceptions.ValidationError(_("Failed to resolve gateway endpoint (%(key)s): %(error)s", key=metadata_key, error=str(error)))
+
+    def _build_model_alias(self):
+        self.ensure_one()
+        alias = re.sub(r"[^a-zA-Z0-9_]+", "_", self.name or "").strip("_")
+        if not alias:
+            alias = "training_model"
+        return f"{alias}_{self.id}"
+
+    def _to_vllm_adapter_path(self):
+        self.ensure_one()
+        source = (self.output_path or "").strip()
+        if not source:
+            raise exceptions.ValidationError(_("Output path is empty. Please run training first."))
+        if source.startswith("/app/output/"):
+            return source.replace("/app/output/", "/app/lora_adapters/", 1)
+        return source
+
     def _build_training_yaml(self):
+        model_ref = self._resolve_training_model_reference()
         quantization_bit = ""
         if self.quantization == "4bit":
             quantization_bit = "4"
@@ -337,7 +377,7 @@ class FtsAiTraining(models.Model):
         lines = [
             "stage: sft",
             "do_train: true",
-            f"model_name_or_path: {self.base_model_id.name}",
+            f"model_name_or_path: {model_ref}",
             f"dataset: {self.dataset_key}",
             "dataset_dir: /app/data",
             "template: qwen",
@@ -362,6 +402,32 @@ class FtsAiTraining(models.Model):
             ]
         )
         return "\n".join(lines)
+
+    def _resolve_training_model_reference(self):
+        self.ensure_one()
+        model_ref = (self.base_model_id.name or "").strip()
+        if not model_ref:
+            raise exceptions.ValidationError(_("Base model identifier is required."))
+        normalized_model_ref = model_ref.lower()
+        if model_ref.isdigit():
+            raise exceptions.ValidationError(
+                _(
+                    "Base model '%(model)s' is invalid. "
+                    "Please use a valid Hugging Face model id (for example: Qwen/Qwen2-1.5B-Instruct) "
+                    "or a local path that exists inside crose-ai-train container.",
+                    model=model_ref,
+                )
+            )
+        if "awq" in normalized_model_ref:
+            raise exceptions.ValidationError(
+                _(
+                    "Base model '%(model)s' appears to be an AWQ quantized model. "
+                    "Current training pipeline requires a non-AWQ base model "
+                    "(for example: Qwen/Qwen2-1.5B-Instruct).",
+                    model=model_ref,
+                )
+            )
+        return model_ref
 
     def _apply_remote_status(self, payload):
         self.ensure_one()
@@ -425,7 +491,7 @@ class FtsAiTraining(models.Model):
                 "error_message": False,
             }
         )
-        component = self._get_llama_factory_component()
+        component = self._get_training_gateway_component()
         endpoint = self._get_training_api_endpoint(component)
         yaml_text = self._build_training_yaml()
         try:
@@ -455,7 +521,7 @@ class FtsAiTraining(models.Model):
             "tag": "display_notification",
             "params": {
                 "title": _("Training Started"),
-                "message": _("Training request has been sent to LLaMA-Factory, and dataset has been prepared."),
+                "message": _("Training request has been sent to AI gateway, and dataset has been prepared."),
                 "type": "success",
                 "sticky": False,
             },
@@ -465,7 +531,7 @@ class FtsAiTraining(models.Model):
         for record in self:
             if not record.external_job_id:
                 continue
-            component = record._get_llama_factory_component()
+            component = record._get_training_gateway_component()
             endpoint = record._get_training_status_endpoint(component)
             try:
                 response = requests.get(endpoint, timeout=15)
@@ -477,3 +543,146 @@ class FtsAiTraining(models.Model):
                 record._apply_remote_status(payload)
             except Exception as error:
                 record.write({"last_heartbeat": fields.Datetime.now(), "error_message": str(error)})
+
+    def action_load_model(self):
+        for record in self:
+            if record.state != "completed":
+                raise exceptions.ValidationError(_("Training must be completed before loading the model."))
+            component = record._get_training_gateway_component()
+            endpoint = record._get_gateway_endpoint(component, "load_adapter_api_path")
+            alias = record.loaded_model_name or record._build_model_alias()
+            adapter_path = record._to_vllm_adapter_path()
+            payload = {
+                "model": record._resolve_training_model_reference(),
+                "adapter_name": alias,
+                "adapter_path": adapter_path,
+            }
+            try:
+                response = requests.post(endpoint, json=payload, timeout=30)
+                response.raise_for_status()
+                body = response.json() if response.text else {}
+            except Exception as error:
+                raise exceptions.ValidationError(_("Failed to load model adapter: %(error)s", error=str(error)))
+            record.write(
+                {
+                    "loaded_model_name": alias,
+                    "loaded_model_path": adapter_path,
+                    "is_model_loaded": True,
+                    "error_message": False,
+                }
+            )
+            record.message_post(
+                body=_(
+                    "Model adapter loaded.\nAlias: %(alias)s\nPath: %(path)s\nGateway response: %(response)s",
+                    alias=alias,
+                    path=adapter_path,
+                    response=json.dumps(body, ensure_ascii=False) if isinstance(body, dict) else str(body),
+                )
+            )
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": _("Model Loaded"),
+                "message": _("The trained model adapter has been loaded into vLLM through AI gateway."),
+                "type": "success",
+                "sticky": False,
+            },
+        }
+
+    def action_unload_model(self):
+        for record in self:
+            if not record.loaded_model_name:
+                raise exceptions.ValidationError(_("No loaded model alias was found for this training task."))
+            component = record._get_training_gateway_component()
+            endpoint = record._get_gateway_endpoint(component, "unload_adapter_api_path")
+            payload = {
+                "adapter_name": record.loaded_model_name,
+            }
+            try:
+                response = requests.post(endpoint, json=payload, timeout=30)
+                response.raise_for_status()
+                body = response.json() if response.text else {}
+            except Exception as error:
+                raise exceptions.ValidationError(_("Failed to unload model adapter: %(error)s", error=str(error)))
+            record.write(
+                {
+                    "is_model_loaded": False,
+                    "error_message": False,
+                }
+            )
+            record.message_post(
+                body=_(
+                    "Model adapter unloaded.\nAlias: %(alias)s\nGateway response: %(response)s",
+                    alias=record.loaded_model_name,
+                    response=json.dumps(body, ensure_ascii=False) if isinstance(body, dict) else str(body),
+                )
+            )
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": _("Model Unloaded"),
+                "message": _("The model adapter has been unloaded from vLLM through AI gateway."),
+                "type": "success",
+                "sticky": False,
+            },
+        }
+
+    def action_infer(self):
+        fixed_system_prompt = "你是 CRose 平台的 AI 助手，请基于当前训练模型给出简洁、可执行的回复。"
+        fixed_user_prompt = "请介绍你最擅长的任务类型，并给出一个用于数据模型转流程的示例回答。"
+        for record in self:
+            if not record.is_model_loaded or not record.loaded_model_name:
+                raise exceptions.ValidationError(_("Please load the model first."))
+            component = record._get_training_gateway_component()
+            endpoint = record._get_gateway_endpoint(component, "infer_api_path")
+            payload = {
+                "model": record.loaded_model_name,
+                "messages": [
+                    {"role": "system", "content": fixed_system_prompt},
+                    {"role": "user", "content": fixed_user_prompt},
+                ],
+                "temperature": 0.1,
+                "max_tokens": 512,
+            }
+            try:
+                response = requests.post(endpoint, json=payload, timeout=60)
+                response.raise_for_status()
+                data = response.json() if response.text else {}
+            except Exception as error:
+                raise exceptions.ValidationError(_("Inference failed: %(error)s", error=str(error)))
+            content_text = ""
+            if isinstance(data, dict):
+                choices = data.get("choices")
+                if isinstance(choices, list) and choices:
+                    first_choice = choices[0] if isinstance(choices[0], dict) else {}
+                    message = first_choice.get("message") if isinstance(first_choice, dict) else {}
+                    if isinstance(message, dict):
+                        content_text = message.get("content") or ""
+            if not content_text:
+                content_text = json.dumps(data, ensure_ascii=False) if isinstance(data, dict) else str(data)
+            record.write(
+                {
+                    "last_inference_at": fields.Datetime.now(),
+                    "last_inference_reply": content_text,
+                }
+            )
+            record.message_post(
+                body=_(
+                    "Inference with model %(model)s\nPrompt: %(prompt)s\nReply: %(reply)s",
+                    model=record.loaded_model_name,
+                    prompt=fixed_user_prompt,
+                    reply=content_text,
+                )
+            )
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": _("Inference Complete"),
+                "message": _("Inference result has been posted to chatter."),
+                "type": "success",
+                "sticky": False,
+            },
+        }

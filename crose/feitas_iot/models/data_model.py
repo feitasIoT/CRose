@@ -74,6 +74,7 @@ class DataModel(models.Model):
     log_ids = fields.One2many('fts.data.log', 'model_id', string='Logs')
     address_ids = fields.One2many('fts.data.address', 'model_id', string='Addresses')
     data_structure = fields.Text(string='Data Structure', required=True)
+    ai_model_name = fields.Char(string='AI Model', help='Model alias used by AI Flow inference, usually a loaded LoRA alias in vLLM.')
     state = fields.Selection([
         ('draft', 'Draft'),
         ('approval', 'Approval'),
@@ -458,18 +459,14 @@ class DataModel(models.Model):
                 metadata = json.loads(component.metadata)
         if not isinstance(metadata, dict):
             metadata = {}
-        host = (component.host or "").strip()
-        port = component.port
-        path = str(metadata.get("chat_completions_path") or "").strip()
-        if not host or not port:
-            raise ValidationError(_("vLLM component must provide host and port."))
-        if not path:
-            raise ValidationError(_("vLLM component metadata must provide chat_completions_path."))
-        if not path.startswith("/"):
-            path = f"/{path}"
-        endpoint = f"http://{host}:{port}{path}"
+        try:
+            endpoint = component._resolve_metadata_endpoint("chat_completions_path")
+        except Exception as error:
+            raise ValidationError(_("vLLM component metadata must provide chat_completions_path. Error: %(error)s", error=str(error)))
 
-        model_name = str(metadata.get("model_name") or "Qwen/Qwen2-1.5B-Instruct-AWQ").strip() or "Qwen/Qwen2-1.5B-Instruct-AWQ"
+        model_name = (self.ai_model_name or "").strip()
+        if not model_name:
+            raise ValidationError(_("Please set AI Model before running AI Flow."))
         temperature = metadata.get("temperature", 0.1)
         with contextlib.suppress(Exception):
             temperature = float(temperature)

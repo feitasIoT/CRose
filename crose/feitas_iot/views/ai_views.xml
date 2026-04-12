@@ -218,6 +218,7 @@
                     <field name="dataset_ids" widget="many2many_tags"/>
                     <field name="base_model_id"/>
                     <field name="state"/>
+                    <field name="is_model_loaded"/>
                     <field name="progress_pct" widget="progressbar"/>
                     <field name="epochs"/>
                     <field name="quantization"/>
@@ -255,6 +256,9 @@
                     <header>
                         <button name="action_start_training" string="Start Training" type="object" class="btn-primary" invisible="state not in ['draft','failed','cancelled','completed']"/>
                         <button name="action_refresh_training_status" string="Refresh Status" type="object" invisible="not external_job_id"/>
+                        <button name="action_load_model" string="Load Model" type="object" class="btn-secondary" invisible="state != 'completed' or is_model_loaded"/>
+                        <button name="action_unload_model" string="Unload Model" type="object" class="btn-secondary" invisible="not is_model_loaded"/>
+                        <button name="action_infer" string="Infer" type="object" class="btn-secondary" invisible="not is_model_loaded"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,pending,queued,preparing,training,running,completed,failed,cancelled"/>
                     </header>
                     <sheet>
@@ -296,11 +300,18 @@
                                 <field name="dataset_key" readonly="1"/>
                                 <field name="dataset_file_path" readonly="1"/>
                                 <field name="output_path" readonly="1"/>
+                                <field name="loaded_model_name" readonly="1"/>
+                                <field name="loaded_model_path" readonly="1"/>
+                                <field name="is_model_loaded" readonly="1"/>
+                                <field name="last_inference_at" readonly="1"/>
                             </group>
                         </group>
                         <group>
                             <field name="error_message" readonly="1"/>
                             <field name="log_tail" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="last_inference_reply" readonly="1"/>
                         </group>
                     </sheet>
                     <chatter />
@@ -311,4 +322,3 @@
 
     </data>
 </odoo>
-

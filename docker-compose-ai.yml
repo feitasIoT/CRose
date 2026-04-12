@@ -5,6 +5,7 @@ services:
     runtime: nvidia
     environment:
       - CUDA_VISIBLE_DEVICES=0
+      - VLLM_ALLOW_RUNTIME_LORA_UPDATING=True
     ports:
       - "8002:8000"
     volumes:
@@ -15,7 +16,7 @@ services:
       --model Qwen/Qwen2-1.5B-Instruct-AWQ
       --quantization awq
       --enable-lora
-      --max-loras 5
+      --max-loras 2
       --max-lora-rank 64
       --gpu-memory-utilization 0.6
       --max-model-len 1024
@@ -36,6 +37,7 @@ services:
     runtime: nvidia
     environment:
       - CUDA_VISIBLE_DEVICES=0
+      - HF_TOKEN=${HF_TOKEN}
     ports:
       - "8001:8000"
     volumes:

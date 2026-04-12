@@ -5,11 +5,11 @@ aidev/*
 
 data/crose/data/*
 data/db/data/*
-data/nodered/data/*
-data/nodered-staging/*
+data/nas/srv/*
 data/redis/data/*
 data/verdaccio/production/storage/*
 data/verdaccio/staging/storage/*
+config/ai/generated/*
 
 #crose/.gitignore
 
