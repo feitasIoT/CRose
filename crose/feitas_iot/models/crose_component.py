@@ -33,7 +33,6 @@ class CroseComponent(models.Model):
     ], string="Status", default='offline', readonly=True)
     host = fields.Char(string="Host")
     port = fields.Integer(string="Port")
-    url = fields.Char(string="URL")
     metadata = fields.Text(string="Metadata")
     account_ids = fields.One2many("crose.component.account", "component_id", string="Accounts")
     last_check_time = fields.Datetime(string="Last Check Time", readonly=True)
@@ -46,20 +45,20 @@ class CroseComponent(models.Model):
             return
 
         defaults = {
-            'mqtt': {'metrics_port': 8082, 'tcp_port': 1883, 'ws_port': 8083},
+            'mqtt': {'metrics_port': 8082, 'metrics_endpoint': '/metrics', 'tcp_port': 1883, 'ws_port': 8083},
             'iotdb': {'dn_rpc_port': 6667, 'dn_internal_port': 10730},
             'ai': {'health_endpoint': '/health'},
-            'llama_factory': {'health_endpoint': '/health'},
+            'llama_factory': {'health_endpoint': '/health', 'train_api_path': '/v1/train', 'train_status_api_path': '/v1/train/{job_id}'},
             'vllm': {'health_endpoint': '/v1/models'},
             'npm': {'registry_url': 'http://verdaccio-staging:4873'},
             'redis': {'db': 0},
-            'nodered': {'admin_path': '/admin'}
+            'nodered': {'admin_path': '/admin', 'health_endpoint': '/'}
         }
 
         port_defaults = {
             'mqtt': 1883,
             'iotdb': 6667,
-            'llama_factory': 7860,
+            'llama_factory': 8000,
             'vllm': 8000,
             'npm': 4873,
             'redis': 6379,
@@ -71,7 +70,7 @@ class CroseComponent(models.Model):
             'mqtt': 'gmqtt',
             'iotdb': 'iotdb',
             'ai': 'crose-ai',
-            'llama_factory': 'llama-factory',
+            'llama_factory': 'crose-ai-train',
             'vllm': 'crose-vllm',
             'npm': 'verdaccio-staging',
             'nodered': 'nodered'
@@ -86,17 +85,36 @@ class CroseComponent(models.Model):
         if self.component_type in host_defaults and not self.host:
             self.host = host_defaults[self.component_type]
 
-        if not self.url:
-            if self.component_type == 'npm':
-                self.url = f"http://{host_defaults.get('npm')}:{port_defaults.get('npm')}"
-            elif self.component_type == 'nodered':
-                self.url = f"http://{host_defaults.get('nodered')}:{port_defaults.get('nodered')}"
-            elif self.component_type == 'ai':
-                self.url = f"http://{host_defaults.get('ai')}:8000/health"
-            elif self.component_type == 'llama_factory':
-                self.url = f"http://{host_defaults.get('llama_factory')}:{port_defaults.get('llama_factory')}/health"
-            elif self.component_type == 'vllm':
-                self.url = f"http://{host_defaults.get('vllm')}:{port_defaults.get('vllm')}/v1/models"
+    def _metadata_dict(self):
+        self.ensure_one()
+        if not self.metadata:
+            return {}
+        try:
+            parsed = json.loads(self.metadata)
+        except Exception:
+            return {}
+        return parsed if isinstance(parsed, dict) else {}
+
+    def _build_component_base_url(self):
+        self.ensure_one()
+        host = (self.host or "").strip()
+        port = self.port
+        if not host or not port:
+            raise ValueError(_("Component host and port are required."))
+        return f"http://{host}:{port}"
+
+    def _resolve_metadata_endpoint(self, key_name):
+        self.ensure_one()
+        metadata_dict = self._metadata_dict()
+        raw_value = str(metadata_dict.get(key_name) or "").strip()
+        if not raw_value:
+            raise ValueError(_("Metadata key %(key)s is empty.", key=key_name))
+        lower_value = raw_value.lower()
+        if lower_value.startswith("http://") or lower_value.startswith("https://"):
+            return raw_value
+        if not raw_value.startswith("/"):
+            raw_value = f"/{raw_value}"
+        return f"{self._build_component_base_url()}{raw_value}"
 
     def action_check_status(self):
         for component in self:
@@ -188,9 +206,13 @@ class CroseComponent(models.Model):
                     metadata_dict = json.loads(self.metadata)
                 except json.JSONDecodeError:
                     pass
-            metrics_port = metadata_dict.get('metrics_port', 8082)
-            url = f"http://{self.host}:{metrics_port}/metrics"
-            response = requests.get(url, timeout=5)
+            metrics_endpoint = str(metadata_dict.get("metrics_endpoint") or "").strip()
+            if metrics_endpoint:
+                endpoint = self._resolve_metadata_endpoint("metrics_endpoint")
+            else:
+                metrics_port = int(metadata_dict.get("metrics_port") or 8082)
+                endpoint = f"http://{(self.host or '').strip()}:{metrics_port}/metrics"
+            response = requests.get(endpoint, timeout=5)
             if response.status_code == 200:
                 self.write({'status': 'online', 'last_check_time': fields.Datetime.now(), 'error_reason': False})
             else:
@@ -219,9 +241,8 @@ class CroseComponent(models.Model):
 
     def _check_status_ai(self):
         try:
-            if not self.url:
-                raise ValueError(_("AI service URL is not configured."))
-            response = requests.get(self.url, timeout=5)
+            endpoint = self._resolve_metadata_endpoint("health_endpoint")
+            response = requests.get(endpoint, timeout=5)
             if response.status_code == 200:
                 self.write({'status': 'online', 'last_check_time': fields.Datetime.now(), 'error_reason': False})
             else:
@@ -239,21 +260,8 @@ class CroseComponent(models.Model):
 
     def _check_status_llama_factory(self):
         try:
-            url = (self.url or "").strip()
-            metadata_dict = {}
-            if self.metadata:
-                try:
-                    metadata_dict = json.loads(self.metadata)
-                except Exception:
-                    metadata_dict = {}
-            health_endpoint = (metadata_dict.get("health_endpoint") or "/health").strip() or "/health"
-            if not url:
-                host = (self.host or "llama-factory").strip()
-                port = self.port or 7860
-                if not health_endpoint.startswith("/"):
-                    health_endpoint = f"/{health_endpoint}"
-                url = f"http://{host}:{port}{health_endpoint}"
-            response = requests.get(url, timeout=5)
+            endpoint = self._resolve_metadata_endpoint("health_endpoint")
+            response = requests.get(endpoint, timeout=5)
             if response.status_code == 200:
                 self.write({'status': 'online', 'last_check_time': fields.Datetime.now(), 'error_reason': False})
             else:
@@ -271,21 +279,8 @@ class CroseComponent(models.Model):
 
     def _check_status_vllm(self):
         try:
-            url = (self.url or "").strip()
-            metadata_dict = {}
-            if self.metadata:
-                try:
-                    metadata_dict = json.loads(self.metadata)
-                except Exception:
-                    metadata_dict = {}
-            health_endpoint = (metadata_dict.get("health_endpoint") or "/v1/models").strip() or "/v1/models"
-            if not url:
-                host = (self.host or "crose-vllm").strip()
-                port = self.port or 8000
-                if not health_endpoint.startswith("/"):
-                    health_endpoint = f"/{health_endpoint}"
-                url = f"http://{host}:{port}{health_endpoint}"
-            response = requests.get(url, timeout=8)
+            endpoint = self._resolve_metadata_endpoint("health_endpoint")
+            response = requests.get(endpoint, timeout=8)
             if response.status_code == 200:
                 self.write({'status': 'online', 'last_check_time': fields.Datetime.now(), 'error_reason': False})
             else:
@@ -303,9 +298,8 @@ class CroseComponent(models.Model):
 
     def _check_status_npm(self):
         try:
-            if not self.url:
-                raise ValueError(_("NPM registry URL is not configured."))
-            response = requests.get(self.url, timeout=5)
+            endpoint = self._resolve_metadata_endpoint("registry_url")
+            response = requests.get(endpoint, timeout=5)
             if response.status_code == 200:
                 self.write({'status': 'online', 'last_check_time': fields.Datetime.now(), 'error_reason': False})
             else:
@@ -342,9 +336,8 @@ class CroseComponent(models.Model):
 
     def _check_status_nodered(self):
         try:
-            if not self.url:
-                raise ValueError(_("Node-RED URL is not configured."))
-            response = requests.get(self.url, timeout=5)
+            endpoint = self._resolve_metadata_endpoint("health_endpoint")
+            response = requests.get(endpoint, timeout=5)
             if response.status_code == 200:
                 self.write({'status': 'online', 'last_check_time': fields.Datetime.now(), 'error_reason': False})
             else:

@@ -7,6 +7,13 @@
         <field name="padding">5</field>
         <field name="company_id" eval="False"/>
     </record>
+    <record id="seq_fts_ai_dataset_message" model="ir.sequence">
+        <field name="name">AI Dataset Message Sequence</field>
+        <field name="code">fts.ai.dataset.message</field>
+        <field name="prefix">AIM</field>
+        <field name="padding">6</field>
+        <field name="company_id" eval="False"/>
+    </record>
    
 
     <!-- System components -->
@@ -15,8 +22,7 @@
         <field name="component_type">mqtt</field>
         <field name="host">gmqtt</field>
         <field name="port">8082</field>
-        <field name="url"></field>
-        <field name="metadata">{"metrics_port": 8082,"tcp_port": 1883,"ws_port": 8083}</field>
+        <field name="metadata">{"metrics_port": 8082,"metrics_endpoint": "/metrics","tcp_port": 1883,"ws_port": 8083}</field>
     </record>
 
     <record id="component_nodered" model="crose.component">
@@ -24,8 +30,7 @@
         <field name="component_type">nodered</field>
         <field name="host">nodered-prod</field>
         <field name="port">1880</field>
-        <field name="url">http://nodered-prod:1880</field>
-        <field name="metadata">{"admin_path": "/admin"}</field>
+        <field name="metadata">{"admin_path": "/admin", "health_endpoint": "/"}</field>
     </record>
 
     <record id="component_nodered_staging" model="crose.component">
@@ -33,8 +38,7 @@
         <field name="component_type">nodered</field>
         <field name="host">nodered-staging</field>
         <field name="port">1880</field>
-        <field name="url">http://nodered-staging:1880</field>
-        <field name="metadata">{"admin_path": "/admin"}</field>
+        <field name="metadata">{"admin_path": "/admin", "health_endpoint": "/"}</field>
     </record>
 
     <record id="component_iotdb" model="crose.component">
@@ -42,7 +46,6 @@
         <field name="component_type">iotdb</field>
         <field name="host">iotdb</field>
         <field name="port">6667</field>
-        <field name="url"></field>
         <field name="metadata">{"dn_rpc_port": 6667,"dn_internal_port": 10730}</field>
     </record>
 
@@ -74,8 +77,7 @@
         <field name="component_type">ai</field>
         <field name="host">crose-ai</field>
         <field name="port">8000</field>
-        <field name="url">http://crose-ai:8000/health</field>
-        <field name="metadata"></field>
+        <field name="metadata">{"health_endpoint": "/health", "embed_endpoint": "/embed"}</field>
     </record>
 
     <record id="component_registry_stage" model="crose.component">
@@ -83,8 +85,7 @@
         <field name="component_type">npm</field>
         <field name="host">verdaccio-staging</field>
         <field name="port">4873</field>
-        <field name="url">http://verdaccio-staging:4873</field>
-        <field name="metadata"></field>
+        <field name="metadata">{"registry_url": "/"}</field>
     </record>
 
     <record id="component_registr_prod" model="crose.component">
@@ -92,8 +93,7 @@
         <field name="component_type">npm</field>
         <field name="host">verdaccio-prod</field>
         <field name="port">4873</field>
-        <field name="url">http://verdaccio-prod:4873</field>
-        <field name="metadata"></field>
+        <field name="metadata">{"registry_url": "/"}</field>
     </record>
 
     <record id="component_redis" model="crose.component">
@@ -101,7 +101,6 @@
         <field name="component_type">redis</field>
         <field name="host">redis</field>
         <field name="port">6379</field>
-        <field name="url"></field>
         <field name="metadata">{"db": 0}</field>
     </record>
 
@@ -110,17 +109,15 @@
         <field name="component_type">nas</field>
         <field name="host">crose-nas</field>
         <field name="port">80</field>
-        <field name="url"></field>
         <field name="metadata">{}</field>
     </record>
 
     <record id="component_llama_factory" model="crose.component">
         <field name="name">LLama Factory</field>
         <field name="component_type">llama_factory</field>
-        <field name="host">crose-ai-engine</field>
+        <field name="host">crose-ai-train</field>
         <field name="port">8000</field>
-        <field name="url">http://crose-ai-engine:8000/health</field>
-        <field name="metadata">{}</field>
+        <field name="metadata">{"health_endpoint": "/health", "train_api_path": "/v1/train", "train_status_api_path": "/v1/train/{job_id}"}</field>
     </record>
 
     <record id="component_vllm" model="crose.component">
@@ -128,7 +125,6 @@
         <field name="component_type">vllm</field>
         <field name="host">crose-vllm</field>
         <field name="port">8000</field>
-        <field name="url">http://crose-vllm:8000/v1/models</field>
         <field name="metadata">{"health_endpoint": "/v1/models", "chat_completions_path": "/v1/chat/completions", "model_name": "Qwen/Qwen2-1.5B-Instruct-AWQ", "temperature": 0.1}</field>
     </record>
 

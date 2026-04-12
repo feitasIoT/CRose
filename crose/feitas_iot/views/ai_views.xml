@@ -54,7 +54,20 @@
             <field name="arch" type="xml">
                 <list string="Datasets">
                     <field name="name"/>
+                    <field name="message_count"/>
+                    <field name="category_ratio"/>
                 </list>
+            </field>
+        </record>
+
+        <record id="view_fts_ai_dataset_search" model="ir.ui.view">
+            <field name="name">fts.ai.dataset.search</field>
+            <field name="model">fts.ai.dataset</field>
+            <field name="arch" type="xml">
+                <search string="Datasets">
+                    <field name="name"/>
+                    <field name="dataset_message_ids"/>
+                </search>
             </field>
         </record>
 
@@ -66,8 +79,132 @@
                     <sheet>
                         <group>
                             <field name="name"/>
+                            <field name="message_count" readonly="1"/>
+                            <field name="category_ratio" readonly="1"/>
+                        </group>
+                        <notebook>
+                            <page string="Atomic Messages">
+                                <field name="dataset_message_ids" widget="many2many_tags" options="{'no_create': False}"/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <chatter />
+                </form>
+            </field>
+        </record>
+
+        <record id="view_fts_ai_category_list" model="ir.ui.view">
+            <field name="name">fts.ai.category.list</field>
+            <field name="model">fts.ai.category</field>
+            <field name="arch" type="xml">
+                <list string="AI Categories">
+                    <field name="name"/>
+                    <field name="active"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_fts_ai_category_form" model="ir.ui.view">
+            <field name="name">fts.ai.category.form</field>
+            <field name="model">fts.ai.category</field>
+            <field name="arch" type="xml">
+                <form string="AI Category">
+                    <sheet>
+                        <group>
+                            <field name="name"/>
+                            <field name="active"/>
+                            <field name="color"/>
                         </group>
                     </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_fts_ai_prompt_list" model="ir.ui.view">
+            <field name="name">fts.ai.prompt.list</field>
+            <field name="model">fts.ai.prompt</field>
+            <field name="arch" type="xml">
+                <list string="AI Prompts">
+                    <field name="name"/>
+                    <field name="category_ids" widget="many2many_tags"/>
+                    <field name="is_template" widget="boolean_toggle"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_fts_ai_prompt_form" model="ir.ui.view">
+            <field name="name">fts.ai.prompt.form</field>
+            <field name="model">fts.ai.prompt</field>
+            <field name="arch" type="xml">
+                <form string="AI Prompt">
+                    <sheet>
+                        <group>
+                            <field name="name"/>
+                            <field name="is_template"/>
+                            <field name="category_ids" widget="many2many_tags"/>
+                        </group>
+                        <group>
+                            <field name="content" nolabel="1"/>
+                        </group>
+                    </sheet>
+                    <chatter />
+                </form>
+            </field>
+        </record>
+
+        <record id="view_fts_ai_dataset_message_list" model="ir.ui.view">
+            <field name="name">fts.ai.dataset.message.list</field>
+            <field name="model">fts.ai.dataset.message</field>
+            <field name="arch" type="xml">
+                <list string="Atomic Messages">
+                    <field name="name"/>
+                    <field name="format"/>
+                    <field name="primary_category_id"/>
+                    <field name="category_ids" widget="many2many_tags"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_fts_ai_dataset_message_search" model="ir.ui.view">
+            <field name="name">fts.ai.dataset.message.search</field>
+            <field name="model">fts.ai.dataset.message</field>
+            <field name="arch" type="xml">
+                <search string="Atomic Messages">
+                    <field name="name"/>
+                    <field name="format"/>
+                    <field name="category_ids"/>
+                    <group>
+                        <filter string="Primary Category" name="group_by_primary_category" context="{'group_by': 'primary_category_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_fts_ai_dataset_message_form" model="ir.ui.view">
+            <field name="name">fts.ai.dataset.message.form</field>
+            <field name="model">fts.ai.dataset.message</field>
+            <field name="arch" type="xml">
+                <form string="Atomic Message">
+                    <sheet>
+                        <group>
+                            <field name="name" readonly="1"/>
+                            <field name="format"/>
+                            <field name="category_ids" widget="many2many_tags"/>
+                            <field name="primary_category_id" readonly="1"/>
+                        </group>
+                        <notebook>
+                            <page string="System">
+                                <field name="system" nolabel="1"/>
+                            </page>
+                            <page string="User">
+                                <field name="user" nolabel="1"/>
+                            </page>
+                            <page string="Assistant">
+                                <field name="assistant" nolabel="1"/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <chatter />
                 </form>
             </field>
         </record>
@@ -78,7 +215,35 @@
             <field name="arch" type="xml">
                 <list string="Model Training">
                     <field name="name"/>
+                    <field name="dataset_ids" widget="many2many_tags"/>
+                    <field name="base_model_id"/>
+                    <field name="state"/>
+                    <field name="progress_pct" widget="progressbar"/>
+                    <field name="epochs"/>
+                    <field name="quantization"/>
+                    <field name="batch_size"/>
+                    <field name="learning_rate"/>
+                    <field name="adapter_type"/>
                 </list>
+            </field>
+        </record>
+
+        <record id="view_fts_ai_training_search" model="ir.ui.view">
+            <field name="name">fts.ai.training.search</field>
+            <field name="model">fts.ai.training</field>
+            <field name="arch" type="xml">
+                <search string="Model Training">
+                    <field name="name"/>
+                    <field name="dataset_ids"/>
+                    <field name="base_model_id"/>
+                    <field name="quantization"/>
+                    <field name="adapter_type"/>
+                    <field name="external_job_id"/>
+                    <group>
+                        <filter string="Base Model" name="group_by_base_model" context="{'group_by': 'base_model_id'}"/>
+                        <filter string="State" name="group_by_state" context="{'group_by': 'state'}"/>
+                    </group>
+                </search>
             </field>
         </record>
 
@@ -87,14 +252,63 @@
             <field name="model">fts.ai.training</field>
             <field name="arch" type="xml">
                 <form string="Model Training">
+                    <header>
+                        <button name="action_start_training" string="Start Training" type="object" class="btn-primary" invisible="state not in ['draft','failed','cancelled','completed']"/>
+                        <button name="action_refresh_training_status" string="Refresh Status" type="object" invisible="not external_job_id"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,pending,queued,preparing,training,running,completed,failed,cancelled"/>
+                    </header>
                     <sheet>
                         <group>
-                            <field name="name"/>
+                            <field name="progress_pct" widget="progressbar" readonly="1"/>
+                            <field name="external_job_id" readonly="1"/>
+                            <field name="last_heartbeat" readonly="1"/>
+                        </group>
+                        <group>
+                            <group string="Core">
+                                <field name="name"/>
+                                <field name="dataset_ids" widget="many2many_tags"/>
+                                <field name="base_model_id"/>
+                                <field name="epochs"/>
+                            </group>
+                            <group string="Performance">
+                                <field name="quantization"/>
+                                <field name="batch_size"/>
+                                <field name="gradient_accumulation_steps"/>
+                                <field name="learning_rate"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group string="Fine-tuning">
+                                <field name="adapter_type"/>
+                                <field name="lora_rank"/>
+                                <field name="lora_alpha"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group string="Progress">
+                                <field name="current_epoch" readonly="1"/>
+                                <field name="total_epoch" readonly="1"/>
+                                <field name="current_step" readonly="1"/>
+                                <field name="total_step" readonly="1"/>
+                                <field name="eta_seconds" readonly="1"/>
+                            </group>
+                            <group string="Artifacts">
+                                <field name="dataset_key" readonly="1"/>
+                                <field name="dataset_file_path" readonly="1"/>
+                                <field name="output_path" readonly="1"/>
+                            </group>
+                        </group>
+                        <group>
+                            <field name="error_message" readonly="1"/>
+                            <field name="log_tail" readonly="1"/>
                         </group>
                     </sheet>
+                    <chatter />
                 </form>
             </field>
         </record>
+
+
     </data>
 </odoo>
 

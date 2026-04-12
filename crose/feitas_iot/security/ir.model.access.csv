@@ -11,6 +11,9 @@ access_fts_data_app,fts.data.app,model_fts_data_app,base.group_user,1,1,1,1
 access_fts_mqtt_topic,fts.mqtt.topic,model_fts_mqtt_topic,base.group_user,1,1,1,1
 access_fts_ai_model,fts.ai.model,model_fts_ai_model,base.group_user,1,1,1,1
 access_fts_ai_dataset,fts.ai.dataset,model_fts_ai_dataset,base.group_user,1,1,1,1
+access_fts_ai_dataset_message,fts.ai.dataset.message,model_fts_ai_dataset_message,base.group_user,1,1,1,1
+access_fts_ai_prompt,fts.ai.prompt,model_fts_ai_prompt,base.group_user,1,1,1,1
+access_fts_ai_category,fts.ai.category,model_fts_ai_category,base.group_user,1,1,1,1
 access_fts_ai_training,fts.ai.training,model_fts_ai_training,base.group_user,1,1,1,1
 access_instance_flow_line,instance.flow.line,model_instance_flow_line,base.group_user,1,1,1,1
 access_agent_flow_line,agent.flow.line,model_agent_flow_line,base.group_user,1,1,1,1

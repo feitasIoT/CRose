@@ -1,6 +1,7 @@
 import json
 
 from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError
 
 
 class FtsNrFlow(models.Model):
@@ -84,6 +85,55 @@ class FtsNrFlow(models.Model):
             }
             return res
         return {}
+
+    def _build_atomic_user_text(self):
+        self.ensure_one()
+        lines = [
+            f"Flow Name: {self.name or ''}",
+            f"Flow ID: {self.nr_id or ''}",
+            f"Flow Type: {self.type or ''}",
+            "",
+            "Flow Prompt:",
+            self.prompt or "",
+            "",
+            "Flow Description:",
+            self.description or "",
+        ]
+        return "\n".join(lines).strip()
+
+    def _build_atomic_assistant_text(self):
+        self.ensure_one()
+        return self.content or ""
+
+    def action_convert_to_atomic_messages(self):
+        Prompt = self.env["fts.ai.prompt"]
+        Message = self.env["fts.ai.dataset.message"]
+        templates = Prompt.search([("is_template", "=", True)])
+        if not templates:
+            raise ValidationError(_("No template prompts were found. Please create at least one prompt with Template Prompt enabled."))
+        created = Message.browse()
+        for flow in self:
+            user_text = flow._build_atomic_user_text()
+            assistant_text = flow._build_atomic_assistant_text()
+            for prompt in templates:
+                values = {
+                    "format": "ChatML",
+                    "system": prompt.content or "",
+                    "user": user_text,
+                    "assistant": assistant_text,
+                    "category_ids": [(6, 0, prompt.category_ids.ids)],
+                }
+                created |= Message.create(values)
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": _("Atomic Messages Created"),
+                "message": _("%(count)s atomic messages were created from %(flow_count)s flows.", count=len(created), flow_count=len(self)),
+                "type": "success",
+                "sticky": False,
+            },
+        }
 
     def _format_json_text(self, value):
         if value is None:

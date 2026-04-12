@@ -62,6 +62,7 @@
                     <field name="nr_id"/>
                     <field name="type"/>
                     <button name="action_view_nodes" type="object" icon="fa-sitemap" title="Nodes"/>
+                    <button name="action_convert_to_atomic_messages" type="object" icon="fa-database" title="Convert to Atomic Messages"/>
                 </list>
             </field>
         </record>
@@ -71,6 +72,9 @@
             <field name="model">fts.nr.flow</field>
             <field name="arch" type="xml">
                 <form string="Node-RED Flow">
+                    <header>
+                        <button name="action_convert_to_atomic_messages" string="Convert to Atomic Messages" type="object" class="btn-primary"/>
+                    </header>
                     <sheet>
                         <group>
                             <group>
