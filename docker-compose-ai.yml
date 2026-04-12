@@ -48,9 +48,12 @@ services:
       - crose-net
 
 volumes:
-  crose-models: # 基础模型
-  crose-datasets: # 收集到的数据集
-  crose-loras:    # 训练出的插件
+  crose-models:
+    name: crose-models
+  crose-datasets:
+    name: crose-datasets
+  crose-loras:
+    name: crose-loras
 
 networks:
   crose-net:
