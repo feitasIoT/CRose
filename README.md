@@ -35,7 +35,7 @@ CRose is an integrated data platform designed for manufacturing and modern agric
 - Schema checks at ingestion (units, ranges, non‑null, etc.), flagging anomalies.
 - Data quality reports (missing rate, latency distribution, duplication rate) to underpin trustworthy AI analytics.
 
-![CRose Framework](./crose_framework.jpg)
+![CRose Framework](./crose_framework_en.jpg)
 
 ## 🚀 Quick Start
 
