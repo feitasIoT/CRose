@@ -60,7 +60,7 @@
                                 <field name="iotdb_topic" readonly="1" groups="base.group_no_one" />
                                 <field name="mqtt_topic_id" invisible="protocol != 'mqtt'"/>
                                 <field name="nr_instance_id"/>
-                                <field name="ai_model_name"/>
+                                <field name="ai_model_name" groups="base.group_no_one"/>
                                 <field name="nr_flow_ids" widget="many2many_tags" style="margin-bottom: 10px !important"/>
                                 
                             </group>

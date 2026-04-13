@@ -21,7 +21,17 @@ class EmbeddingManager:
     @classmethod
     def encode(cls, env, text):
         """Call the remote AI service to generate embeddings."""
-        ai_endpoint = env['ir.config_parameter'].sudo().get_param('crose_iot.ai_endpoint', 'http://crose-ai:8000/embed')
+        ai_endpoint = ""
+        try:
+            component = env["crose.component"].search([("component_type", "=", "ai"), ("status", "=", "online")], limit=1)
+            if not component:
+                component = env["crose.component"].search([("component_type", "=", "ai")], limit=1)
+            if component:
+                ai_endpoint = component._resolve_metadata_endpoint("embed_endpoint")
+        except Exception:
+            ai_endpoint = ""
+        if not ai_endpoint:
+            ai_endpoint = env["ir.config_parameter"].sudo().get_param("crose_iot.ai_endpoint", "http://crose-ai:8000/embed")
 
         try:
             response = requests.post(ai_endpoint, json={'text': text}, timeout=10)

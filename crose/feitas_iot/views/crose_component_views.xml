@@ -24,7 +24,7 @@
                 <form string="System Component">
                     <header>
                         <button name="action_check_status" type="object" string="Check Status" class="oe_highlight"/>
-                        <button name="action_reset_credentials" type="object" string="重置凭据" class="btn-secondary"/>
+                        <button name="action_reset_credentials" type="object" string="重置凭据" class="btn-secondary" invisible="component_type == 'llm_provider'"/>
                         <button name="action_view_packages" type="object" string="View Packages"
                                 invisible="component_type != 'npm'"/>
                         <field name="status" widget="statusbar"/>

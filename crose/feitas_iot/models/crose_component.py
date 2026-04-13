@@ -21,6 +21,7 @@ class CroseComponent(models.Model):
         ('ai', 'AI Service'),
         ('llama_factory', 'LLaMA-Factory'),
         ('vllm', 'vLLM'),
+        ('llm_provider', 'LLM Provider'),
         ('nas', 'NAS'),
         ('npm', 'NPM Registry'),
         ('redis', 'Redis'),
@@ -58,6 +59,7 @@ class CroseComponent(models.Model):
             },
             'llama_factory': {'health_endpoint': '/health', 'train_api_path': '/v1/train', 'train_status_api_path': '/v1/train/{job_id}'},
             'vllm': {'health_endpoint': '/v1/models', 'chat_completions_path': '/v1/chat/completions', 'temperature': 0.1},
+            'llm_provider': {'chat_completions_path': '/v1/chat/completions', 'models_endpoint': '/v1/models', 'base_path': '/v1'},
             'npm': {'registry_url': 'http://verdaccio-staging:4873'},
             'redis': {'db': 0},
             'nodered': {'admin_path': '/admin', 'health_endpoint': '/'}
@@ -68,6 +70,7 @@ class CroseComponent(models.Model):
             'iotdb': 6667,
             'llama_factory': 8000,
             'vllm': 8000,
+            'llm_provider': 443,
             'npm': 4873,
             'redis': 6379,
             'nodered': 1880
@@ -97,10 +100,16 @@ class CroseComponent(models.Model):
         self.ensure_one()
         if not self.metadata:
             return {}
+        raw = (self.metadata or "").strip()
         try:
-            parsed = json.loads(self.metadata)
+            parsed = json.loads(raw)
         except Exception:
-            return {}
+            try:
+                import ast
+
+                parsed = ast.literal_eval(raw)
+            except Exception:
+                return {}
         return parsed if isinstance(parsed, dict) else {}
 
     def _build_component_base_url(self):
@@ -205,6 +214,48 @@ class CroseComponent(models.Model):
                 'last_check_time': fields.Datetime.now(),
                 'error_reason': _('No status check method found for component type %(type)s', type=self.component_type)
             })
+
+    def _check_status_llm_provider(self):
+        try:
+            metadata_dict = self._metadata_dict()
+            endpoint = ""
+            if metadata_dict.get("health_endpoint"):
+                endpoint = self._resolve_metadata_endpoint("health_endpoint")
+            elif metadata_dict.get("models_endpoint"):
+                endpoint = self._resolve_metadata_endpoint("models_endpoint")
+            else:
+                chat_url = str(metadata_dict.get("chat_completions_path") or "").strip()
+                if chat_url:
+                    endpoint = self._resolve_metadata_endpoint("chat_completions_path")
+                    if endpoint.endswith("/chat/completions"):
+                        endpoint = endpoint[: -len("/chat/completions")] + "/models"
+
+            if not endpoint:
+                raise ValueError(_("Metadata key %(key)s is empty.", key="models_endpoint"))
+
+            headers = {}
+            account = self.account_ids.filtered(lambda r: r.is_primary)[:1] or self.account_ids[:1]
+            if account:
+                token = account._get_plain_password()
+                if token:
+                    headers["Authorization"] = f"Bearer {token}"
+            response = requests.get(endpoint, headers=headers, timeout=10)
+            response.raise_for_status()
+            self.write(
+                {
+                    "status": "online",
+                    "last_check_time": fields.Datetime.now(),
+                    "error_reason": False,
+                }
+            )
+        except Exception as error:
+            self.write(
+                {
+                    "status": "error",
+                    "last_check_time": fields.Datetime.now(),
+                    "error_reason": str(error),
+                }
+            )
 
     def _check_status_mqtt(self):
         try:
@@ -509,6 +560,18 @@ class CroseComponentAccount(models.Model):
     _sql_constraints = [
         ("component_username_unique", "unique(component_id, username)", "The username already exists in this component."),
     ]
+
+    def name_get(self):
+        result = []
+        for record in self:
+            comp = record.component_id.name or ""
+            username = record.username or ""
+            role = record.role or ""
+            label = f"{comp} - {username}"
+            if role:
+                label = f"{label} ({role})"
+            result.append((record.id, label.strip()))
+        return result
 
     def _get_cipher(self):
         try:

@@ -1,13 +1,9 @@
-import zipfile
-import io
 import os
-import base64
 import json
 import re
 import tempfile
 from collections import defaultdict
 import requests
-from .utils import EmbeddingManager
 
 from odoo import models, fields, api, exceptions, _
 
@@ -15,53 +11,150 @@ from odoo import models, fields, api, exceptions, _
 class FtsAiModel(models.Model):
     _name = "fts.ai.model"
     _description = "AI Model"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
 
-    name = fields.Char(string="Name", required=True)
-    model_file = fields.Binary('Model Archive (.zip)', required=True, help='Upload a zip archive created from the folder downloaded from HuggingFace.')
-    model_filename = fields.Char(string="Model Filename")
-    is_active = fields.Boolean('Active', default=False)
-    local_path = fields.Char('Local Extract Path', compute='_compute_local_path')
+    name = fields.Char(string="Name", required=True, tracking=True)
+    model_type = fields.Selection(
+        [
+            ("hf", "HuggingFace/Base (Training)"),
+            ("vllm_base", "vLLM Base (Local Inference)"),
+            ("vllm_adapter", "vLLM Adapter (LoRA)"),
+            ("provider", "LLM Provider (External)"),
+        ],
+        string="Type",
+        required=True,
+        default="vllm_base",
+        tracking=True,
+    )
+    model_ref = fields.Char(string="Model Reference", required=True, tracking=True)
+    component_id = fields.Many2one("crose.component", string="Component", tracking=True)
+    account_id = fields.Many2one(
+        "crose.component.account",
+        string="Account",
+        domain="[('component_id', '=', component_id)]",
+        tracking=True,
+    )
+    adapter_path = fields.Char(string="Adapter Path", tracking=True)
+    base_model_id = fields.Many2one(
+        "fts.ai.model",
+        string="Base Model",
+        domain="[('model_type', '=', 'vllm_base')]",
+        tracking=True,
+    )
+    is_default = fields.Boolean(string="Default", default=False, tracking=True)
 
-    @api.depends('is_active')
-    def _compute_local_path(self):
+    @api.constrains("model_type", "is_default")
+    def _check_single_default_per_type(self):
         for record in self:
-            if record.id:
-                record.local_path = os.path.join(self.env['ir.attachment']._storage(), 'ai_models', str(record.id))
-            else:
-                record.local_path = False
+            if not record.is_default:
+                continue
+            domain = [("id", "!=", record.id), ("model_type", "=", record.model_type), ("is_default", "=", True)]
+            if self.search_count(domain):
+                raise exceptions.ValidationError(_("Only one default model is allowed per type."))
 
-    @api.constrains('is_active')
-    def _check_single_active(self):
-        if self.search_count([('is_active', '=', True)]) > 1:
-            raise exceptions.ValidationError(_("Only one model can be active at a time."))
-
-    def action_deploy_model(self):
-        """Extract the model archive to persistent storage."""
+    def _get_component(self):
         self.ensure_one()
-        base_path = self.local_path
+        if self.component_id:
+            return self.component_id
+        component_type = False
+        if self.model_type in ("vllm_base", "vllm_adapter"):
+            component_type = "ai"
+        elif self.model_type == "provider":
+            component_type = "llm_provider"
+        if not component_type:
+            return self.env["crose.component"]
+        component = self.env["crose.component"].search([("component_type", "=", component_type), ("status", "=", "online")], limit=1)
+        if not component:
+            component = self.env["crose.component"].search([("component_type", "=", component_type)], limit=1)
+        return component
 
-        if not os.path.exists(base_path):
-            os.makedirs(base_path)
-
+    def _resolve_endpoint(self, component, metadata_key):
+        self.ensure_one()
+        if not component:
+            raise exceptions.ValidationError(_("No component is configured for this model."))
         try:
-            zip_data = base64.b64decode(self.model_file)
-            with zipfile.ZipFile(io.BytesIO(zip_data), 'r') as zip_ref:
-                zip_ref.extractall(base_path)
-        except Exception as e:
-            raise exceptions.UserError(_("Failed to extract the model archive: %(error)s", error=e))
+            return component._resolve_metadata_endpoint(metadata_key)
+        except Exception as error:
+            raise exceptions.ValidationError(_("Failed to resolve endpoint (%(key)s): %(error)s", key=metadata_key, error=str(error)))
 
-        self.env['fts.ai.model'].search([('id', '!=', self.id)]).write({'is_active': False})
-        self.write({'is_active': True})
-        EmbeddingManager.clear_cache()
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': _('Deployment Successful'),
-                'message': _('The model has been deployed to %(path)s and activated.', path=base_path),
-                'sticky': False,
-            }
-        }
+    def _provider_headers(self):
+        self.ensure_one()
+        headers = {"Content-Type": "application/json"}
+        if self.account_id:
+            token = self.account_id._get_plain_password()
+            if token:
+                headers["Authorization"] = f"Bearer {token}"
+        return headers
+
+    def ensure_remote_ready(self):
+        self.ensure_one()
+        if self.model_type != "vllm_adapter":
+            return
+        component = self._get_component()
+        endpoint = self._resolve_endpoint(component, "load_adapter_api_path")
+        adapter_name = (self.model_ref or "").strip()
+        adapter_path = (self.adapter_path or "").strip()
+        if not adapter_name:
+            raise exceptions.ValidationError(_("Model Reference is required for vLLM adapter models."))
+        if not adapter_path:
+            raise exceptions.ValidationError(_("Adapter Path is required for vLLM adapter models."))
+        payload = {"adapter_name": adapter_name, "adapter_path": adapter_path}
+        try:
+            response = requests.post(endpoint, json=payload, timeout=60)
+            response.raise_for_status()
+        except Exception as error:
+            raise exceptions.ValidationError(_("Failed to load vLLM adapter: %(error)s", error=str(error)))
+
+    def chat(self, messages, temperature=0.1, max_tokens=512):
+        self.ensure_one()
+        model_ref = (self.model_ref or "").strip()
+        if not model_ref:
+            raise exceptions.ValidationError(_("Model Reference is required."))
+        if not isinstance(messages, list) or not messages:
+            raise exceptions.ValidationError(_("Messages are required."))
+
+        if self.model_type in ("vllm_base", "vllm_adapter"):
+            if self.model_type == "vllm_adapter":
+                self.ensure_remote_ready()
+            component = self._get_component()
+            endpoint = self._resolve_endpoint(component, "infer_api_path")
+            payload = {"model": model_ref, "messages": messages, "temperature": temperature, "max_tokens": max_tokens}
+            try:
+                response = requests.post(endpoint, json=payload, timeout=120)
+                response.raise_for_status()
+                return response.json() if response.text else {}
+            except Exception as error:
+                raise exceptions.ValidationError(_("Inference failed: %(error)s", error=str(error)))
+
+        if self.model_type == "provider":
+            component = self._get_component()
+            endpoint = self._resolve_endpoint(component, "chat_completions_path")
+            payload = {"model": model_ref, "messages": messages, "temperature": temperature, "max_tokens": max_tokens}
+            try:
+                response = requests.post(endpoint, headers=self._provider_headers(), json=payload, timeout=120)
+                response.raise_for_status()
+                return response.json() if response.text else {}
+            except Exception as error:
+                raise exceptions.ValidationError(_("Provider call failed: %(error)s", error=str(error)))
+
+        raise exceptions.ValidationError(_("Unsupported model type: %(type)s", type=self.model_type))
+
+    def rag_chat(self, query_text, document_ids=None, top_k=5, temperature=0.1, max_tokens=512):
+        self.ensure_one()
+        query_text = (query_text or "").strip()
+        if not query_text:
+            raise exceptions.ValidationError(_("Query is empty."))
+        context = self.env["fts.ai.knowledge.document"].rag_context(
+            query_text=query_text,
+            document_ids=document_ids or [],
+            top_k=top_k,
+        )
+        system_prompt = "你是 CRose 平台的 AI 助手。请严格基于提供的知识库片段回答；若片段中没有依据，请直接说明无法从知识库中找到答案。"
+        messages = [{"role": "system", "content": system_prompt}]
+        if context:
+            messages.append({"role": "system", "content": f"知识库片段：\n{context}"})
+        messages.append({"role": "user", "content": query_text})
+        return self.chat(messages=messages, temperature=temperature, max_tokens=max_tokens)
 
 
 class FtsAiDataset(models.Model):
@@ -181,7 +274,12 @@ class FtsAiTraining(models.Model):
         required=True,
         tracking=True,
     )
-    base_model_id = fields.Many2one("fts.ai.model", string="Base Model", required=True)
+    base_model_id = fields.Many2one(
+        "fts.ai.model",
+        string="Base Model",
+        required=True,
+        domain="[('model_type', '=', 'hf')]",
+    )
     epochs = fields.Integer(string="Epochs", default=10)
     quantization = fields.Selection([("no", "No"), ("4bit", "4-bit"), ("8bit", "8-bit")], string="Quantization", default="no")
     batch_size = fields.Integer(string="Batch Size", default=1)
@@ -405,7 +503,7 @@ class FtsAiTraining(models.Model):
 
     def _resolve_training_model_reference(self):
         self.ensure_one()
-        model_ref = (self.base_model_id.name or "").strip()
+        model_ref = (self.base_model_id.model_ref or "").strip()
         if not model_ref:
             raise exceptions.ValidationError(_("Base model identifier is required."))
         normalized_model_ref = model_ref.lower()

@@ -7,8 +7,10 @@
             <field name="arch" type="xml">
                 <list string="AI Models">
                     <field name="name"/>
-                    <field name="is_active" widget="boolean_toggle"/>
-                    <field name="local_path"/>
+                    <field name="model_type"/>
+                    <field name="model_ref"/>
+                    <field name="component_id"/>
+                    <field name="is_default" widget="boolean_toggle"/>
                 </list>
             </field>
         </record>
@@ -18,32 +20,30 @@
             <field name="model">fts.ai.model</field>
             <field name="arch" type="xml">
                 <form string="AI Model">
-                    <header>
-                        <button name="action_deploy_model" string="Deploy and Activate Model" type="object" class="btn-primary" icon="fa-cloud-upload"/>
-                    </header>
                     <sheet>
                         <div class="oe_title">
                             <label for="name" class="oe_edit_only"/>
                             <h1>
-                                <field name="name" placeholder="For example: paraphrase-multilingual-MiniLM-L12-v2"/>
+                                <field name="name" placeholder="For example: Qwen2-7B / DeepSeek / My LoRA Adapter"/>
                             </h1>
                         </div>
                         <group>
-                            <group string="Model Configuration">
-                                <field name="model_file" filename="model_filename"/>
-                                <field name="is_active" readonly="1"/>
+                            <group string="Model">
+                                <field name="model_type"/>
+                                <field name="model_ref"/>
+                                <field name="is_default"/>
                             </group>
-                            <group string="Local Status">
-                                <field name="local_path" readonly="1"/>
+                            <group string="Connection">
+                                <field name="component_id"/>
+                                <field name="account_id" invisible="model_type != 'provider'"/>
                             </group>
                         </group>
-                        <div class="alert alert-info" role="alert" invisible="not is_active">
-                            <i class="fa fa-info-circle"/> This model is currently active and can be used by the system.
-                        </div>
-                        <div class="alert alert-warning" role="alert" invisible="is_active">
-                            <i class="fa fa-exclamation-triangle"/> This model is not active yet. Upload the archive and click "Deploy and Activate Model".
-                        </div>
+                        <group string="vLLM Adapter" invisible="model_type != 'vllm_adapter'">
+                            <field name="base_model_id"/>
+                            <field name="adapter_path"/>
+                        </group>
                     </sheet>
+                    <chatter />
                 </form>
             </field>
         </record>

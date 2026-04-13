@@ -45,6 +45,7 @@
         "views/ai_views.xml",
         "wizards/ai_knowledge_rag_wizard_views.xml",
         "views/ai_knowledge_views.xml",
+        "wizards/data_model_ai_flow_wizard_views.xml",
         "views/nr_tag_views.xml",
         "views/nr_flow_param_views.xml",
         "views/data_log_views.xml",
