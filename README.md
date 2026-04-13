@@ -1,6 +1,6 @@
 # 🌹 CRose (China Rose) - All-in-One Lightweight Data Engine
 
-[中文版](./readme/README_CN.md)
+[中文版](./README_CN.md)
 
 ## Connect Datas, Deliver Values
 
