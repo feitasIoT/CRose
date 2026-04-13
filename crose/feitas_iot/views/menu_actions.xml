@@ -35,7 +35,7 @@
 
         <!-- Server action: synchronize flows to the knowledge base -->
         <record id="action_sync_flow_to_knowledge" model="ir.actions.server">
-            <field name="name">Synchronize Knowledge Base</field>
+            <field name="name">Synchronize Knowledge Documents</field>
             <field name="model_id" ref="model_fts_nr_flow"/>
             <field name="binding_model_id" ref="model_fts_nr_flow"/>
             <field name="binding_view_types">list</field>
@@ -48,7 +48,7 @@
 
         <!-- Server action: synchronize nodes to the knowledge base -->
         <record id="action_sync_node_to_knowledge" model="ir.actions.server">
-            <field name="name">Synchronize Knowledge Base</field>
+            <field name="name">Synchronize Knowledge Documents</field>
             <field name="model_id" ref="model_fts_nr_node"/>
             <field name="binding_model_id" ref="model_fts_nr_node"/>
             <field name="binding_view_types">list</field>
@@ -175,6 +175,7 @@
             name="Knowledge Base"
             parent="menu_fts_iot_root"
             action="feitas_iot.action_fts_knowledge"
+            groups="base.group_no_one"
             sequence="15"
         />
 
@@ -254,10 +255,22 @@
             <field name="res_model">fts.ai.training</field>
             <field name="view_mode">list,form</field>
         </record>
+        <record id="action_fts_ai_knowledge_document" model="ir.actions.act_window">
+            <field name="name">Knowledge Documents</field>
+            <field name="res_model">fts.ai.knowledge.document</field>
+            <field name="view_mode">list,form</field>
+        </record>
+        <record id="action_fts_ai_knowledge_chunk" model="ir.actions.act_window">
+            <field name="name">Knowledge Chunks</field>
+            <field name="res_model">fts.ai.knowledge.chunk</field>
+            <field name="view_mode">list,form</field>
+        </record>
 
         <menuitem id="menu_fts_ai_model" name="AI Models" parent="menu_fts_ai_root" action="action_fts_ai_model" sequence="10"/>
         <menuitem id="menu_fts_ai_category" name="Prompt Categories" parent="menu_fts_ai_root" action="action_fts_ai_category" sequence="20"/>
         <menuitem id="menu_fts_ai_prompt" name="Prompts" parent="menu_fts_ai_root" action="action_fts_ai_prompt" sequence="30"/>
+        <menuitem id="menu_fts_ai_knowledge_document" name="Knowledge Documents" parent="menu_fts_ai_root" action="action_fts_ai_knowledge_document" sequence="35"/>
+        <menuitem id="menu_fts_ai_knowledge_chunk" name="Knowledge Chunks" parent="menu_fts_ai_root" action="action_fts_ai_knowledge_chunk" sequence="36"/>
         <menuitem id="menu_fts_ai_dataset_message" name="Atomic Messages" parent="menu_fts_ai_root" action="action_fts_ai_dataset_message" sequence="40"/>
         <menuitem id="menu_fts_ai_dataset" name="Datasets" parent="menu_fts_ai_root" action="action_fts_ai_dataset" sequence="50"/>
         <menuitem id="menu_fts_ai_training" name="Model Training" parent="menu_fts_ai_root" action="action_fts_ai_training" sequence="60"/>

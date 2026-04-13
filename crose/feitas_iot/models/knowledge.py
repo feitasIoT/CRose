@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError
 
 
 class FtsKnowledge(models.Model):
@@ -23,16 +24,20 @@ class FtsKnowledge(models.Model):
                 if vector:
                     record.save_vector(vector)
             except Exception as e:
-                raise models.ValidationError(_("Vectorization failed: %(error)s", error=e))
+                raise ValidationError(_("Vectorization failed: %(error)s", error=e))
 
     def _register_hook(self):
         """Ensure the database supports the vector extension and column."""
-        query = """
-            CREATE EXTENSION IF NOT EXISTS vector;
-            ALTER TABLE fts_knowledge
-            ADD COLUMN IF NOT EXISTS vector_data vector(384);
-        """
-        self.env.cr.execute(query)
+        self.env.cr.execute("CREATE EXTENSION IF NOT EXISTS vector;")
+        self.env.cr.execute("SELECT to_regclass(%s)", ("fts_knowledge",))
+        row = self.env.cr.fetchone()
+        if row and row[0]:
+            self.env.cr.execute(
+                """
+                ALTER TABLE fts_knowledge
+                ADD COLUMN IF NOT EXISTS vector_data vector(384);
+                """
+            )
         return super(FtsKnowledge, self)._register_hook()
 
     @api.model
@@ -41,9 +46,10 @@ class FtsKnowledge(models.Model):
         vector_str = str(query_vector)
 
         sql = """
-            SELECT id, name, flow_json,
+            SELECT id, name, json_source,
                    vector_data <-> %s AS distance
             FROM fts_knowledge
+            WHERE vector_data IS NOT NULL
             ORDER BY distance ASC
             LIMIT %s
         """

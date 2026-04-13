@@ -18,6 +18,6 @@ from . import node_item
 from . import mail_thread
 from . import mcp_tool
 from . import knowledge
+from . import ai_knowledge
 from . import nr_tag
 from . import nr_flow_param
-

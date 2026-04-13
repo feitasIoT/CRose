@@ -526,6 +526,7 @@ class DataModel(models.Model):
         self.ensure_one()
         if not self.nr_instance_id:
             raise ValidationError(_("Please select a runtime instance before generating a flow."))
+
         endpoint, payload = self._get_vllm_endpoint_and_payload()
         try:
             response = requests.post(endpoint, json=payload, timeout=60)
@@ -542,6 +543,7 @@ class DataModel(models.Model):
                 message = first.get("message") if isinstance(first, dict) else {}
                 if isinstance(message, dict):
                     content_text = message.get("content") or ""
+        
         parsed_json = self._extract_json_from_llm_text(content_text)
         if parsed_json is None:
             raise ValidationError(_("vLLM response does not contain valid flow JSON."))
@@ -549,6 +551,7 @@ class DataModel(models.Model):
         flow_name = f"{self.name} - AI Flow"
         if isinstance(parsed_json, dict):
             flow_name = parsed_json.get("label") or parsed_json.get("name") or flow_name
+        
         created_flow = self.env["fts.nr.flow"].create(
             {
                 "name": flow_name,

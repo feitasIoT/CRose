@@ -2,6 +2,7 @@ import json
 
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
+from odoo.tools import html2plaintext
 
 
 class FtsNrFlow(models.Model):
@@ -30,25 +31,44 @@ class FtsNrFlow(models.Model):
     ], string="State", default="active")
 
     def action_sync_to_knowledge(self):
-        """Synchronize selected flows to the knowledge base and vectorize them."""
-        Knowledge = self.env['fts.knowledge']
-        created_records = Knowledge.browse()
+        Document = self.env["fts.ai.knowledge.document"]
+        vals_list = []
         for record in self:
-            vals = {
-                'name': f"Flow: {record.name}",
-                'description': record.description or '',
-                'json_source': record.content,
-            }
-            created_records |= Knowledge.create(vals)
-
-        created_records.action_vectorize()
+            description = html2plaintext(record.description or "").strip()
+            lines = [
+                f"Flow Name: {record.name or ''}",
+                f"Flow ID: {record.nr_id or ''}",
+                f"Flow Type: {record.type or ''}",
+                "",
+                "Flow Prompt:",
+                (record.prompt or "").strip(),
+                "",
+                "Flow Description:",
+                description,
+                "",
+                "Flow JSON:",
+                (record.content or "").strip(),
+            ]
+            raw_text = "\n".join([l for l in lines if l is not None]).strip()
+            if not raw_text:
+                continue
+            vals_list.append(
+                {
+                    "name": f"Flow: {record.name}",
+                    "source_type": "text",
+                    "raw_text": raw_text,
+                }
+            )
+        created_records = Document.create(vals_list) if vals_list else Document.browse()
+        if created_records:
+            created_records.action_split_and_vectorize()
 
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
                 'title': _('Synchronization Successful'),
-                'message': _('Synchronized %(count)s flows to the knowledge base and completed vectorization.', count=len(self)),
+                'message': _('Synchronized %(count)s flows to knowledge documents and completed vectorization.', count=len(created_records)),
                 'sticky': False,
             }
         }

@@ -43,11 +43,13 @@
         "views/data_model_views.xml",
         "views/mqtt_topic_views.xml",
         "views/ai_views.xml",
+        "wizards/ai_knowledge_rag_wizard_views.xml",
+        "views/ai_knowledge_views.xml",
         "views/nr_tag_views.xml",
         "views/nr_flow_param_views.xml",
         "views/data_log_views.xml",
         "views/res_partner_views.xml",
-        
+
         "views/menu_actions.xml",
     ],
     'assets': {
