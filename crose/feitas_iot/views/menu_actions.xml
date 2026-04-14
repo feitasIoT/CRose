@@ -148,6 +148,12 @@
             <field name="name">Agent Package</field>
             <field name="res_model">ir.attachment</field>
             <field name="view_mode">list,form</field>
+            <field name="domain">[('res_model', '=', 'crose.agent.package')]</field>
+            <field name="view_ids" eval="[
+                (5, 0, 0),
+                (0, 0, {'view_mode': 'list', 'view_id': ref('feitas_iot.view_fts_agent_package_list')})
+            ]"/>
+            <field name="context" eval="{'default_res_model': 'crose.agent.package'}"/>
         </record>
 
         <menuitem id="menu_fts_agent_release" 

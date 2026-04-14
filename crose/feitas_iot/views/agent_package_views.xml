@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_fts_agent_package_list" model="ir.ui.view">
+            <field name="name">fts.agent.package.list</field>
+            <field name="model">ir.attachment</field>
+            <field name="priority">100</field>
+            <field name="arch" type="xml">
+                <list string="Agent Packages">
+                    <field name="name"/>
+                    <field name="description"/>
+                    <field name="public"/>
+                    <field name="create_date"/>
+                </list>
+            </field>
+        </record>
+
+    </data>
+</odoo>

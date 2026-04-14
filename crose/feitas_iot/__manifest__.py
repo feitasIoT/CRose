@@ -39,6 +39,7 @@
         
         "views/data_address_views.xml",
         "views/data_asset_views.xml",
+        "views/agent_package_views.xml",
         "views/alert_views.xml",
         "views/data_model_views.xml",
         "views/mqtt_topic_views.xml",
