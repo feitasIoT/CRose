@@ -3,11 +3,13 @@
 import { registry } from "@web/core/registry";
 import { Component, onWillStart, useState } from "@odoo/owl";
 import { rpc } from "@web/core/network/rpc";
+import { useService } from "@web/core/utils/hooks";
 
 class OverviewDashboard extends Component {
     static template = "feitas_iot.OverviewDashboard";
 
     setup() {
+        this.action = useService("action");
         this.state = useState({
             loading: true,
             error: null,
@@ -117,6 +119,16 @@ class OverviewDashboard extends Component {
             const y = height - ((v - min) / range) * height;
             return `${x},${y}`;
         }).join(" ");
+    }
+
+    openAskAi() {
+        return this.action.doAction({
+            type: "ir.actions.act_window",
+            name: "Ask AI",
+            res_model: "fts.ai.chat.wizard",
+            views: [[false, "form"]],
+            target: "new",
+        });
     }
 }
 

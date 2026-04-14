@@ -39,11 +39,12 @@
         
         "views/data_address_views.xml",
         "views/data_asset_views.xml",
-        "views/knowledge_views.xml",
+        "views/alert_views.xml",
         "views/data_model_views.xml",
         "views/mqtt_topic_views.xml",
         "views/ai_views.xml",
         "wizards/ai_knowledge_rag_wizard_views.xml",
+        "wizards/ai_chat_wizard_views.xml",
         "views/ai_knowledge_views.xml",
         "wizards/data_model_ai_flow_wizard_views.xml",
         "views/nr_tag_views.xml",
@@ -52,6 +53,7 @@
         "views/res_partner_views.xml",
 
         "views/menu_actions.xml",
+        "views/crose_settings_views.xml",
     ],
     'assets': {
         'spreadsheet.o_spreadsheet': [

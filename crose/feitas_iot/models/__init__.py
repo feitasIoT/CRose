@@ -15,6 +15,7 @@ from . import ai
 from . import instance_flow_line
 from . import agent_flow_line
 from . import node_item
+from . import alert
 from . import mail_thread
 from . import mcp_tool
 from . import knowledge

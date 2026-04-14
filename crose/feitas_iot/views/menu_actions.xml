@@ -27,37 +27,7 @@
             <field name="domain">[('is_template', '=', True)]</field>
             <field name="context">{'default_is_template': True}</field>
         </record>
-        <record id="action_fts_nr_node" model="ir.actions.act_window">
-            <field name="name">Nodes</field>
-            <field name="res_model">fts.nr.node</field>
-            <field name="view_mode">list,form</field>
-        </record>
 
-        <!-- Server action: synchronize flows to the knowledge base -->
-        <record id="action_sync_flow_to_knowledge" model="ir.actions.server">
-            <field name="name">Synchronize Knowledge Documents</field>
-            <field name="model_id" ref="model_fts_nr_flow"/>
-            <field name="binding_model_id" ref="model_fts_nr_flow"/>
-            <field name="binding_view_types">list</field>
-            <field name="state">code</field>
-            <field name="code">
-                if records:
-                    action = records.action_sync_to_knowledge()
-            </field>
-        </record>
-
-        <!-- Server action: synchronize nodes to the knowledge base -->
-        <record id="action_sync_node_to_knowledge" model="ir.actions.server">
-            <field name="name">Synchronize Knowledge Documents</field>
-            <field name="model_id" ref="model_fts_nr_node"/>
-            <field name="binding_model_id" ref="model_fts_nr_node"/>
-            <field name="binding_view_types">list</field>
-            <field name="state">code</field>
-            <field name="code">
-                if records:
-                    action = records.action_sync_to_knowledge()
-            </field>
-        </record>
         <record id="action_fts_edge_agent" model="ir.actions.act_window">
             <field name="name">Agents</field>
             <field name="res_model">fts.edge.agent</field>
@@ -71,31 +41,22 @@
         </record>
 
         <record id="action_fts_iot_overview" model="ir.actions.client">
-            <field name="name">Overview</field>
+            <field name="name">Dashboard</field>
             <field name="tag">feitas_iot.overview</field>
         </record>
 
 
-        <!-- Root menu -->
-        <menuitem id="menu_fts_iot_root" 
-            name="CRose" 
-            web_icon="feitas_iot,static/description/icon.png"
-            sequence="1"/>
-        <!-- Overview -->
-        <menuitem
-            id="menu_fts_iot_overview"
-            name="Overview"
-            parent="menu_fts_iot_root"
-            action="action_fts_iot_overview"
-            sequence="2"
-        />
-        <!-- Data Center -->
-        <menuitem id="menu_fts_iot_data" 
-            name="Data Center" parent="menu_fts_iot_root" sequence="5"/>
+        <!-- Workbench -->
+        <menuitem id="menu_crose_workbench" name="Workbench" web_icon="feitas_iot,static/description/icon.png" sequence="6"/>
+        <menuitem id="menu_crose_workbench_dashboard" name="Dashboard" parent="menu_crose_workbench" action="action_fts_iot_overview" sequence="1"/>
+        <menuitem id="menu_crose_workbench_alerts" name="Alerts" parent="menu_crose_workbench" action="feitas_iot.action_fts_alert" sequence="2"/>
+
+        <!-- Data Factory -->
+        <menuitem id="menu_crose_data_factory" name="Data Factory" web_icon="feitas_iot,static/description/icon.png" sequence="8"/>
         
         
         <record id="action_fts_data_model" model="ir.actions.act_window">
-            <field name="name">Data Modeling</field>
+            <field name="name">Modeling</field>
             <field name="res_model">fts.data.model</field>
             <field name="view_mode">kanban,list,form</field>
             <field name="view_ids" eval="[
@@ -107,7 +68,7 @@
         </record>
 
         <record id="action_fts_data_asset" model="ir.actions.act_window">
-            <field name="name">Data Assets</field>
+            <field name="name">Assets</field>
             <field name="res_model">fts.data.asset</field>
             <field name="view_mode">kanban,list,form</field>
             <field name="view_ids" eval="[
@@ -120,78 +81,101 @@
 
         <menuitem
             id="menu_fts_data_asset"
-            name="Data Assets"
-            parent="menu_fts_iot_data"
+            name="Assets"
+            parent="menu_crose_data_factory"
             action="action_fts_data_asset"
             sequence="5"
         />
 
         <menuitem
             id="menu_fts_data_model"
-            name="Data Modeling"
-            parent="menu_fts_iot_data"
+            name="Modeling"
+            parent="menu_crose_data_factory"
             action="action_fts_data_model"
             sequence="10"
         />
 
-        <!-- Edge Computing -->
+        <!-- Edge Management -->
+        <menuitem id="menu_crose_edge_management" name="Edge Management" web_icon="feitas_iot,static/description/icon.png" sequence="7"/>
+        <menuitem id="menu_crose_edge_nodes" name="Edge Nodes" parent="menu_crose_edge_management" action="action_fts_edge_agent" sequence="10"/>
+        <menuitem id="menu_crose_app_store" name="App Store" parent="menu_crose_edge_management" action="action_fts_nr_flow_template" sequence="15"/>
+        <menuitem id="menu_crose_deployments" name="Deployments" parent="menu_crose_edge_management" action="action_fts_nr_instance" sequence="20"/>
+        <menuitem id="menu_crose_flows" name="Flows" parent="menu_crose_edge_management" action="action_fts_nr_flow" sequence="30"/>
+
+        
+        <!-- AI Lab -->
+        <menuitem id="menu_fts_ai_root" name="AI Lab" web_icon="feitas_iot,static/description/icon.png" sequence="9"/>
+
+        <record id="action_fts_ai_model" model="ir.actions.act_window">
+            <field name="name">AI Models</field>
+            <field name="res_model">fts.ai.model</field>
+            <field name="view_mode">list,form</field>
+        </record>
+        <record id="action_fts_ai_dataset" model="ir.actions.act_window">
+            <field name="name">Datasets</field>
+            <field name="res_model">fts.ai.dataset</field>
+            <field name="view_mode">list,form</field>
+        </record>
+        <record id="action_fts_ai_prompt" model="ir.actions.act_window">
+            <field name="name">Prompts</field>
+            <field name="res_model">fts.ai.prompt</field>
+            <field name="view_mode">list,form</field>
+        </record>
+        
+        <record id="action_fts_ai_training" model="ir.actions.act_window">
+            <field name="name">Model Training</field>
+            <field name="res_model">fts.ai.training</field>
+            <field name="view_mode">list,form</field>
+        </record>
+        <record id="action_fts_ai_knowledge_document" model="ir.actions.act_window">
+            <field name="name">Knowledge Documents</field>
+            <field name="res_model">fts.ai.knowledge.document</field>
+            <field name="view_mode">list,form</field>
+        </record>
+
+        <menuitem id="menu_fts_ai_knowledge_document" name="Knowledge" parent="menu_fts_ai_root" action="action_fts_ai_knowledge_document" sequence="10"/>
+        <menuitem id="menu_fts_ai_dataset" name="Datasets" parent="menu_fts_ai_root" action="action_fts_ai_dataset" sequence="20"/>
+        <menuitem id="menu_fts_ai_training" name="Model Training" parent="menu_fts_ai_root" action="action_fts_ai_training" sequence="30"/>
+        <menuitem id="menu_fts_ai_model" name="Models" parent="menu_fts_ai_root" action="action_fts_ai_model" sequence="40"/>
+        <menuitem id="menu_fts_ai_prompt" name="Prompts" parent="menu_fts_ai_root" action="action_fts_ai_prompt" sequence="50"/>
+
+
+        <!-- Infrastructure -->
+        <menuitem id="menu_fts_crose_config" 
+            name="Infrastructure" web_icon="feitas_iot,static/description/icon.png" sequence="10"/>
+
+        <record id="action_fts_agent_release" model="ir.actions.act_window">
+            <field name="name">Agent Package</field>
+            <field name="res_model">ir.attachment</field>
+            <field name="view_mode">list,form</field>
+        </record>
+
+        <menuitem id="menu_fts_agent_release" 
+            name="Agent Package" parent="menu_fts_crose_config" action="action_fts_agent_release" sequence="10"/>
+
         <menuitem
-            id="menu_fts_iot_edge"
-            name="Edge Computing"
-            parent="menu_fts_iot_root"
-            sequence="10"
-        />
-        <menuitem
-            id="menu_fts_iot_nr_agent"
-            name="Agents"
-            parent="menu_fts_iot_edge"
-            action="action_fts_edge_agent"
-            sequence="10"
-        />
-        <menuitem
-            id="menu_fts_iot_nr_instance"
-            name="Instances"
-            parent="menu_fts_iot_edge"
-            action="action_fts_nr_instance"
+            id="menu_crose_component"
+            name="System Components"
+            parent="menu_fts_crose_config"
+            action="action_crose_component"
             sequence="20"
         />
-        <menuitem
-            id="menu_fts_iot_nr_flow"
-            name="Flows"
-            parent="menu_fts_iot_edge"
-            action="action_fts_nr_flow"
-            sequence="30"
-        />
-        <menuitem
-            id="menu_fts_iot_nr_node"
-            name="Nodes"
-            parent="menu_fts_iot_edge"
-            action="action_fts_nr_node"
-            sequence="40"
-        />
 
-        <menuitem
-            id="menu_fts_knowledge"
-            name="Knowledge Base"
-            parent="menu_fts_iot_root"
-            action="feitas_iot.action_fts_knowledge"
-            groups="base.group_no_one"
-            sequence="15"
-        />
+        <record id="action_fts_nr_tag" model="ir.actions.act_window">
+            <field name="name">Tags</field>
+            <field name="res_model">fts.nr.tag</field>
+            <field name="view_mode">list</field>
+        </record>
 
-        <!-- Template Library -->
-        <menuitem id="menu_fts_library" name="Template Library" parent="menu_fts_iot_root" sequence="35"/>
+        <record id="action_fts_ai_category" model="ir.actions.act_window">
+            <field name="name">Prompt Categories</field>
+            <field name="res_model">fts.ai.category</field>
+            <field name="view_mode">list,form</field>
+        </record>
 
-        <menuitem
-            id="menu_fts_library_flow"
-            name="Applications"
-            parent="menu_fts_library"
-            action="action_fts_nr_flow_template"
-            sequence="10"
-        />
 
         <!-- MQTT -->
-        <menuitem id="menu_fts_mqtt_root" name="MQTT" parent="menu_fts_iot_root" sequence="40"/>
+        <menuitem id="menu_fts_mqtt_root" name="MQTT" parent="menu_fts_crose_config" sequence="40"/>
 
         <record id="action_fts_mqtt_user" model="ir.actions.act_window">
             <field name="name">MQTT Users</field>
@@ -220,97 +204,6 @@
                   parent="menu_fts_mqtt_root"
                   action="action_fts_mqtt_topic"
                   sequence="10"/>
-                  
-
-        <!-- AI -->
-        <menuitem id="menu_fts_ai_root" name="Deep Learning" parent="menu_fts_iot_root" sequence="50"/>
-
-        <record id="action_fts_ai_model" model="ir.actions.act_window">
-            <field name="name">AI Models</field>
-            <field name="res_model">fts.ai.model</field>
-            <field name="view_mode">list,form</field>
-        </record>
-        <record id="action_fts_ai_dataset" model="ir.actions.act_window">
-            <field name="name">Datasets</field>
-            <field name="res_model">fts.ai.dataset</field>
-            <field name="view_mode">list,form</field>
-        </record>
-        <record id="action_fts_ai_dataset_message" model="ir.actions.act_window">
-            <field name="name">Atomic Messages</field>
-            <field name="res_model">fts.ai.dataset.message</field>
-            <field name="view_mode">list,form</field>
-        </record>
-        <record id="action_fts_ai_prompt" model="ir.actions.act_window">
-            <field name="name">Prompts</field>
-            <field name="res_model">fts.ai.prompt</field>
-            <field name="view_mode">list,form</field>
-        </record>
-        <record id="action_fts_ai_category" model="ir.actions.act_window">
-            <field name="name">Prompt Categories</field>
-            <field name="res_model">fts.ai.category</field>
-            <field name="view_mode">list,form</field>
-        </record>
-        <record id="action_fts_ai_training" model="ir.actions.act_window">
-            <field name="name">Model Training</field>
-            <field name="res_model">fts.ai.training</field>
-            <field name="view_mode">list,form</field>
-        </record>
-        <record id="action_fts_ai_knowledge_document" model="ir.actions.act_window">
-            <field name="name">Knowledge Documents</field>
-            <field name="res_model">fts.ai.knowledge.document</field>
-            <field name="view_mode">list,form</field>
-        </record>
-        <record id="action_fts_ai_knowledge_chunk" model="ir.actions.act_window">
-            <field name="name">Knowledge Chunks</field>
-            <field name="res_model">fts.ai.knowledge.chunk</field>
-            <field name="view_mode">list,form</field>
-        </record>
-
-        <menuitem id="menu_fts_ai_model" name="AI Models" parent="menu_fts_ai_root" action="action_fts_ai_model" sequence="10"/>
-        <menuitem id="menu_fts_ai_category" name="Prompt Categories" parent="menu_fts_ai_root" action="action_fts_ai_category" sequence="20"/>
-        <menuitem id="menu_fts_ai_prompt" name="Prompts" parent="menu_fts_ai_root" action="action_fts_ai_prompt" sequence="30"/>
-        <menuitem id="menu_fts_ai_knowledge_document" name="Knowledge Documents" parent="menu_fts_ai_root" action="action_fts_ai_knowledge_document" sequence="35"/>
-        <menuitem id="menu_fts_ai_knowledge_chunk" name="Knowledge Chunks" parent="menu_fts_ai_root" action="action_fts_ai_knowledge_chunk" sequence="36"/>
-        <menuitem id="menu_fts_ai_dataset_message" name="Atomic Messages" parent="menu_fts_ai_root" action="action_fts_ai_dataset_message" sequence="40"/>
-        <menuitem id="menu_fts_ai_dataset" name="Datasets" parent="menu_fts_ai_root" action="action_fts_ai_dataset" sequence="50"/>
-        <menuitem id="menu_fts_ai_training" name="Model Training" parent="menu_fts_ai_root" action="action_fts_ai_training" sequence="60"/>
-
-
-        <!-- Configuration -->
-        <menuitem id="menu_fts_crose_config" 
-            name="Configuration" parent="menu_fts_iot_root" sequence="100"/>
-
-        <record id="action_fts_agent_release" model="ir.actions.act_window">
-            <field name="name">Agent Package</field>
-            <field name="res_model">ir.attachment</field>
-            <field name="view_mode">list,form</field>
-        </record>
-
-        <menuitem id="menu_fts_agent_release" 
-            name="Agent Package" parent="menu_fts_crose_config" action="action_fts_agent_release" sequence="10"/>
-
-        <menuitem
-            id="menu_crose_component"
-            name="System Components"
-            parent="menu_fts_crose_config"
-            action="action_crose_component"
-            sequence="20"
-        />
-
-        <record id="action_fts_nr_tag" model="ir.actions.act_window">
-            <field name="name">Tags</field>
-            <field name="res_model">fts.nr.tag</field>
-            <field name="view_mode">list</field>
-        </record>
-
-        <menuitem
-            id="menu_fts_nr_tag"
-            name="Tags"
-            parent="menu_fts_crose_config"
-            action="action_fts_nr_tag"
-            sequence="30"
-        />
-
         
 
     </data>
