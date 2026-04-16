@@ -19,54 +19,54 @@ msgstr ""
 #. odoo-python
 #: code:addons/feitas_iot/models/nr_flow.py:0
 msgid "%(count)s atomic messages were created from %(flow_count)s flows."
-msgstr ""
+msgstr "已从 %(flow_count)s 个流程生成 %(count)s 条原子消息。"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_ai_training__quantization__4bit
 msgid "4-bit"
-msgstr ""
+msgstr "4比特"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_ai_training__quantization__8bit
 msgid "8-bit"
-msgstr ""
+msgstr "8比特"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_nr_flow_kanban
 msgid "<i class=\"fa fa-fire me-1\" title=\"Heat\"/>"
-msgstr ""
+msgstr "<i class=\"fa fa-fire me-1\" title=\"Heat\"/>"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_data_model_kanban
 msgid "<span class=\"small text-muted\">Instance</span>"
-msgstr ""
+msgstr "<span class=\"small text-muted\">实例</span>"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_crose_component_form
 msgid "<strong>Check failed:</strong>"
-msgstr ""
+msgstr "<strong>检查失败：</strong>"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/nr_instance.py:0
 msgid "A remote instance must have an edge agent before it can be started."
-msgstr ""
+msgstr "远程实例在启动前必须绑定一个边缘节点。"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_category_list
 msgid "AI Categories"
-msgstr ""
+msgstr "AI分类"
 
 #. module: feitas_iot
 #: model:ir.model,name:feitas_iot.model_fts_ai_category
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_category_form
 msgid "AI Category"
-msgstr ""
+msgstr "AI分类"
 
 #. module: feitas_iot
 #: model:ir.model,name:feitas_iot.model_fts_ai_chat_wizard
 msgid "AI Chat"
-msgstr ""
+msgstr "AI对话"
 
 #. module: feitas_iot
 #. odoo-python
@@ -74,83 +74,83 @@ msgstr ""
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_data_model_ai_flow_wizard_form
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_data_model_form
 msgid "AI Flow"
-msgstr ""
+msgstr "AI流程"
 
 #. module: feitas_iot
 #: model:ir.model,name:feitas_iot.model_fts_ai_knowledge_chunk
 msgid "AI Knowledge Chunk"
-msgstr ""
+msgstr "AI知识片段"
 
 #. module: feitas_iot
 #: model:ir.model,name:feitas_iot.model_fts_ai_knowledge_document
 msgid "AI Knowledge Document"
-msgstr ""
+msgstr "AI知识文档"
 
 #. module: feitas_iot
 #: model:ir.ui.menu,name:feitas_iot.menu_fts_ai_root
 msgid "AI Lab"
-msgstr "深度学习"
+msgstr "AI实验室"
 
 #. module: feitas_iot
 #: model:ir.model,name:feitas_iot.model_fts_ai_model
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_data_model__ai_model_name
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_model_form
 msgid "AI Model"
-msgstr ""
+msgstr "AI模型"
 
 #. module: feitas_iot
 #: model:ir.actions.act_window,name:feitas_iot.action_fts_ai_model
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_model_list
 msgid "AI Models"
-msgstr ""
+msgstr "AI模型"
 
 #. module: feitas_iot
 #: model:ir.model,name:feitas_iot.model_fts_ai_prompt
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_prompt_form
 msgid "AI Prompt"
-msgstr ""
+msgstr "提示词"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_prompt_list
 msgid "AI Prompts"
-msgstr ""
+msgstr "提示词"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__crose_component__component_type__ai
 msgid "AI Service"
-msgstr ""
+msgstr "AI服务"
 
 #. module: feitas_iot
 #: model:ir.actions.server,name:feitas_iot.ir_cron_ai_training_status_update_ir_actions_server
 msgid "AI Training Status Update"
-msgstr ""
+msgstr "模型训练状态更新"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/utils.py:0
 msgid "AI embedding service call failed: %(error)s"
-msgstr ""
+msgstr "AI 向量化服务调用失败：%(error)s"
 
 #. module: feitas_iot
 #: model:ir.module.category,description:feitas_iot.module_category_feitas_iot
 msgid "Access groups for CRose IoT platform"
-msgstr ""
+msgstr "CRose 物联网平台访问权限组"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_model__account_id
 msgid "Account"
-msgstr ""
+msgstr "账号"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_crose_component__account_ids
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_crose_component_form
 msgid "Accounts"
-msgstr ""
+msgstr "账号"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_alert__state__ack
 msgid "Acknowledged"
-msgstr ""
+msgstr "已确认"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_dataset__message_needaction
@@ -166,7 +166,7 @@ msgstr ""
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_flow__message_needaction
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_instance__message_needaction
 msgid "Action Needed"
-msgstr ""
+msgstr "需要处理"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_category__active
@@ -206,7 +206,7 @@ msgstr "活动"
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_flow__activity_exception_decoration
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_instance__activity_exception_decoration
 msgid "Activity Exception Decoration"
-msgstr ""
+msgstr "活动异常标记"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_dataset__activity_state
@@ -222,7 +222,7 @@ msgstr ""
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_flow__activity_state
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_instance__activity_state
 msgid "Activity State"
-msgstr ""
+msgstr "活动状态"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_dataset__activity_type_icon
@@ -238,28 +238,28 @@ msgstr ""
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_flow__activity_type_icon
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_instance__activity_type_icon
 msgid "Activity Type Icon"
-msgstr ""
+msgstr "活动类型图标"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_model__adapter_path
 msgid "Adapter Path"
-msgstr ""
+msgstr "适配器路径"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/ai.py:0
 msgid "Adapter Path is required for vLLM adapter models."
-msgstr ""
+msgstr "vLLM 适配器模型必须填写适配器路径。"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_training__adapter_type
 msgid "Adapter Type"
-msgstr ""
+msgstr "适配器类型"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_nr_instance_wizard__operation__add
 msgid "Add Flows from Template"
-msgstr ""
+msgstr "从模板添加流程"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_data_address__address
@@ -277,12 +277,12 @@ msgstr "地址"
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__crose_component_account__role__admin
 msgid "Admin"
-msgstr ""
+msgstr "管理员"
 
 #. module: feitas_iot
 #: model:res.groups,name:feitas_iot.group_feitas_iot_admin
 msgid "Administrator"
-msgstr ""
+msgstr "管理员"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_agent_flow_line__agent_id
@@ -294,91 +294,91 @@ msgstr "代理"
 #. module: feitas_iot
 #: model:ir.model,name:feitas_iot.model_agent_flow_line
 msgid "Agent Flow Line"
-msgstr ""
+msgstr "节点流程行"
 
 #. module: feitas_iot
 #: model:ir.actions.act_window,name:feitas_iot.action_fts_agent_release
 #: model:ir.ui.menu,name:feitas_iot.menu_fts_agent_release
 msgid "Agent Package"
-msgstr ""
+msgstr "节点程序包"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_agent_package_list
 msgid "Agent Packages"
-msgstr ""
+msgstr "节点程序包"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_edge_agent__agent_port
 msgid "Agent Port"
-msgstr ""
+msgstr "节点端口"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/controllers/download.py:0
 msgid "Agent address is not configured"
-msgstr ""
+msgstr "未配置节点地址"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/controllers/download.py:0
 msgid "Agent does not exist"
-msgstr ""
+msgstr "节点不存在"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_edge_agent_kanban
 msgid "Agent:"
-msgstr ""
+msgstr "节点："
 
 #. module: feitas_iot
 #: model:ir.actions.act_window,name:feitas_iot.action_fts_edge_agent
 msgid "Agents"
-msgstr ""
+msgstr "边缘节点"
 
 #. module: feitas_iot
 #: model:ir.model,name:feitas_iot.model_fts_alert
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_alert_form
 msgid "Alert"
-msgstr ""
+msgstr "告警"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_alert_form
 msgid "Alert title"
-msgstr ""
+msgstr "告警标题"
 
 #. module: feitas_iot
 #: model:ir.actions.act_window,name:feitas_iot.action_fts_alert
 #: model:ir.ui.menu,name:feitas_iot.menu_crose_workbench_alerts
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_alert_list
 msgid "Alerts"
-msgstr ""
+msgstr "告警"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_knowledge_rag_wizard__result_answer
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_knowledge_rag_wizard_form
 msgid "Answer"
-msgstr ""
+msgstr "答案"
 
 #. module: feitas_iot
 #: model:ir.ui.menu,name:feitas_iot.menu_crose_app_store
 msgid "App Store"
-msgstr ""
+msgstr "应用商店"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/nr_instance.py:0
 msgid "Application Complete"
-msgstr ""
+msgstr "应用完成"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_nr_flow_param_form
 msgid "Application Parameter"
-msgstr ""
+msgstr "应用参数"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_data_model__app_param_ids
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_nr_flow_param_tree
 msgid "Application Parameters"
-msgstr ""
+msgstr "应用参数"
 
 #. module: feitas_iot
 #. odoo-python
@@ -389,7 +389,7 @@ msgstr ""
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_instance_kanban
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_instance_tree
 msgid "Applications"
-msgstr ""
+msgstr "应用"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_instance_form
@@ -405,17 +405,17 @@ msgstr "审批"
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_crose_nr_package_form
 msgid ""
 "Are you sure you want to publish this package from Staging to Production?"
-msgstr ""
+msgstr "确定要将该包从预发布发布到生产吗？"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_training_form
 msgid "Artifacts"
-msgstr ""
+msgstr "产物"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_chat_wizard_form
 msgid "Ask"
-msgstr ""
+msgstr "提问"
 
 #. module: feitas_iot
 #. odoo-javascript
@@ -425,51 +425,51 @@ msgstr ""
 #: model:ir.actions.act_window,name:feitas_iot.action_fts_ai_chat_wizard
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_chat_wizard_form
 msgid "Ask AI"
-msgstr ""
+msgstr "询问AI"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_knowledge_rag_wizard_form
 msgid "Ask Model"
-msgstr ""
+msgstr "询问模型"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_chat_wizard_form
 msgid "Ask something..."
-msgstr ""
+msgstr "请输入问题..."
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_data_model_kanban
 msgid "Asset"
-msgstr ""
+msgstr "资产"
 
 #. module: feitas_iot
 #. odoo-javascript
 #: code:addons/feitas_iot/static/src/xml/overview_templates.xml:0
 msgid "Asset Insight"
-msgstr ""
+msgstr "资产洞察"
 
 #. module: feitas_iot
 #: model:ir.actions.act_window,name:feitas_iot.action_fts_data_asset
 #: model:ir.ui.menu,name:feitas_iot.menu_fts_data_asset
 msgid "Assets"
-msgstr ""
+msgstr "资产"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_dataset_message__assistant
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_dataset_message_form
 msgid "Assistant"
-msgstr ""
+msgstr "助手"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/ai.py:0
 msgid "At least one atomic message is required to start training."
-msgstr ""
+msgstr "开始训练至少需要一条原子消息。"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_dataset_message_form
 msgid "Atomic Message"
-msgstr ""
+msgstr "原子消息"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_dataset__dataset_message_ids
@@ -477,13 +477,13 @@ msgstr ""
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_dataset_message_list
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_dataset_message_search
 msgid "Atomic Messages"
-msgstr ""
+msgstr "原子消息"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/nr_flow.py:0
 msgid "Atomic Messages Created"
-msgstr ""
+msgstr "原子消息已创建"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_dataset__message_attachment_count
@@ -505,14 +505,14 @@ msgstr "附件数"
 #. odoo-python
 #: code:addons/feitas_iot/models/edge_agent.py:0
 msgid "Attachment not found: config.yaml.template"
-msgstr ""
+msgstr "未找到附件：config.yaml.template"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_model__base_model_id
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_training__base_model_id
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_training_search
 msgid "Base Model"
-msgstr ""
+msgstr "基础模型"
 
 #. module: feitas_iot
 #. odoo-python
@@ -522,6 +522,8 @@ msgid ""
 "training pipeline requires a non-AWQ base model (for example: "
 "Qwen/Qwen2-1.5B-Instruct)."
 msgstr ""
+"基础模型“%(model)s”看起来是 AWQ 量化模型。当前训练流程需要非 AWQ 的基础模型（例如："
+"Qwen/Qwen2-1.5B-Instruct）。"
 
 #. module: feitas_iot
 #. odoo-python
@@ -531,12 +533,14 @@ msgid ""
 "(for example: Qwen/Qwen2-1.5B-Instruct) or a local path that exists inside "
 "crose-ai-train container."
 msgstr ""
+"基础模型“%(model)s”无效。请使用有效的 Hugging Face 模型 ID（例如：Qwen/Qwen2-1.5B-Instruct），"
+"或使用 crose-ai-train 容器内存在的本地路径。"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/ai.py:0
 msgid "Base model identifier is required."
-msgstr ""
+msgstr "必须填写基础模型标识。"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_edge_agent_form
@@ -546,12 +550,12 @@ msgstr "基础配置"
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_training__batch_size
 msgid "Batch Size"
-msgstr ""
+msgstr "批大小"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_nr_flow_param__type__bool
 msgid "Boolean"
-msgstr ""
+msgstr "布尔"
 
 #. module: feitas_iot
 #. odoo-javascript
@@ -563,45 +567,45 @@ msgstr "Broker状态变化"
 #. odoo-javascript
 #: code:addons/feitas_iot/static/src/xml/overview_templates.xml:0
 msgid "CPU"
-msgstr ""
+msgstr "CPU"
 
 #. module: feitas_iot
 #: model:ir.ui.menu,name:feitas_iot.menu_crose_settings
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_crose_res_config_settings
 msgid "CRose"
-msgstr ""
+msgstr "CRose"
 
 #. module: feitas_iot
 #: model:ir.module.category,name:feitas_iot.module_category_feitas_iot
 #: model:res.groups.privilege,name:feitas_iot.res_groups_privilege_feitas_iot
 msgid "CRose IoT"
-msgstr ""
+msgstr "CRose IoT"
 
 #. module: feitas_iot
 #: model:ir.actions.act_window,name:feitas_iot.action_crose_settings
 msgid "CRose Settings"
-msgstr ""
+msgstr "CRose 设置"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_nr_instance_wizard_form
 msgid "Cancel"
-msgstr ""
+msgstr "取消"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_ai_training__state__cancelled
 msgid "Cancelled"
-msgstr ""
+msgstr "已取消"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_dataset_message__category_ids
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_prompt__category_ids
 msgid "Categories"
-msgstr ""
+msgstr "分类"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_dataset__category_ratio
 msgid "Category Ratio"
-msgstr ""
+msgstr "分类比例"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_crose_component_form
@@ -611,63 +615,63 @@ msgstr "检查状态"
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_knowledge_document_form
 msgid "Chunk"
-msgstr ""
+msgstr "片段"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_knowledge_document__chunk_count
 msgid "Chunk Count"
-msgstr ""
+msgstr "片段数量"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_knowledge_document__chunk_overlap
 msgid "Chunk Overlap"
-msgstr ""
+msgstr "重叠长度"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/ai_knowledge.py:0
 msgid "Chunk Overlap cannot be negative."
-msgstr ""
+msgstr "重叠长度不能为负数。"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/ai_knowledge.py:0
 msgid "Chunk Overlap must be smaller than Chunk Size."
-msgstr ""
+msgstr "重叠长度必须小于片段长度。"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_knowledge_document__chunk_size
 msgid "Chunk Size"
-msgstr ""
+msgstr "片段长度"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/ai_knowledge.py:0
 msgid "Chunk Size must be greater than 0."
-msgstr ""
+msgstr "片段长度必须大于 0。"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_knowledge_document_form
 msgid "Chunking"
-msgstr ""
+msgstr "切片"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_knowledge_document__chunk_ids
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_knowledge_document_form
 msgid "Chunks"
-msgstr ""
+msgstr "片段"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/ai_knowledge.py:0
 msgid "Chunks were generated."
-msgstr ""
+msgstr "已生成片段。"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/ai_knowledge.py:0
 msgid "Chunks were vectorized."
-msgstr ""
+msgstr "片段已向量化。"
 
 #. module: feitas_iot
 #. odoo-javascript
@@ -687,38 +691,38 @@ msgstr "关闭"
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_data_model__protocol__coap
 msgid "CoAP"
-msgstr ""
+msgstr "CoAP"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_data_model__name
 msgid "Code"
-msgstr ""
+msgstr "编码"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_category__color
 msgid "Color"
-msgstr ""
+msgstr "颜色"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_tag__color
 msgid "Color Index"
-msgstr ""
+msgstr "颜色索引"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_edge_agent__agent_cmd
 msgid "Command"
-msgstr ""
+msgstr "命令"
 
 #. module: feitas_iot
 #. odoo-javascript
 #: code:addons/feitas_iot/static/src/xml/overview_templates.xml:0
 msgid "Commands Today"
-msgstr ""
+msgstr "今日指令"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_ai_training__state__completed
 msgid "Completed"
-msgstr ""
+msgstr "已完成"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_crose_component_account__component_id
@@ -726,34 +730,34 @@ msgstr ""
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_model__component_id
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_crose_nr_package_search
 msgid "Component"
-msgstr ""
+msgstr "组件"
 
 #. module: feitas_iot
 #: model:ir.model,name:feitas_iot.model_crose_component_account
 msgid "Component Account"
-msgstr ""
+msgstr "组件账号"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_crose_component__name
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_crose_component_form
 msgid "Component Name"
-msgstr ""
+msgstr "组件名称"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_crose_component__component_type
 msgid "Component Type"
-msgstr ""
+msgstr "组件类型"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/crose_component.py:0
 msgid "Component host and port are required."
-msgstr ""
+msgstr "必须填写组件主机和端口。"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_node__config_node_ids
 msgid "Config Nodes"
-msgstr ""
+msgstr "配置节点"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_nr_node_form
@@ -774,12 +778,12 @@ msgstr "配置项"
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_nr_instance_wizard_form
 msgid "Confirm"
-msgstr ""
+msgstr "确认"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_model_form
 msgid "Connection"
-msgstr ""
+msgstr "连接"
 
 #. module: feitas_iot
 #. odoo-python
@@ -797,7 +801,7 @@ msgstr "连接成功"
 #. odoo-javascript
 #: code:addons/feitas_iot/static/src/xml/overview_templates.xml:0
 msgid "Connectivity & Health"
-msgstr ""
+msgstr "连接性与健康状态"
 
 #. module: feitas_iot
 #: model:ir.model,name:feitas_iot.model_res_partner
@@ -821,24 +825,24 @@ msgstr "内容"
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_knowledge_rag_wizard__result_context
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_knowledge_rag_wizard_form
 msgid "Context"
-msgstr ""
+msgstr "上下文"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_nr_flow_form
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_nr_flow_tree
 msgid "Convert to Atomic Messages"
-msgstr ""
+msgstr "转换为原子消息"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_training_form
 msgid "Core"
-msgstr ""
+msgstr "核心"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/data_model.py:0
 msgid "Created %(count)s flows on %(instance)s and pushed them to Node-RED."
-msgstr ""
+msgstr "已在 %(instance)s 上创建 %(count)s 个流程并推送到 Node-RED。"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_mqtt_topic__create_date
@@ -922,22 +926,22 @@ msgstr "创建于"
 #. odoo-python
 #: code:addons/feitas_iot/models/crose_component.py:0
 msgid "Credentials reset successfully."
-msgstr ""
+msgstr "凭据重置成功。"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_alert__severity__critical
 msgid "Critical"
-msgstr ""
+msgstr "严重"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_training__current_epoch
 msgid "Current Epoch"
-msgstr ""
+msgstr "当前轮次"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_training__current_step
 msgid "Current Step"
-msgstr ""
+msgstr "当前步数"
 
 #. module: feitas_iot
 #. odoo-python
@@ -948,7 +952,7 @@ msgstr "当前主题"
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__crose_component_account__role__custom
 msgid "Custom"
-msgstr ""
+msgstr "自定义"
 
 #. module: feitas_iot
 #. odoo-javascript
@@ -956,12 +960,12 @@ msgstr ""
 #: model:ir.actions.client,name:feitas_iot.action_fts_iot_overview
 #: model:ir.ui.menu,name:feitas_iot.menu_crose_workbench_dashboard
 msgid "Dashboard"
-msgstr "概览"
+msgstr "仪表盘"
 
 #. module: feitas_iot
 #: model:ir.model,name:feitas_iot.model_fts_data_app
 msgid "Data App"
-msgstr ""
+msgstr "数据应用"
 
 #. module: feitas_iot
 #: model:ir.model,name:feitas_iot.model_fts_data_asset
@@ -970,22 +974,22 @@ msgstr ""
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_data_asset_form
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_data_asset_search
 msgid "Data Asset"
-msgstr ""
+msgstr "数据资产"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_data_asset_tree
 msgid "Data Assets"
-msgstr ""
+msgstr "数据资产"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_alert__source__collection
 msgid "Data Collection"
-msgstr ""
+msgstr "数据采集"
 
 #. module: feitas_iot
 #: model:ir.ui.menu,name:feitas_iot.menu_crose_data_factory
 msgid "Data Factory"
-msgstr ""
+msgstr "数据工厂"
 
 #. module: feitas_iot
 #: model:ir.model,name:feitas_iot.model_fts_data_model
@@ -998,44 +1002,44 @@ msgstr ""
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_data_model_search
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_data_model_tree
 msgid "Data Model"
-msgstr "数据建模"
+msgstr "数据模型"
 
 #. module: feitas_iot
 #: model:ir.model,name:feitas_iot.model_fts_data_model_ai_flow_wizard
 msgid "Data Model AI Flow Wizard"
-msgstr ""
+msgstr "数据模型AI流程向导"
 
 #. module: feitas_iot
 #: model:ir.model,name:feitas_iot.model_fts_data_address
 msgid "Data Model Address"
-msgstr ""
+msgstr "数据模型地址"
 
 #. module: feitas_iot
 #: model:ir.model,name:feitas_iot.model_fts_data_log
 msgid "Data Model History Log"
-msgstr ""
+msgstr "数据模型历史日志"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_data_log_tree
 msgid "Data Model Logs"
-msgstr ""
+msgstr "数据模型日志"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/wizards/data_model_ai_flow_wizard.py:0
 msgid "Data Model is required."
-msgstr ""
+msgstr "必须选择数据模型。"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_data_asset__data_model_ids
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_data_asset_form
 msgid "Data Models"
-msgstr ""
+msgstr "数据模型"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_alert__source__processing
 msgid "Data Processing"
-msgstr ""
+msgstr "数据处理"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_data_model_form
@@ -1045,7 +1049,7 @@ msgstr "数据查询"
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_data_model__data_status
 msgid "Data Status"
-msgstr ""
+msgstr "数据状态"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_data_model__data_structure
@@ -1057,7 +1061,7 @@ msgstr "数据结构"
 #. odoo-javascript
 #: code:addons/feitas_iot/static/src/xml/overview_templates.xml:0
 msgid "Data Throughput"
-msgstr ""
+msgstr "数据吞吐"
 
 #. module: feitas_iot
 #: model:ir.model,name:feitas_iot.model_fts_ai_dataset
@@ -1068,17 +1072,17 @@ msgstr "数据集"
 #. module: feitas_iot
 #: model:ir.model,name:feitas_iot.model_fts_ai_dataset_message
 msgid "Dataset Atomic Message"
-msgstr ""
+msgstr "数据集原子消息"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_training__dataset_file_path
 msgid "Dataset File Path"
-msgstr ""
+msgstr "数据集文件路径"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_training__dataset_key
 msgid "Dataset Key"
-msgstr ""
+msgstr "数据集标识"
 
 #. module: feitas_iot
 #. odoo-python
@@ -1089,6 +1093,9 @@ msgid ""
 "--rm --user root crose-web sh -lc \"mkdir -p %(path)s && chown -R odoo:odoo "
 "%(path)s && chmod -R u+rwX,g+rwX %(path)s\". Original error: %(error)s"
 msgstr ""
+"数据集路径不可写：%(path)s。请修复 Odoo 容器用户的卷权限后重试。推荐命令：docker compose run "
+"--rm --user root crose-web sh -lc \"mkdir -p %(path)s && chown -R odoo:odoo "
+"%(path)s && chmod -R u+rwX,g+rwX %(path)s\"。原始错误：%(error)s"
 
 #. module: feitas_iot
 #: model:ir.actions.act_window,name:feitas_iot.action_fts_ai_dataset
@@ -1108,12 +1115,12 @@ msgstr "默认"
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_nr_instance_wizard__operation__delete
 msgid "Delete Flows"
-msgstr ""
+msgstr "删除流程"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_data_model__is_demo
 msgid "Demo"
-msgstr ""
+msgstr "演示"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_edge_agent_form
@@ -1128,7 +1135,7 @@ msgstr "部署信息"
 #. module: feitas_iot
 #: model:ir.ui.menu,name:feitas_iot.menu_crose_deployments
 msgid "Deployments"
-msgstr ""
+msgstr "部署"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_data_model__description
@@ -1147,41 +1154,41 @@ msgstr "细节"
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_alert__source__device
 msgid "Device"
-msgstr ""
+msgstr "设备"
 
 #. module: feitas_iot
 #. odoo-javascript
 #: code:addons/feitas_iot/static/src/xml/overview_templates.xml:0
 msgid "Device Online Ratio"
-msgstr ""
+msgstr "设备在线率"
 
 #. module: feitas_iot
 #. odoo-javascript
 #: code:addons/feitas_iot/static/src/xml/overview_templates.xml:0
 msgid "Devices"
-msgstr ""
+msgstr "设备"
 
 #. module: feitas_iot
 #. odoo-javascript
 #: code:addons/feitas_iot/static/src/xml/overview_templates.xml:0
 msgid "Digital Models"
-msgstr ""
+msgstr "数字模型"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_nr_instance_wizard__operation__disable
 msgid "Disable Flows"
-msgstr ""
+msgstr "禁用流程"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_nr_flow__state__disabled
 msgid "Disabled"
-msgstr ""
+msgstr "已禁用"
 
 #. module: feitas_iot
 #. odoo-javascript
 #: code:addons/feitas_iot/static/src/xml/overview_templates.xml:0
 msgid "Disk"
-msgstr ""
+msgstr "磁盘"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_agent_flow_line__display_name
@@ -1226,12 +1233,12 @@ msgstr "显示名称"
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_knowledge_chunk__document_id
 msgid "Document"
-msgstr ""
+msgstr "文档"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_knowledge_rag_wizard__document_ids
 msgid "Documents"
-msgstr ""
+msgstr "文档"
 
 #. module: feitas_iot
 #. odoo-javascript
@@ -1250,12 +1257,12 @@ msgstr "草稿"
 #. odoo-python
 #: code:addons/feitas_iot/models/nr_instance.py:0
 msgid "Duplicate node IDs exist in the flow, so it cannot be applied."
-msgstr ""
+msgstr "流程中存在重复的节点 ID，无法应用。"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_training__eta_seconds
 msgid "ETA (s)"
-msgstr ""
+msgstr "预计剩余时间（秒）"
 
 #. module: feitas_iot
 #: model:ir.model,name:feitas_iot.model_fts_edge_agent
@@ -1267,12 +1274,12 @@ msgstr "边缘代理"
 #. module: feitas_iot
 #: model:ir.ui.menu,name:feitas_iot.menu_crose_edge_management
 msgid "Edge Management"
-msgstr ""
+msgstr "边缘管理"
 
 #. module: feitas_iot
 #: model:ir.ui.menu,name:feitas_iot.menu_crose_edge_nodes
 msgid "Edge Nodes"
-msgstr ""
+msgstr "边缘节点"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_instance_form
@@ -1282,7 +1289,7 @@ msgstr "编辑器"
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_instance__editor_port
 msgid "Editor Port"
-msgstr ""
+msgstr "编辑器端口"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_data_model__state__effective
@@ -1298,7 +1305,7 @@ msgstr "邮件会话"
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_crose_component_account__password_encrypted
 msgid "Encrypted Password"
-msgstr ""
+msgstr "加密密码"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_data_model__query_end_time
@@ -1319,7 +1326,7 @@ msgstr "环境变量"
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_training__epochs
 msgid "Epochs"
-msgstr ""
+msgstr "训练轮次"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__crose_component__status__error
@@ -1331,7 +1338,7 @@ msgstr "错误"
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_training__error_message
 msgid "Error Message"
-msgstr ""
+msgstr "错误信息"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_crose_component__error_reason
@@ -1343,60 +1350,60 @@ msgstr "错误原因"
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_data_model__data_status__abnormal
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_data_asset_search
 msgid "Exceptional"
-msgstr ""
+msgstr "异常"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_training__external_job_id
 msgid "External Job ID"
-msgstr ""
+msgstr "外部任务ID"
 
 #. module: feitas_iot
 #: model:res.groups,name:feitas_iot.group_feitas_iot_external
 msgid "External User"
-msgstr ""
+msgstr "外部用户"
 
 #. module: feitas_iot
 #. odoo-javascript
 #: code:addons/feitas_iot/static/src/xml/overview_templates.xml:0
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_ai_training__state__failed
 msgid "Failed"
-msgstr ""
+msgstr "失败"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/nr_instance.py:0
 msgid "Failed to call Node-RED API: %(error)s"
-msgstr ""
+msgstr "调用 Node-RED API 失败：%(error)s"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/nr_instance.py:0
 msgid "Failed to call the GMQTT publish API: %(error)s"
-msgstr ""
+msgstr "调用 GMQTT 发布 API 失败：%(error)s"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/data_model.py:0
 msgid "Failed to create MQTT user for %(partner)s: %(error)s"
-msgstr ""
+msgstr "为 %(partner)s 创建 MQTT 用户失败：%(error)s"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/data_model.py:0
 msgid "Failed to generate spreadsheet: %(error)s"
-msgstr ""
+msgstr "生成电子表格失败：%(error)s"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/ai.py:0
 msgid "Failed to load model adapter: %(error)s"
-msgstr ""
+msgstr "加载模型适配器失败：%(error)s"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/ai.py:0
 msgid "Failed to load vLLM adapter: %(error)s"
-msgstr ""
+msgstr "加载 vLLM 适配器失败：%(error)s"
 
 #. module: feitas_iot
 #. odoo-javascript
@@ -1408,59 +1415,59 @@ msgstr "解析电子表格数据失败"
 #. odoo-python
 #: code:addons/feitas_iot/controllers/download.py:0
 msgid "Failed to read logs: %(error)s"
-msgstr ""
+msgstr "读取日志失败：%(error)s"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/ai.py:0
 msgid "Failed to resolve endpoint (%(key)s): %(error)s"
-msgstr ""
+msgstr "解析端点（%(key)s）失败：%(error)s"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/ai.py:0
 msgid "Failed to resolve gateway endpoint (%(key)s): %(error)s"
-msgstr ""
+msgstr "解析网关端点（%(key)s）失败：%(error)s"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/ai.py:0
 msgid "Failed to resolve training API endpoint: %(error)s"
-msgstr ""
+msgstr "解析训练 API 端点失败：%(error)s"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/ai.py:0
 msgid "Failed to resolve training status API endpoint: %(error)s"
-msgstr ""
+msgstr "解析训练状态 API 端点失败：%(error)s"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/ai.py:0
 msgid "Failed to start training: %(error)s"
-msgstr ""
+msgstr "启动训练失败：%(error)s"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/ai.py:0
 msgid "Failed to unload model adapter: %(error)s"
-msgstr ""
+msgstr "卸载模型适配器失败：%(error)s"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/data_model.py:0
 msgid "Failed: %(fail)s."
-msgstr ""
+msgstr "失败：%(fail)s。"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_training_form
 msgid "Fine-tuning"
-msgstr ""
+msgstr "微调"
 
 #. module: feitas_iot
 #: model:ir.model.fields,help:feitas_iot.field_fts_data_model__redis_key
 msgid "Fixed Redis key to query, e.g. check_db"
-msgstr ""
+msgstr "固定要查询的 Redis 键，例如 check_db"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_agent_flow_line__flow_id
@@ -1473,12 +1480,12 @@ msgstr "流程"
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_flow__nr_id
 msgid "Flow ID"
-msgstr ""
+msgstr "流程ID"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_instance__flow_line_ids
 msgid "Flow Lines"
-msgstr ""
+msgstr "流程行"
 
 #. module: feitas_iot
 #: model:ir.actions.act_window,name:feitas_iot.action_fts_nr_flow
@@ -1487,7 +1494,7 @@ msgstr ""
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_instance__flow_ids
 #: model:ir.ui.menu,name:feitas_iot.menu_crose_flows
 msgid "Flows"
-msgstr ""
+msgstr "流程"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_dataset__message_follower_ids
@@ -1503,7 +1510,7 @@ msgstr ""
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_flow__message_follower_ids
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_instance__message_follower_ids
 msgid "Followers"
-msgstr ""
+msgstr "关注者"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_dataset__message_partner_ids
@@ -1519,7 +1526,7 @@ msgstr ""
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_flow__message_partner_ids
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_instance__message_partner_ids
 msgid "Followers (Partners)"
-msgstr ""
+msgstr "关注者（合作伙伴）"
 
 #. module: feitas_iot
 #: model:ir.model.fields,help:feitas_iot.field_fts_ai_dataset__activity_type_icon
@@ -1535,27 +1542,27 @@ msgstr ""
 #: model:ir.model.fields,help:feitas_iot.field_fts_nr_flow__activity_type_icon
 #: model:ir.model.fields,help:feitas_iot.field_fts_nr_instance__activity_type_icon
 msgid "Font awesome icon e.g. fa-tasks"
-msgstr ""
+msgstr "Font Awesome 图标，例如 fa-tasks"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_knowledge_document_form
 msgid "For example: Product Manual"
-msgstr ""
+msgstr "例如：产品手册"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_model_form
 msgid "For example: Qwen2-7B / DeepSeek / My LoRA Adapter"
-msgstr ""
+msgstr "例如：Qwen2-7B / DeepSeek / 我的 LoRA 适配器"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_dataset_message__format
 msgid "Format"
-msgstr ""
+msgstr "格式"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_crose_res_config_settings
 msgid "General"
-msgstr ""
+msgstr "通用"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_data_model_ai_flow_wizard_form
@@ -1567,30 +1574,30 @@ msgstr "生成"
 #. odoo-python
 #: code:addons/feitas_iot/models/data_model.py:0
 msgid "Generated by LLaMA-Factory"
-msgstr ""
+msgstr "由 LLaMA-Factory 生成"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/data_model.py:0
 msgid "Generated flow %(flow)s and linked it to this data model."
-msgstr ""
+msgstr "已生成流程 %(flow)s 并关联到该数据模型。"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/data_model.py:0
 #: code:addons/feitas_iot/models/edge_agent.py:0
 msgid "Generation Complete"
-msgstr ""
+msgstr "生成完成"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_training__gradient_accumulation_steps
 msgid "Gradient Accumulation"
-msgstr ""
+msgstr "梯度累积"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_data_model__protocol__http
 msgid "HTTP"
-msgstr ""
+msgstr "HTTP"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_dataset__has_message
@@ -1606,23 +1613,23 @@ msgstr ""
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_flow__has_message
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_instance__has_message
 msgid "Has Message"
-msgstr ""
+msgstr "有消息"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_data_asset__health_status
 msgid "Health Status"
-msgstr ""
+msgstr "健康状态"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_flow__heat
 msgid "Heat"
-msgstr ""
+msgstr "热度"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_knowledge_rag_wizard__result_hits
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_knowledge_rag_wizard_form
 msgid "Hits (JSON)"
-msgstr ""
+msgstr "命中（JSON）"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_crose_component__host
@@ -1633,7 +1640,7 @@ msgstr "主机名"
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_ai_model__model_type__hf
 msgid "HuggingFace/Base (Training)"
-msgstr ""
+msgstr "HuggingFace/基础模型（训练）"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_agent_flow_line__id
@@ -1673,7 +1680,7 @@ msgstr ""
 #: model:ir.model.fields,field_description:feitas_iot.field_mail_thread__id
 #: model:ir.model.fields,field_description:feitas_iot.field_res_partner__id
 msgid "ID"
-msgstr ""
+msgstr "ID"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_edge_agent__ip_address
@@ -1695,7 +1702,7 @@ msgstr "IP地址"
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_flow__activity_exception_icon
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_instance__activity_exception_icon
 msgid "Icon"
-msgstr ""
+msgstr "图标"
 
 #. module: feitas_iot
 #: model:ir.model.fields,help:feitas_iot.field_fts_ai_dataset__activity_exception_icon
@@ -1711,7 +1718,7 @@ msgstr ""
 #: model:ir.model.fields,help:feitas_iot.field_fts_nr_flow__activity_exception_icon
 #: model:ir.model.fields,help:feitas_iot.field_fts_nr_instance__activity_exception_icon
 msgid "Icon to indicate an exception activity."
-msgstr ""
+msgstr "用于标识异常活动的图标。"
 
 #. module: feitas_iot
 #: model:ir.model.fields,help:feitas_iot.field_fts_ai_dataset__message_needaction
@@ -1727,7 +1734,7 @@ msgstr ""
 #: model:ir.model.fields,help:feitas_iot.field_fts_nr_flow__message_needaction
 #: model:ir.model.fields,help:feitas_iot.field_fts_nr_instance__message_needaction
 msgid "If checked, new messages require your attention."
-msgstr ""
+msgstr "勾选后，新消息需要你关注。"
 
 #. module: feitas_iot
 #: model:ir.model.fields,help:feitas_iot.field_fts_ai_dataset__message_has_error
@@ -1755,30 +1762,30 @@ msgstr ""
 #: model:ir.model.fields,help:feitas_iot.field_fts_nr_instance__message_has_error
 #: model:ir.model.fields,help:feitas_iot.field_fts_nr_instance__message_has_sms_error
 msgid "If checked, some messages have a delivery error."
-msgstr ""
+msgstr "勾选后，部分消息可能存在投递错误。"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_training_form
 msgid "Infer"
-msgstr ""
+msgstr "推理"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/ai.py:0
 msgid "Inference Complete"
-msgstr ""
+msgstr "推理完成"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/ai.py:0
 msgid "Inference failed: %(error)s"
-msgstr ""
+msgstr "推理失败：%(error)s"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/ai.py:0
 msgid "Inference result has been posted to chatter."
-msgstr ""
+msgstr "推理结果已发布到聊天记录。"
 
 #. module: feitas_iot
 #. odoo-python
@@ -1788,16 +1795,19 @@ msgid ""
 "Prompt: %(prompt)s\n"
 "Reply: %(reply)s"
 msgstr ""
+"使用模型 %(model)s 进行推理\n"
+"提示词：%(prompt)s\n"
+"回复：%(reply)s"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_alert__severity__info
 msgid "Info"
-msgstr ""
+msgstr "信息"
 
 #. module: feitas_iot
 #: model:ir.ui.menu,name:feitas_iot.menu_fts_crose_config
 msgid "Infrastructure"
-msgstr "配置"
+msgstr "基础设施"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_flow__instance_id
@@ -1813,7 +1823,7 @@ msgstr "实例"
 #. module: feitas_iot
 #: model:ir.model,name:feitas_iot.model_instance_flow_line
 msgid "Instance Flow Line"
-msgstr ""
+msgstr "实例流程行"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_instance__instance_type
@@ -1844,7 +1854,7 @@ msgstr "各集成系统状态更新"
 #. module: feitas_iot
 #: model:res.groups,name:feitas_iot.group_feitas_iot_internal
 msgid "Internal User"
-msgstr ""
+msgstr "内部用户"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_data_model__query_interval
@@ -1860,28 +1870,28 @@ msgstr "失效"
 #. odoo-python
 #: code:addons/feitas_iot/controllers/download.py:0
 msgid "Invalid parameter: agent_id"
-msgstr ""
+msgstr "无效参数：agent_id"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/controllers/download.py:0
 msgid "Invalid parameter: instance_id"
-msgstr ""
+msgstr "无效参数：instance_id"
 
 #. module: feitas_iot
 #: model:ir.model,name:feitas_iot.model_fts_nr_instance
 msgid "IoT Instance"
-msgstr ""
+msgstr "物联网实例"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__crose_component__component_type__iotdb
 msgid "IoTDB"
-msgstr ""
+msgstr "IoTDB"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_data_model__iotdb_topic
 msgid "IoTDB Topic"
-msgstr ""
+msgstr "IoTDB 主题"
 
 #. module: feitas_iot
 #. odoo-python
@@ -1894,7 +1904,7 @@ msgstr ""
 #. odoo-python
 #: code:addons/feitas_iot/models/data_model.py:0
 msgid "IoTDB account 'crose_app' was not found on the component."
-msgstr ""
+msgstr "组件上未找到 IoTDB 账号“crose_app”。"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_dataset__message_is_follower
@@ -1910,7 +1920,7 @@ msgstr ""
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_flow__message_is_follower
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_instance__message_is_follower
 msgid "Is Follower"
-msgstr ""
+msgstr "关注者"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_edge_agent__is_template
@@ -1922,12 +1932,12 @@ msgstr "是模板"
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_node_item__value_type__json
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_nr_flow_param__type__json
 msgid "JSON"
-msgstr ""
+msgstr "JSON"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_knowledge__json_source
 msgid "JSON Source"
-msgstr ""
+msgstr "JSON源"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_node_item__key
@@ -1937,54 +1947,54 @@ msgstr "键"
 #. module: feitas_iot
 #: model:ir.ui.menu,name:feitas_iot.menu_fts_ai_knowledge_document
 msgid "Knowledge"
-msgstr ""
+msgstr "知识库"
 
 #. module: feitas_iot
 #: model:ir.model,name:feitas_iot.model_fts_knowledge
 msgid "Knowledge Base for Node-RED"
-msgstr ""
+msgstr "Node-RED 知识库"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_knowledge_chunk_form
 msgid "Knowledge Chunk"
-msgstr ""
+msgstr "知识片段"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_knowledge_chunk_list
 msgid "Knowledge Chunks"
-msgstr ""
+msgstr "知识片段"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_knowledge_document_form
 msgid "Knowledge Document"
-msgstr ""
+msgstr "知识文档"
 
 #. module: feitas_iot
 #: model:ir.actions.act_window,name:feitas_iot.action_fts_ai_knowledge_document
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_chat_wizard__document_ids
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_knowledge_document_list
 msgid "Knowledge Documents"
-msgstr ""
+msgstr "知识文档"
 
 #. module: feitas_iot
 #: model:ir.model,name:feitas_iot.model_fts_ai_knowledge_rag_wizard
 msgid "Knowledge RAG Test"
-msgstr ""
+msgstr "知识库RAG测试"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__crose_component__component_type__llm_provider
 msgid "LLM Provider"
-msgstr ""
+msgstr "LLM提供方"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_ai_model__model_type__provider
 msgid "LLM Provider (External)"
-msgstr ""
+msgstr "外部LLM提供方"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__crose_component__component_type__llama_factory
 msgid "LLaMA-Factory"
-msgstr ""
+msgstr "LLaMA-Factory"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_crose_component__last_check_time
@@ -1994,17 +2004,17 @@ msgstr "上次检查时间"
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_training__last_heartbeat
 msgid "Last Heartbeat"
-msgstr ""
+msgstr "最近心跳"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_training__last_inference_at
 msgid "Last Inference At"
-msgstr ""
+msgstr "上次推理时间"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_training__last_inference_reply
 msgid "Last Inference Reply"
-msgstr ""
+msgstr "上次推理回复"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_agent_flow_line__write_uid
@@ -2084,69 +2094,69 @@ msgstr "最近更新时间"
 #. odoo-javascript
 #: code:addons/feitas_iot/static/src/xml/overview_templates.xml:0
 msgid "Latency (ms)"
-msgstr ""
+msgstr "延迟（毫秒）"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_training__log_tail
 msgid "Latest Logs"
-msgstr ""
+msgstr "最新日志"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_training__learning_rate
 msgid "Learning Rate"
-msgstr ""
+msgstr "学习率"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_data_address__length
 msgid "Length"
-msgstr ""
+msgstr "长度"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_ai_training__adapter_type__lora
 msgid "LoRA"
-msgstr ""
+msgstr "LoRA"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_training__lora_alpha
 msgid "LoRA Alpha"
-msgstr ""
+msgstr "LoRA Alpha"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_training__lora_rank
 msgid "LoRA Rank"
-msgstr ""
+msgstr "LoRA Rank"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_training_form
 msgid "Load Model"
-msgstr ""
+msgstr "加载模型"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_training__loaded_model_name
 msgid "Loaded Model Alias"
-msgstr ""
+msgstr "已加载模型别名"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_training__loaded_model_path
 msgid "Loaded Model Path"
-msgstr ""
+msgstr "已加载模型路径"
 
 #. module: feitas_iot
 #. odoo-javascript
 #: code:addons/feitas_iot/static/src/xml/editor_templates.xml:0
 #: code:addons/feitas_iot/static/src/xml/overview_templates.xml:0
 msgid "Loading..."
-msgstr ""
+msgstr "加载中..."
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_nr_instance__instance_type__local
 msgid "Local Instance"
-msgstr ""
+msgstr "本地实例"
 
 #. module: feitas_iot
 #: model:ir.model.fields,help:feitas_iot.field_fts_data_model__nr_instance_id
 msgid "Local instance responsible for data processing"
-msgstr ""
+msgstr "负责数据处理的本地实例"
 
 #. module: feitas_iot
 #. odoo-javascript
@@ -2166,18 +2176,18 @@ msgstr "日志"
 #. odoo-python
 #: code:addons/feitas_iot/models/edge_agent.py:0
 msgid "Logs - %(name)s"
-msgstr ""
+msgstr "日志 - %(name)s"
 
 #. module: feitas_iot
 #: model:ir.model,name:feitas_iot.model_fts_mcp_tool_registry
 msgid "MCP Tool Registry"
-msgstr ""
+msgstr "MCP 工具注册表"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_data_model__protocol__mqtt
 #: model:ir.ui.menu,name:feitas_iot.menu_fts_mqtt_root
 msgid "MQTT"
-msgstr ""
+msgstr "MQTT"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_edge_agent__mqtt_broker_id
@@ -2185,17 +2195,17 @@ msgstr ""
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_mqtt_user__broker_id
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_mqtt_user_search
 msgid "MQTT Broker"
-msgstr ""
+msgstr "MQTT Broker"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_edge_agent_form
 msgid "MQTT Configuration"
-msgstr ""
+msgstr "MQTT 配置"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__crose_component__component_type__mqtt
 msgid "MQTT Service"
-msgstr ""
+msgstr "MQTT 服务"
 
 #. module: feitas_iot
 #: model:ir.model,name:feitas_iot.model_fts_mqtt_topic
@@ -2208,31 +2218,31 @@ msgstr "MQTT主题"
 #: model:ir.actions.act_window,name:feitas_iot.action_fts_mqtt_topic
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_mqtt_topic_tree
 msgid "MQTT Topics"
-msgstr ""
+msgstr "MQTT主题"
 
 #. module: feitas_iot
 #: model:ir.model,name:feitas_iot.model_fts_mqtt_user
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_mqtt_user_tree
 msgid "MQTT User"
-msgstr ""
+msgstr "MQTT用户"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_res_partner__mqtt_username
 #: model:ir.model.fields,field_description:feitas_iot.field_res_users__mqtt_username
 msgid "MQTT Username"
-msgstr ""
+msgstr "MQTT用户名"
 
 #. module: feitas_iot
 #: model:ir.actions.act_window,name:feitas_iot.action_fts_mqtt_user
 #: model:ir.ui.menu,name:feitas_iot.menu_fts_mqtt_user
 msgid "MQTT Users"
-msgstr ""
+msgstr "MQTT用户"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/data_model.py:0
 msgid "MQTT connection parameters have been generated:"
-msgstr ""
+msgstr "已生成 MQTT 连接参数："
 
 #. module: feitas_iot
 #. odoo-python
@@ -2243,42 +2253,42 @@ msgstr "MQTT主题同步完成。"
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_crose_res_config_settings
 msgid "Manage"
-msgstr ""
+msgstr "管理"
 
 #. module: feitas_iot
 #: model:ir.actions.act_window,name:feitas_iot.action_fts_nr_instance_wizard
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_instance_form
 msgid "Manage Flows"
-msgstr ""
+msgstr "管理流程"
 
 #. module: feitas_iot
 #: model:ir.model,name:feitas_iot.model_fts_nr_instance_wizard
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_nr_instance_wizard_form
 msgid "Manage Instance Flows"
-msgstr ""
+msgstr "管理实例流程"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_data_model_ai_flow_wizard__max_tokens
 msgid "Max Tokens"
-msgstr ""
+msgstr "最大Token数"
 
 #. module: feitas_iot
 #. odoo-javascript
 #: code:addons/feitas_iot/static/src/xml/overview_templates.xml:0
 msgid "Memory"
-msgstr ""
+msgstr "内存"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_chat_wizard__user_text
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_alert__message
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_chat_wizard_form
 msgid "Message"
-msgstr ""
+msgstr "消息"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_dataset__message_count
 msgid "Message Count"
-msgstr ""
+msgstr "消息数量"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_dataset__message_has_error
@@ -2294,13 +2304,13 @@ msgstr ""
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_flow__message_has_error
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_instance__message_has_error
 msgid "Message Delivery error"
-msgstr ""
+msgstr "消息投递错误"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/wizards/ai_chat_wizard.py:0
 msgid "Message is empty."
-msgstr ""
+msgstr "消息为空。"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_dataset__message_ids
@@ -2316,53 +2326,53 @@ msgstr ""
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_flow__message_ids
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_instance__message_ids
 msgid "Messages"
-msgstr ""
+msgstr "消息"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/ai.py:0
 msgid "Messages are required."
-msgstr ""
+msgstr "必须提供消息内容。"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_crose_component__metadata
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_crose_component_form
 msgid "Metadata"
-msgstr ""
+msgstr "元数据"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/crose_component.py:0
 msgid "Metadata key %(key)s is empty."
-msgstr ""
+msgstr "元数据键 %(key)s 为空。"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/crose_component.py:0
 msgid "Missing dependency cryptography: %(error)s"
-msgstr ""
+msgstr "缺少依赖 cryptography：%(error)s"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/crose_component.py:0
 msgid "Missing encryption secret in system parameter database.secret."
-msgstr ""
+msgstr "系统参数 database.secret 缺少加密密钥。"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/controllers/download.py:0
 msgid "Missing parameter: instance_id or agent_id"
-msgstr ""
+msgstr "缺少参数：instance_id 或 agent_id"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_data_model__protocol__mobus-rtu
 msgid "Modbus-RTU"
-msgstr ""
+msgstr "Modbus-RTU"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_data_model__protocol__mobus-tcp
 msgid "Modbus-TCP"
-msgstr ""
+msgstr "Modbus-TCP"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_chat_wizard__model_id
@@ -2372,19 +2382,19 @@ msgstr ""
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_model_form
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_data_asset_kanban
 msgid "Model"
-msgstr ""
+msgstr "模型"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_data_asset__model_count
 msgid "Model Count"
-msgstr ""
+msgstr "模型数量"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/ai.py:0
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_training__is_model_loaded
 msgid "Model Loaded"
-msgstr ""
+msgstr "模型已加载"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_training__name
@@ -2394,19 +2404,19 @@ msgstr "名称"
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_model__model_ref
 msgid "Model Reference"
-msgstr ""
+msgstr "模型引用"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/ai.py:0
 msgid "Model Reference is required for vLLM adapter models."
-msgstr ""
+msgstr "vLLM 适配器模型必须填写模型引用。"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/ai.py:0
 msgid "Model Reference is required."
-msgstr ""
+msgstr "必须填写模型引用。"
 
 #. module: feitas_iot
 #: model:ir.actions.act_window,name:feitas_iot.action_fts_ai_training
@@ -2416,13 +2426,13 @@ msgstr ""
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_training_list
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_training_search
 msgid "Model Training"
-msgstr ""
+msgstr "模型训练"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/ai.py:0
 msgid "Model Unloaded"
-msgstr ""
+msgstr "模型已卸载"
 
 #. module: feitas_iot
 #. odoo-python
@@ -2455,7 +2465,7 @@ msgstr ""
 #: code:addons/feitas_iot/wizards/ai_chat_wizard.py:0
 #: code:addons/feitas_iot/wizards/data_model_ai_flow_wizard.py:0
 msgid "Model is required."
-msgstr ""
+msgstr "必须选择模型。"
 
 #. module: feitas_iot
 #: model:ir.actions.act_window,name:feitas_iot.action_fts_data_model
@@ -2467,23 +2477,23 @@ msgstr "数据建模"
 #: model:ir.ui.menu,name:feitas_iot.menu_fts_ai_model
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_data_asset_kanban
 msgid "Models"
-msgstr ""
+msgstr "模型"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_crose_component_account__modified_at
 msgid "Modified At"
-msgstr ""
+msgstr "修改时间"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_crose_component_account__modified_by
 msgid "Modified By"
-msgstr ""
+msgstr "修改人"
 
 #. module: feitas_iot
 #. odoo-javascript
 #: code:addons/feitas_iot/static/src/xml/overview_templates.xml:0
 msgid "Month"
-msgstr ""
+msgstr "月"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_dataset__my_activity_date_deadline
@@ -2499,24 +2509,24 @@ msgstr ""
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_flow__my_activity_date_deadline
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_instance__my_activity_date_deadline
 msgid "My Activity Deadline"
-msgstr ""
+msgstr "我的活动截止日期"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__crose_component__component_type__nas
 msgid "NAS"
-msgstr ""
+msgstr "NAS"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_edge_agent__npm_registry_id
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_instance__npm_registry_id
 #: model:ir.model.fields.selection,name:feitas_iot.selection__crose_component__component_type__npm
 msgid "NPM Registry"
-msgstr ""
+msgstr "NPM 仓库"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_edge_agent__nr_node
 msgid "NR Node"
-msgstr ""
+msgstr "Node-RED 节点"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_category__name
@@ -2542,7 +2552,7 @@ msgstr "名称"
 #. odoo-javascript
 #: code:addons/feitas_iot/static/src/xml/overview_templates.xml:0
 msgid "Network"
-msgstr ""
+msgstr "网络"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_dataset__activity_date_deadline
@@ -2558,7 +2568,7 @@ msgstr ""
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_flow__activity_date_deadline
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_instance__activity_date_deadline
 msgid "Next Activity Deadline"
-msgstr ""
+msgstr "下次活动截止日期"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_dataset__activity_summary
@@ -2574,7 +2584,7 @@ msgstr ""
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_flow__activity_summary
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_instance__activity_summary
 msgid "Next Activity Summary"
-msgstr ""
+msgstr "下次活动摘要"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_dataset__activity_type_id
@@ -2590,12 +2600,12 @@ msgstr ""
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_flow__activity_type_id
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_instance__activity_type_id
 msgid "Next Activity Type"
-msgstr ""
+msgstr "下次活动类型"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_ai_training__quantization__no
 msgid "No"
-msgstr ""
+msgstr "否"
 
 #. module: feitas_iot
 #. odoo-python
@@ -2608,7 +2618,7 @@ msgstr ""
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_data_asset__health_status__empty
 msgid "No Model"
-msgstr ""
+msgstr "无模型"
 
 #. module: feitas_iot
 #. odoo-python
@@ -2622,37 +2632,37 @@ msgstr ""
 #. odoo-python
 #: code:addons/feitas_iot/models/crose_component.py:0
 msgid "No account available for credential reset."
-msgstr ""
+msgstr "没有可用于重置凭据的账号。"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/crose_component.py:0
 msgid "No account records found for this component."
-msgstr ""
+msgstr "该组件未找到账号记录。"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/nr_instance.py:0
 msgid "No applications are configured."
-msgstr ""
+msgstr "未配置应用。"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/ai.py:0
 msgid "No component is configured for this model."
-msgstr ""
+msgstr "该模型未配置组件。"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/nr_instance.py:0
 msgid "No instances were selected."
-msgstr ""
+msgstr "未选择实例。"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/ai.py:0
 msgid "No loaded model alias was found for this training task."
-msgstr ""
+msgstr "未找到该训练任务对应的已加载模型别名。"
 
 #. module: feitas_iot
 #. odoo-python
@@ -2666,7 +2676,7 @@ msgstr ""
 #. odoo-python
 #: code:addons/feitas_iot/models/crose_component.py:0
 msgid "No status check method found for component type %(type)s"
-msgstr ""
+msgstr "未找到组件类型 %(type)s 的状态检查方法"
 
 #. module: feitas_iot
 #. odoo-python
@@ -2680,7 +2690,7 @@ msgstr ""
 #. odoo-python
 #: code:addons/feitas_iot/models/data_model.py:0
 msgid "No vLLM component was found. Please configure it in System Components."
-msgstr ""
+msgstr "未找到 vLLM 组件。请在系统组件中配置。"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_node_item__node_id
@@ -2691,17 +2701,17 @@ msgstr "节点"
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_node__nr_id
 msgid "Node ID"
-msgstr ""
+msgstr "节点ID"
 
 #. module: feitas_iot
 #: model:ir.model,name:feitas_iot.model_fts_node_item
 msgid "Node Item"
-msgstr ""
+msgstr "节点项"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__crose_component__component_type__nodered
 msgid "Node-RED"
-msgstr ""
+msgstr "Node-RED"
 
 #. module: feitas_iot
 #. odoo-python
@@ -2715,38 +2725,38 @@ msgstr "Node-RED编辑器"
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_nr_flow_form
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_nr_flow_tree
 msgid "Node-RED Flow"
-msgstr ""
+msgstr "Node-RED 流程"
 
 #. module: feitas_iot
 #: model:ir.model,name:feitas_iot.model_fts_nr_flow_param
 msgid "Node-RED Flow Parameter"
-msgstr ""
+msgstr "Node-RED 流程参数"
 
 #. module: feitas_iot
 #: model:ir.actions.client,name:feitas_iot.action_node_red_logs_client
 msgid "Node-RED Logs"
-msgstr ""
+msgstr "Node-RED 日志"
 
 #. module: feitas_iot
 #: model:ir.model,name:feitas_iot.model_fts_nr_node
 msgid "Node-RED Node"
-msgstr ""
+msgstr "Node-RED 节点"
 
 #. module: feitas_iot
 #: model:ir.model,name:feitas_iot.model_crose_nr_package
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_crose_nr_package_form
 msgid "Node-RED Package"
-msgstr ""
+msgstr "Node-RED 包"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_crose_nr_package_tree
 msgid "Node-RED Packages"
-msgstr ""
+msgstr "Node-RED 包"
 
 #. module: feitas_iot
 #: model:ir.model,name:feitas_iot.model_fts_nr_tag
 msgid "Node-RED Tag"
-msgstr ""
+msgstr "Node-RED 标签"
 
 #. module: feitas_iot
 #. odoo-python
@@ -2760,18 +2770,18 @@ msgstr "节点"
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_data_asset__health_status__normal
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_data_model__data_status__normal
 msgid "Normal"
-msgstr ""
+msgstr "正常"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_node_item__note
 msgid "Note"
-msgstr ""
+msgstr "备注"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_dataset_message__name
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_nr_flow_param__type__num
 msgid "Number"
-msgstr ""
+msgstr "数字"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_dataset__message_needaction_counter
@@ -2787,7 +2797,7 @@ msgstr ""
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_flow__message_needaction_counter
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_instance__message_needaction_counter
 msgid "Number of Actions"
-msgstr ""
+msgstr "操作数量"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_dataset__message_has_error_counter
@@ -2803,7 +2813,7 @@ msgstr ""
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_flow__message_has_error_counter
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_instance__message_has_error_counter
 msgid "Number of errors"
-msgstr ""
+msgstr "错误数量"
 
 #. module: feitas_iot
 #: model:ir.model.fields,help:feitas_iot.field_fts_ai_dataset__message_needaction_counter
@@ -2819,7 +2829,7 @@ msgstr ""
 #: model:ir.model.fields,help:feitas_iot.field_fts_nr_flow__message_needaction_counter
 #: model:ir.model.fields,help:feitas_iot.field_fts_nr_instance__message_needaction_counter
 msgid "Number of messages requiring action"
-msgstr ""
+msgstr "需要处理的消息数量"
 
 #. module: feitas_iot
 #: model:ir.model.fields,help:feitas_iot.field_fts_ai_dataset__message_has_error_counter
@@ -2835,7 +2845,7 @@ msgstr ""
 #: model:ir.model.fields,help:feitas_iot.field_fts_nr_flow__message_has_error_counter
 #: model:ir.model.fields,help:feitas_iot.field_fts_nr_instance__message_has_error_counter
 msgid "Number of messages with delivery error"
-msgstr ""
+msgstr "投递错误的消息数量"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_edge_agent__os_version
@@ -2845,7 +2855,7 @@ msgstr "系统发行版"
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_alert__occurred_at
 msgid "Occurred At"
-msgstr ""
+msgstr "发生时间"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__crose_component__status__offline
@@ -2870,7 +2880,7 @@ msgstr "只能选择本地实例。"
 #. odoo-python
 #: code:addons/feitas_iot/models/ai.py:0
 msgid "Only one default model is allowed per type."
-msgstr ""
+msgstr "每种类型只允许一个默认模型。"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_alert__state__open
@@ -2882,23 +2892,23 @@ msgstr "打开"
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_instance_wizard__operation
 msgid "Operation"
-msgstr ""
+msgstr "操作"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__crose_component_account__role__operator
 msgid "Operator"
-msgstr ""
+msgstr "操作符"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_training__output_path
 msgid "Output Path"
-msgstr ""
+msgstr "输出路径"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/ai.py:0
 msgid "Output path is empty. Please run training first."
-msgstr ""
+msgstr "输出路径为空。请先运行训练。"
 
 #. module: feitas_iot
 #. odoo-python
@@ -2917,13 +2927,13 @@ msgstr "包名"
 #. odoo-python
 #: code:addons/feitas_iot/models/crose_nr_package.py:0
 msgid "Package directory not found in the Staging environment: %(path)s"
-msgstr ""
+msgstr "预发布环境中未找到包目录：%(path)s"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/crose_nr_package.py:0
 msgid "Package file not found in the Staging environment: %(path)s"
-msgstr ""
+msgstr "预发布环境中未找到包文件：%(path)s"
 
 #. module: feitas_iot
 #. odoo-python
@@ -2935,18 +2945,18 @@ msgstr "包"
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_flow_param__name
 msgid "Parameter Name"
-msgstr ""
+msgstr "参数名称"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_flow__param_ids
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_nr_flow_form
 msgid "Parameters"
-msgstr ""
+msgstr "参数"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_mqtt_topic__partner_ids
 msgid "Partners"
-msgstr ""
+msgstr "合作伙伴"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_data_model__password
@@ -2964,18 +2974,18 @@ msgstr "暂停"
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_ai_training__state__pending
 msgid "Pending"
-msgstr ""
+msgstr "待处理"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_training_form
 msgid "Performance"
-msgstr ""
+msgstr "性能"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/data_model.py:0
 msgid "Please configure the IoTDB Topic field before querying."
-msgstr ""
+msgstr "查询前请先配置 IoTDB 主题字段。"
 
 #. module: feitas_iot
 #. odoo-python
@@ -2987,19 +2997,19 @@ msgstr "请输入一个合理的间隔秒数。"
 #. odoo-python
 #: code:addons/feitas_iot/models/ai.py:0
 msgid "Please load the model first."
-msgstr ""
+msgstr "请先加载模型。"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/crose_component.py:0
 msgid "Please mark one account as primary before resetting credentials."
-msgstr ""
+msgstr "重置凭据前请先将一个账号标记为主账号。"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/ai_knowledge.py:0
 msgid "Please provide Content before splitting."
-msgstr ""
+msgstr "切片前请先填写内容。"
 
 #. module: feitas_iot
 #. odoo-python
@@ -3013,13 +3023,13 @@ msgstr ""
 #. odoo-python
 #: code:addons/feitas_iot/models/data_model.py:0
 msgid "Please select a runtime instance before generating a flow."
-msgstr ""
+msgstr "生成流程前请先选择运行时实例。"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/data_model.py:0
 msgid "Please select a runtime instance before starting."
-msgstr ""
+msgstr "启动前请先选择运行时实例。"
 
 #. module: feitas_iot
 #. odoo-python
@@ -3031,13 +3041,13 @@ msgstr "请选择开始时间"
 #. odoo-python
 #: code:addons/feitas_iot/models/data_model.py:0
 msgid "Please select at least one flow template in Applications."
-msgstr ""
+msgstr "请在应用中至少选择一个流程模板。"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/data_model.py:0
 msgid "Please set AI Model before running AI Flow."
-msgstr ""
+msgstr "运行 AI Flow 前请先设置 AI 模型。"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_crose_component__port
@@ -3051,23 +3061,23 @@ msgstr "端口"
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_data_asset__position
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_data_asset_kanban
 msgid "Position"
-msgstr ""
+msgstr "位置"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_ai_training__state__preparing
 msgid "Preparing"
-msgstr ""
+msgstr "准备中"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_crose_component_account__is_primary
 msgid "Primary Account"
-msgstr ""
+msgstr "主账号"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_dataset_message__primary_category_id
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_dataset_message_search
 msgid "Primary Category"
-msgstr ""
+msgstr "主分类"
 
 #. module: feitas_iot
 #. odoo-python
@@ -3086,12 +3096,12 @@ msgstr "生产环境"
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_training_form
 msgid "Progress"
-msgstr ""
+msgstr "进度"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_training__progress_pct
 msgid "Progress (%)"
-msgstr ""
+msgstr "进度（%）"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_flow__prompt
@@ -3103,13 +3113,13 @@ msgstr "提示词"
 #: model:ir.actions.act_window,name:feitas_iot.action_fts_ai_category
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_crose_res_config_settings
 msgid "Prompt Categories"
-msgstr ""
+msgstr "提示词分类"
 
 #. module: feitas_iot
 #: model:ir.actions.act_window,name:feitas_iot.action_fts_ai_prompt
 #: model:ir.ui.menu,name:feitas_iot.menu_fts_ai_prompt
 msgid "Prompts"
-msgstr ""
+msgstr "提示词"
 
 #. module: feitas_iot
 #. odoo-python
@@ -3131,7 +3141,7 @@ msgstr "提供方"
 #. odoo-python
 #: code:addons/feitas_iot/models/ai.py:0
 msgid "Provider call failed: %(error)s"
-msgstr ""
+msgstr "调用提供方失败：%(error)s"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_crose_nr_package_form
@@ -3142,17 +3152,17 @@ msgstr "发布"
 #. odoo-python
 #: code:addons/feitas_iot/models/nr_instance.py:0
 msgid "Published to %(topic)s"
-msgstr ""
+msgstr "已发布到 %(topic)s"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_training__quantization
 msgid "Quantization"
-msgstr ""
+msgstr "量化"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_knowledge_rag_wizard__query_text
 msgid "Query"
-msgstr ""
+msgstr "查询"
 
 #. module: feitas_iot
 #. odoo-python
@@ -3169,7 +3179,7 @@ msgstr "查询结果"
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_data_model__query_type
 msgid "Query Type"
-msgstr ""
+msgstr "查询类型"
 
 #. module: feitas_iot
 #. odoo-python
@@ -3181,12 +3191,12 @@ msgstr "查询失败: %(error)s"
 #. odoo-python
 #: code:addons/feitas_iot/models/ai.py:0
 msgid "Query is empty."
-msgstr ""
+msgstr "查询内容为空。"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_ai_training__state__queued
 msgid "Queued"
-msgstr ""
+msgstr "排队中"
 
 #. module: feitas_iot
 #. odoo-python
@@ -3194,12 +3204,12 @@ msgstr ""
 #: model:ir.actions.act_window,name:feitas_iot.action_fts_ai_knowledge_rag_wizard
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_knowledge_rag_wizard_form
 msgid "RAG Test"
-msgstr ""
+msgstr "RAG 测试"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_data_model__tcp_type__rtu-buffered
 msgid "RTU Buffered"
-msgstr ""
+msgstr "RTU 缓冲"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_edge_agent__os_version__rasp
@@ -3210,17 +3220,17 @@ msgstr "树莓派"
 #. odoo-javascript
 #: code:addons/feitas_iot/static/src/xml/overview_templates.xml:0
 msgid "Records/sec"
-msgstr ""
+msgstr "条/秒"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__crose_component__component_type__redis
 msgid "Redis"
-msgstr ""
+msgstr "Redis"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_data_model__redis_key
 msgid "Redis Key"
-msgstr ""
+msgstr "Redis键"
 
 #. module: feitas_iot
 #. odoo-python
@@ -3232,12 +3242,12 @@ msgstr "Redis PING失败"
 #. odoo-python
 #: code:addons/feitas_iot/models/data_model.py:0
 msgid "Redis key %(key)s in db %(db)s has unsupported type %(type)s."
-msgstr ""
+msgstr "Redis 数据库 %(db)s 中的键 %(key)s 类型 %(type)s 不受支持。"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_training_form
 msgid "Refresh Status"
-msgstr ""
+msgstr "刷新状态"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_flow_param__model_id
@@ -3271,13 +3281,13 @@ msgstr "远程实例"
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_chat_wizard__reply_text
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_chat_wizard_form
 msgid "Reply"
-msgstr ""
+msgstr "回复"
 
 #. module: feitas_iot
 #. odoo-javascript
 #: code:addons/feitas_iot/static/src/xml/overview_templates.xml:0
 msgid "Reports Today"
-msgstr ""
+msgstr "今日上报"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_data_model__partner_id
@@ -3290,23 +3300,23 @@ msgstr "请求方"
 #. odoo-python
 #: code:addons/feitas_iot/models/crose_component.py:0
 msgid "Reset Complete"
-msgstr ""
+msgstr "重置完成"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_alert__state__resolved
 msgid "Resolved"
-msgstr ""
+msgstr "已解决"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_alert__resolved_at
 msgid "Resolved At"
-msgstr ""
+msgstr "解决时间"
 
 #. module: feitas_iot
 #. odoo-javascript
 #: code:addons/feitas_iot/static/src/xml/overview_templates.xml:0
 msgid "Resource Metrics"
-msgstr ""
+msgstr "资源指标"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_dataset__activity_user_id
@@ -3332,18 +3342,18 @@ msgstr "重启"
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_crose_component_account__role
 msgid "Role"
-msgstr ""
+msgstr "角色"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_ai_training__state__running
 msgid "Running"
-msgstr ""
+msgstr "运行中"
 
 #. module: feitas_iot
 #. odoo-javascript
 #: code:addons/feitas_iot/static/src/xml/overview_templates.xml:0
 msgid "Running Flows"
-msgstr ""
+msgstr "运行中的流程"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_data_model__nr_instance_id
@@ -3358,7 +3368,7 @@ msgstr "SMB共享目录路径，例如：/share"
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_data_model__protocol__smb
 msgid "SMB2"
-msgstr ""
+msgstr "SMB2"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_dataset__message_has_sms_error
@@ -3374,17 +3384,17 @@ msgstr ""
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_flow__message_has_sms_error
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_instance__message_has_sms_error
 msgid "SMS Delivery error"
-msgstr ""
+msgstr "短信投递错误"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_knowledge_rag_wizard_form
 msgid "Search"
-msgstr ""
+msgstr "搜索"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_knowledge_chunk__sequence
 msgid "Sequence"
-msgstr ""
+msgstr "序号"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_data_model__serial_port
@@ -3400,7 +3410,7 @@ msgstr "服务器IP"
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_alert__severity
 msgid "Severity"
-msgstr ""
+msgstr "级别"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_data_model__smb_share
@@ -3416,28 +3426,28 @@ msgstr "从站号"
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_alert__source
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_knowledge_document_form
 msgid "Source"
-msgstr ""
+msgstr "来源"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_knowledge_document__source_type
 msgid "Source Type"
-msgstr ""
+msgstr "来源类型"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_knowledge_document_form
 msgid "Split"
-msgstr ""
+msgstr "切片"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_knowledge_document_form
 msgid "Split & Vectorize"
-msgstr ""
+msgstr "切片并向量化"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/ai_knowledge.py:0
 msgid "Split Complete"
-msgstr ""
+msgstr "切片完成"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_data_model_form
@@ -3463,7 +3473,7 @@ msgstr "电子表格文件"
 #: model:ir.model.fields.selection,name:feitas_iot.selection__crose_nr_package__environment__staging
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_crose_nr_package_search
 msgid "Staging"
-msgstr ""
+msgstr "预发布"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_data_model_form
@@ -3475,18 +3485,18 @@ msgstr "启动"
 #. odoo-python
 #: code:addons/feitas_iot/models/data_model.py:0
 msgid "Start Complete"
-msgstr ""
+msgstr "启动完成"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_data_model_form
 msgid "Start Demo"
-msgstr ""
+msgstr "启动演示"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/nr_instance.py:0
 msgid "Start Submitted"
-msgstr ""
+msgstr "启动已提交"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_data_model__query_start_time
@@ -3496,7 +3506,7 @@ msgstr "开始时间"
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_training_form
 msgid "Start Training"
-msgstr ""
+msgstr "开始训练"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_training__state
@@ -3504,7 +3514,7 @@ msgstr ""
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_training_search
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_data_model_kanban
 msgid "State"
-msgstr ""
+msgstr "状态"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_crose_component__status
@@ -3547,7 +3557,7 @@ msgstr "字符串"
 #. odoo-javascript
 #: code:addons/feitas_iot/static/src/xml/overview_templates.xml:0
 msgid "Success"
-msgstr ""
+msgstr "成功"
 
 #. module: feitas_iot
 #. odoo-python
@@ -3590,7 +3600,7 @@ msgstr "立即同步主题"
 msgid ""
 "Synchronized %(count)s flows to knowledge documents and completed "
 "vectorization."
-msgstr ""
+msgstr "已同步 %(count)s 个流程到知识文档并完成向量化。"
 
 #. module: feitas_iot
 #. odoo-python
@@ -3598,14 +3608,14 @@ msgstr ""
 msgid ""
 "Synchronized %(count)s nodes to knowledge documents and completed "
 "vectorization."
-msgstr ""
+msgstr "已同步 %(count)s 个节点到知识文档并完成向量化。"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_dataset_message__system
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_alert__source__system
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_dataset_message_form
 msgid "System"
-msgstr ""
+msgstr "系统"
 
 #. module: feitas_iot
 #: model:ir.model,name:feitas_iot.model_crose_component
@@ -3647,12 +3657,12 @@ msgstr "标签"
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_instance_wizard__target_flow_ids
 msgid "Target Flows"
-msgstr ""
+msgstr "目标流程"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_data_model_ai_flow_wizard__temperature
 msgid "Temperature"
-msgstr ""
+msgstr "温度"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_edge_agent__template_id
@@ -3663,17 +3673,17 @@ msgstr "模板"
 #. module: feitas_iot
 #: model:ir.actions.act_window,name:feitas_iot.action_fts_nr_flow_template
 msgid "Template Applications"
-msgstr ""
+msgstr "应用模板"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_instance_wizard__template_flow_ids
 msgid "Template Flows"
-msgstr ""
+msgstr "模板流程"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_prompt__is_template
 msgid "Template Prompt"
-msgstr ""
+msgstr "模板提示词"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_data_model_form
@@ -3684,7 +3694,7 @@ msgstr "测试"
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_knowledge_document_form
 msgid "Test RAG"
-msgstr ""
+msgstr "测试RAG"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_ai_knowledge_document__source_type__text
@@ -3696,13 +3706,13 @@ msgstr "文本"
 #. odoo-python
 #: code:addons/feitas_iot/models/nr_instance.py:0
 msgid "The Node-RED instance is reachable: %(url)s"
-msgstr ""
+msgstr "Node-RED 实例可访问：%(url)s"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/data_model.py:0
 msgid "The combination of Code and Provider must be unique."
-msgstr ""
+msgstr "编码与提供方的组合必须唯一。"
 
 #. module: feitas_iot
 #. odoo-python
@@ -3715,13 +3725,13 @@ msgstr ""
 #. module: feitas_iot
 #: model:ir.model.constraint,message:feitas_iot.constraint_fts_mqtt_user_name_partner_unique
 msgid "The combination of username and contact must be unique!"
-msgstr ""
+msgstr "用户名与联系人组合必须唯一！"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/edge_agent.py:0
 msgid "The configuration has been generated from config.yaml.template."
-msgstr ""
+msgstr "配置已从 config.yaml.template 生成。"
 
 #. module: feitas_iot
 #. odoo-python
@@ -3733,19 +3743,19 @@ msgstr "数据结构不是有效的JSON格式。"
 #. odoo-python
 #: code:addons/feitas_iot/models/nr_instance.py:0
 msgid "The item value is not valid JSON: %(key)s (%(error)s)"
-msgstr ""
+msgstr "该项的值不是有效 JSON：%(key)s（%(error)s）"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/nr_instance.py:0
 msgid "The log action was not found. Please contact your administrator."
-msgstr ""
+msgstr "未找到日志动作。请联系管理员。"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/ai.py:0
 msgid "The model adapter has been unloaded from vLLM through AI gateway."
-msgstr ""
+msgstr "已通过 AI 网关从 vLLM 卸载模型适配器。"
 
 #. module: feitas_iot
 #. odoo-python
@@ -3763,13 +3773,13 @@ msgstr "电子表格没有完成初始化。"
 #. odoo-javascript
 #: code:addons/feitas_iot/static/src/bundle/actions/data_model_spreadsheet_action.js:0
 msgid "The spreadsheet is open, but there are no visible cell values."
-msgstr ""
+msgstr "电子表格已打开，但没有可见的单元格值。"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/edge_agent.py:0
 msgid "The template content is empty: config.yaml.template"
-msgstr ""
+msgstr "模板内容为空：config.yaml.template"
 
 #. module: feitas_iot
 #. odoo-python
@@ -3782,7 +3792,7 @@ msgstr ""
 #. odoo-python
 #: code:addons/feitas_iot/models/data_model.py:0
 msgid "There are %(count)s rows in the selected time range."
-msgstr ""
+msgstr "所选时间范围内共有 %(count)s 行数据。"
 
 #. module: feitas_iot
 #. odoo-python
@@ -3790,89 +3800,89 @@ msgstr ""
 #: code:addons/feitas_iot/models/nr_instance.py:0
 msgid ""
 "This instance has no edge agent configured, so runtime logs cannot be read."
-msgstr ""
+msgstr "该实例未配置边缘节点，无法读取运行日志。"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_data_model__thumbnail
 msgid "Thumbnail"
-msgstr ""
+msgstr "缩略图"
 
 #. module: feitas_iot
 #. odoo-javascript
 #: code:addons/feitas_iot/static/src/xml/overview_templates.xml:0
 msgid "Time Range"
-msgstr ""
+msgstr "时间范围"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_data_model__query_type__data
 msgid "Time-Series Data"
-msgstr ""
+msgstr "时序数据"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_alert__name
 msgid "Title"
-msgstr ""
+msgstr "标题"
 
 #. module: feitas_iot
 #. odoo-javascript
 #: code:addons/feitas_iot/static/src/xml/overview_templates.xml:0
 msgid "Today"
-msgstr ""
+msgstr "今天"
 
 #. module: feitas_iot
 #. odoo-javascript
 #: code:addons/feitas_iot/static/src/xml/overview_templates.xml:0
 msgid "Today Records"
-msgstr ""
+msgstr "今日记录"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_chat_wizard__top_k
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_knowledge_rag_wizard__top_k
 msgid "Top K"
-msgstr ""
+msgstr "Top K"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_data_model__topic
 msgid "Topic"
-msgstr ""
+msgstr "主题"
 
 #. module: feitas_iot
 #: model:ir.ui.menu,name:feitas_iot.menu_fts_mqtt_topic
 msgid "Topics"
-msgstr ""
+msgstr "主题"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_training__total_epoch
 msgid "Total Epoch"
-msgstr ""
+msgstr "总轮次"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_training__total_step
 msgid "Total Step"
-msgstr ""
+msgstr "总步数"
 
 #. module: feitas_iot
 #. odoo-javascript
 #: code:addons/feitas_iot/static/src/xml/overview_templates.xml:0
 msgid "Total activities"
-msgstr ""
+msgstr "活动总数"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_ai_training__state__training
 msgid "Training"
-msgstr ""
+msgstr "训练"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/ai.py:0
 msgid "Training Started"
-msgstr ""
+msgstr "训练已开始"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/ai.py:0
 msgid "Training must be completed before loading the model."
-msgstr ""
+msgstr "加载模型前必须先完成训练。"
 
 #. module: feitas_iot
 #. odoo-python
@@ -3885,13 +3895,13 @@ msgstr ""
 #. odoo-python
 #: code:addons/feitas_iot/models/ai.py:0
 msgid "Training started. Dataset file: %(path)s"
-msgstr ""
+msgstr "训练已开始。数据集文件：%(path)s"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/data_model.py:0
 msgid "Triggered: %(ok)s."
-msgstr ""
+msgstr "已触发：%(ok)s。"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_model__model_type
@@ -3916,65 +3926,65 @@ msgstr "类型"
 #: model:ir.model.fields,help:feitas_iot.field_fts_nr_flow__activity_exception_decoration
 #: model:ir.model.fields,help:feitas_iot.field_fts_nr_instance__activity_exception_decoration
 msgid "Type of the exception activity on record."
-msgstr ""
+msgstr "记录上的异常活动类型。"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_knowledge_rag_wizard_form
 msgid "Type your question here..."
-msgstr ""
+msgstr "在此输入你的问题..."
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_edge_agent__os_version__ubuntu
 msgid "Ubuntu"
-msgstr ""
+msgstr "Ubuntu"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/crose_component.py:0
 msgid "Unable to connect to %(host)s:%(port)s - %(error)s"
-msgstr ""
+msgstr "无法连接到 %(host)s:%(port)s - %(error)s"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/nr_instance.py:0
 msgid "Unable to connect to Node-RED. Tried: %(detail)s"
-msgstr ""
+msgstr "无法连接到 Node-RED。尝试：%(detail)s"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/crose_component.py:0
 msgid "Unexpected AI service response: %(code)s"
-msgstr ""
+msgstr "AI 服务响应异常：%(code)s"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/crose_component.py:0
 msgid "Unexpected HTTP status code: %(code)s"
-msgstr ""
+msgstr "HTTP 状态码异常：%(code)s"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/crose_component.py:0
 msgid "Unexpected LLaMA-Factory response: %(code)s"
-msgstr ""
+msgstr "LLaMA-Factory 响应异常：%(code)s"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/crose_component.py:0
 msgid "Unexpected NPM registry response: %(code)s"
-msgstr ""
+msgstr "NPM 仓库响应异常：%(code)s"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/crose_component.py:0
 msgid "Unexpected Node-RED response: %(code)s"
-msgstr ""
+msgstr "Node-RED 响应异常：%(code)s"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/crose_component.py:0
 msgid "Unexpected vLLM response: %(code)s"
-msgstr ""
+msgstr "vLLM 响应异常：%(code)s"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_data_address__unitid
@@ -3984,24 +3994,24 @@ msgstr "站号"
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_training_form
 msgid "Unload Model"
-msgstr ""
+msgstr "卸载模型"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/ai.py:0
 msgid "Unsupported model type: %(type)s"
-msgstr ""
+msgstr "不支持的模型类型：%(type)s"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_chat_wizard__use_knowledge
 msgid "Use Knowledge Base"
-msgstr ""
+msgstr "使用知识库"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_dataset_message__user
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_dataset_message_form
 msgid "User"
-msgstr ""
+msgstr "用户"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_crose_component_account__username
@@ -4022,39 +4032,39 @@ msgstr "值"
 #. odoo-javascript
 #: code:addons/feitas_iot/static/src/xml/overview_templates.xml:0
 msgid "Value Delivery"
-msgstr ""
+msgstr "价值交付"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/ai_knowledge.py:0
 msgid "Vectorization Complete"
-msgstr ""
+msgstr "向量化完成"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/knowledge.py:0
 msgid "Vectorization failed: %(error)s"
-msgstr ""
+msgstr "向量化失败：%(error)s"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_knowledge_chunk_form
 msgid "Vectorize"
-msgstr ""
+msgstr "向量化"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_knowledge_document_form
 msgid "Vectorize Missing Chunks"
-msgstr ""
+msgstr "向量化缺失片段"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_knowledge_chunk__is_vectorized
 msgid "Vectorized"
-msgstr ""
+msgstr "已向量化"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_knowledge_document__vectorized_chunk_count
 msgid "Vectorized Chunks"
-msgstr ""
+msgstr "已向量化片段数"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_crose_nr_package__version
@@ -4070,12 +4080,12 @@ msgstr "查看包"
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__crose_component_account__role__viewer
 msgid "Viewer"
-msgstr ""
+msgstr "只读"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_alert__severity__warning
 msgid "Warning"
-msgstr ""
+msgstr "警告"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_ai_dataset__website_message_ids
@@ -4091,7 +4101,7 @@ msgstr ""
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_flow__website_message_ids
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_instance__website_message_ids
 msgid "Website Messages"
-msgstr ""
+msgstr "网站消息"
 
 #. module: feitas_iot
 #: model:ir.model.fields,help:feitas_iot.field_fts_ai_dataset__website_message_ids
@@ -4107,57 +4117,57 @@ msgstr ""
 #: model:ir.model.fields,help:feitas_iot.field_fts_nr_flow__website_message_ids
 #: model:ir.model.fields,help:feitas_iot.field_fts_nr_instance__website_message_ids
 msgid "Website communication history"
-msgstr ""
+msgstr "网站沟通历史"
 
 #. module: feitas_iot
 #. odoo-javascript
 #: code:addons/feitas_iot/static/src/xml/overview_templates.xml:0
 msgid "Week"
-msgstr ""
+msgstr "周"
 
 #. module: feitas_iot
 #: model:ir.ui.menu,name:feitas_iot.menu_crose_workbench
 msgid "Workbench"
-msgstr ""
+msgstr "工作台"
 
 #. module: feitas_iot
 #. odoo-javascript
 #: code:addons/feitas_iot/static/src/xml/overview_templates.xml:0
 msgid "online"
-msgstr ""
+msgstr "在线"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__crose_component__component_type__vllm
 msgid "vLLM"
-msgstr ""
+msgstr "vLLM"
 
 #. module: feitas_iot
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_ai_model_form
 msgid "vLLM Adapter"
-msgstr ""
+msgstr "vLLM适配器"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_ai_model__model_type__vllm_adapter
 msgid "vLLM Adapter (LoRA)"
-msgstr ""
+msgstr "vLLM适配器（LoRA）"
 
 #. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_ai_model__model_type__vllm_base
 msgid "vLLM Base (Local Inference)"
-msgstr ""
+msgstr "vLLM基础模型（本地推理）"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/data_model.py:0
 msgid ""
 "vLLM component metadata must provide chat_completions_path. Error: %(error)s"
-msgstr ""
+msgstr "vLLM 组件 metadata 必须提供 chat_completions_path。错误：%(error)s"
 
 #. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/models/data_model.py:0
 msgid "vLLM response does not contain valid flow JSON."
-msgstr ""
+msgstr "vLLM 响应中不包含有效的流程 JSON。"
 
 #. module: feitas_iot
 #. odoo-python
@@ -4165,7 +4175,7 @@ msgstr ""
 msgid ""
 "⚠️ System notice: the AI API key is not configured. Please set "
 "`feitas_iot.deepseek_api_key` in system parameters."
-msgstr ""
+msgstr "系统提示：未配置 AI API Key。请在系统参数中设置 `feitas_iot.deepseek_api_key`。"
 
 #. module: feitas_iot
 #. odoo-python
