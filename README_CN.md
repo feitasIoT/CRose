@@ -1,5 +1,8 @@
 
 # 🌹 CRose (China Rose，月季)一站式轻量化数据引擎
+
+[English Readme](./README.md)  |  [AI训练框架](./readme/crose_core_tech_framework.jpg)  |  [边缘管理框架](./readme/crose_edge_management_framework.jpg)
+
 ## 连接数据，交付价值
 
 CRose 是一个专为制造业与现代农业打造的集成化数据底座。它封装了从底层的协议采集（Modbus/MQTT）到上层的统计分析、UI展示的全链路能力。
