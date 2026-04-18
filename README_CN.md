@@ -1,7 +1,7 @@
 
 # 🌹 CRose (China Rose，月季)一站式轻量化数据引擎
 
-[English Readme](./README.md)  |  [AI训练框架](./readme/crose_core_tech_framework.jpg)  |  [边缘管理框架](./readme/crose_edge_management_framework.jpg)
+[English Readme](./README.md)  |  [AI训练框架](./readme/crose_core_tech_framework.jpg)  |  [边缘管理框架](./readme/crose_edge_management_mqtt_broker_bridge.jpg)
 
 ## 连接数据，交付价值
 

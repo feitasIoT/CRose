@@ -1,6 +1,6 @@
 # 🌹 CRose (China Rose) - All-in-One Lightweight Data Engine
 
-[Chinese Readme](./README_CN.md)  |  [AI Training Framework](./readme/crose_core_tech_framework.jpg)  |  [Edge Management Framework](./readme/crose_edge_management_framework.jpg)
+[Chinese Readme](./README_CN.md)  |  [AI Training Framework](./readme/crose_core_tech_framework.jpg)  |  [Edge Management Framework](./readme/crose_edge_management_mqtt_broker_bridge.jpg)
 
 ## Connect Datas, Deliver Values
 
