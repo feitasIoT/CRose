@@ -147,7 +147,7 @@ class FeitasIotDownloadController(http.Controller):
             rec.check_access_rights("read")
             rec.check_access_rule("read")
 
-            agent = rec.edge_agent_id
+            agent = rec.edge_node_id
             if not agent:
                 raise UserError(_("This instance has no edge agent configured, so runtime logs cannot be read."))
             host = (agent.ip_address or "").strip()

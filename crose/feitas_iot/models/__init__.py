@@ -2,7 +2,7 @@ from . import res_partner
 from . import crose_component
 from . import crose_nr_package
 from . import nr_instance
-from . import edge_agent
+from . import edge_node
 from . import nr_flow
 from . import nr_node
 from . import mqtt_user

@@ -213,7 +213,7 @@ class OverviewController(http.Controller):
             ['name', 'component_type', 'status']
         )
         stats = {
-            'agents': env['fts.edge.agent'].search_count([]),
+            'agents': env['fts.edge.node'].search_count([]),
             'instances': env['fts.nr.instance'].search_count([]),
             'topics': env['fts.mqtt.topic'].search_count([]),
         }
@@ -280,8 +280,8 @@ class OverviewController(http.Controller):
             trend_points = []
         if not trend_points:
             trend_points = [65, 68, 70, 72, 69, 75, 78, 80, 79, 82, 84, 85]
-        online_devices = env['fts.edge.agent'].search_count([('status', '=', 'online')])
-        total_devices = env['fts.edge.agent'].search_count([])
+        online_devices = env['fts.edge.node'].search_count([('status', '=', 'online')])
+        total_devices = env['fts.edge.node'].search_count([])
         offline_devices = max(total_devices - online_devices, 0)
         asset = {
             'devices_total': total_devices,

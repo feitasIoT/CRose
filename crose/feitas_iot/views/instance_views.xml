@@ -85,7 +85,7 @@
                                 <field name="editor_port"/>
                             </group>
                             <group string="Agent">
-                                <field name="edge_agent_id"/>
+                                <field name="edge_node_id"/>
                                 <field name="ip_address"/>
                                 <field name="npm_registry_id"/>
                             </group>

@@ -1,11 +1,11 @@
 <odoo>
     <data>
 
-        <record id="view_fts_edge_agent_tree" model="ir.ui.view">
-            <field name="name">fts.edge.agent.tree</field>
-            <field name="model">fts.edge.agent</field>
+        <record id="view_fts_edge_node_tree" model="ir.ui.view">
+            <field name="name">fts.edge.node.tree</field>
+            <field name="model">fts.edge.node</field>
             <field name="arch" type="xml">
-                <list string="Edge Agent">
+                <list string="Edge Node">
                     <field name="name"/>
                     <field name="ip_address"/>
                     <field name="port"/>
@@ -17,9 +17,9 @@
             </field>
         </record>
 
-        <record id="view_fts_edge_agent_kanban" model="ir.ui.view">
-            <field name="name">fts.edge.agent.kanban</field>
-            <field name="model">fts.edge.agent</field>
+        <record id="view_fts_edge_node_kanban" model="ir.ui.view">
+            <field name="name">fts.edge.node.kanban</field>
+            <field name="model">fts.edge.node</field>
             <field name="arch" type="xml">
                 <kanban>
                     <field name="name"/>
@@ -65,27 +65,32 @@
             </field>
         </record>
 
-        <record id="view_fts_edge_agent_form" model="ir.ui.view">
-            <field name="name">fts.edge.agent.form</field>
-            <field name="model">fts.edge.agent</field>
+        <record id="view_fts_edge_node_form" model="ir.ui.view">
+            <field name="name">fts.edge.node.form</field>
+            <field name="model">fts.edge.node</field>
             <field name="arch" type="xml">
-                <form string="Agent">
+                <form string="Node">
                     <header>
-                        <button name="action_view_logs" type="object" string="Logs" class="btn-secondary"/>
-                        <button name="action_generate_config" type="object" string="Generate" class="btn-primary"/>
+                        <button name="action_generate_config" type="object" string="Generate config" class="btn-primary" invisible="status != 'draft'"/>
+                        <button name="action_view_logs" type="object" string="Logs" class="btn-secondary" invisible="status != 'online'"/>
                         <field name="status" widget="statusbar" options="{'clickable': '1'}"/>
                     </header>
                     <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <!-- TODO: Add button for node_ids -->
+                        </div>
                         <group>
                             <group>
                                 <field name="name"/>
-                                <field name="version"/>
+                                <!-- <field name="version"/> -->
                                 <field name="is_template"/>
                                 <field name="template_id" invisible="is_template"/>
                                 <field name="os_version"/>
-                                <field name="nr_node"/>
+                                <!-- <field name="nr_node"/> -->
                             </group>
                             <group>
+                                <field name="is_gateway" />
+                                <field name="gateway_id" invisible="is_gateway"/>
                                 <field name="ip_address"/>
                                 <field name="port"/>
                                 <field name="agent_port"/>

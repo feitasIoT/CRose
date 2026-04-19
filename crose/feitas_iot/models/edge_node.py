@@ -1,6 +1,5 @@
 import threading
 import time
-import base64
 import re
 import requests
 import json
@@ -9,9 +8,9 @@ import logging
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 from odoo.tools import html2plaintext
+from odoo.tools.misc import file_open
 
 _logger = logging.getLogger(__name__)
-
 
 
 class FtsEdgeAgent(models.Model):
@@ -19,11 +18,25 @@ class FtsEdgeAgent(models.Model):
     _description = "Edge Agent"
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
+    # 改名fts.edge.node
+    name = fields.Char(string="Name", required=True)
+
+
+class FtsEdgeNode(models.Model):
+    _name = "fts.edge.node"
+    _description = "Edge Node"
+    _inherit = ['mail.thread', 'mail.activity.mixin']
+
     name = fields.Char(string="Name", required=True)
     version = fields.Char(string="Version")
+    # TODO：用于复制边缘网关
     is_template = fields.Boolean(string="Is Template")
-    template_id = fields.Many2one("fts.edge.agent", string="Template", domain="[('is_template', '=', True)]")
+    template_id = fields.Many2one("fts.edge.node", string="Template", domain="[('is_template', '=', True)]")
 
+    is_gateway = fields.Boolean(string="Is Gateway")
+    gateway_id = fields.Many2one("fts.edge.node", string="Gateway", domain="[('is_gateway', '=', True)]")
+    node_ids = fields.One2many("fts.edge.node", "gateway_id", string="Nodes")
+    
     ip_address = fields.Char(string="IP Address")
     port = fields.Integer(string="Port", default=6080)
     agent_port = fields.Integer(string="Agent Port", default=18080)
@@ -47,12 +60,13 @@ class FtsEdgeAgent(models.Model):
     agent_cmd = fields.Text("Command")
     status = fields.Selection(
         [
+            ("draft", "Draft"),
             ("online", "Online"),
             ("offline", "Offline"),
             ("error", "Error"),
         ],
         string="Status",
-        default="offline",
+        default="draft",
         required=True,
     )
     flow_ids = fields.One2many("agent.flow.line", "agent_id", string="Flows")
@@ -219,22 +233,12 @@ class FtsEdgeAgent(models.Model):
 
     def action_generate_config(self):
         self.ensure_one()
-        Attachment = self.env["ir.attachment"].sudo()
-        attachment = Attachment.search([("name", "=", "config.yaml.template")], order="id desc", limit=1)
-        if not attachment:
-            raise UserError(_("Attachment not found: config.yaml.template"))
-
-        data = b""
-        if attachment.store_fname:
-            try:
-                data = attachment._file_read(attachment.store_fname)
-            except Exception:
-                data = b""
-        elif attachment.datas:
-            try:
-                data = base64.b64decode(attachment.datas)
-            except Exception:
-                data = b""
+        module_rel_path = "feitas_iot/data/edge_node_config.yaml.template"
+        try:
+            with file_open(module_rel_path, "rb") as f:
+                data = f.read()
+        except Exception:
+            raise UserError(_("Template file not found or not readable: %(path)s", path=module_rel_path))
 
         try:
             template_text = data.decode("utf-8")
@@ -242,7 +246,7 @@ class FtsEdgeAgent(models.Model):
             template_text = data.decode("utf-8", errors="ignore")
 
         if not template_text.strip():
-            raise UserError(_("The template content is empty: config.yaml.template"))
+            raise UserError(_("The template content is empty: edge_node_config.yaml.template"))
 
         def _placeholder_value(field_name):
             if not hasattr(self, field_name):
@@ -263,7 +267,7 @@ class FtsEdgeAgent(models.Model):
             "tag": "display_notification",
             "params": {
                 "title": _("Generation Complete"),
-                "message": _("The configuration has been generated from config.yaml.template."),
+                "message": _("The configuration has been generated from edge_node_config.yaml.template."),
                 "type": "success",
                 "sticky": False,
             },
@@ -289,9 +293,9 @@ class FtsEdgeAgent(models.Model):
             res = action.read()[0]
             res["display_name"] = _("Instances")
             res["name"] = _("Instances")
-            res["domain"] = [("edge_agent_id", "=", self.id)]
+            res["domain"] = [("edge_node_id", "=", self.id)]
             res["context"] = {
-                "default_edge_agent_id": self.id,
+                "default_edge_node_id": self.id,
             }
             return res
         return {}

@@ -26,9 +26,9 @@ class FtsNrInstance(models.Model):
         required=True,
         default="local",
     )
-    edge_agent_id = fields.Many2one(
-        "fts.edge.agent",
-        string="Edge Agent",
+    edge_node_id = fields.Many2one(
+        "fts.edge.node",
+        string="Edge Node",
         ondelete="restrict",
         required=False,
     )
@@ -140,7 +140,7 @@ class FtsNrInstance(models.Model):
         Start the instance.
         """
         self.ensure_one()
-        if not self.edge_agent_id:
+        if not self.edge_node_id:
             raise UserError(_("A remote instance must have an edge agent before it can be started."))
 
         config = self.env["ir.config_parameter"].sudo()
@@ -152,7 +152,7 @@ class FtsNrInstance(models.Model):
         publish_url = str(publish_url)
 
         body = {
-            "topic_name": f"agent/create/{self.edge_agent_id.id}",
+            "topic_name": f"agent/create/{self.edge_node_id.id}",
             "payload": json.dumps(
                 {
                     "instance_id": self.id,
@@ -215,7 +215,7 @@ class FtsNrInstance(models.Model):
 
     def action_view_logs(self):
         self.ensure_one()
-        if not self.edge_agent_id:
+        if not self.edge_node_id:
             raise UserError(_("This instance has no edge agent configured, so runtime logs cannot be read."))
         action = self.env.ref("feitas_iot.action_node_red_logs_client", raise_if_not_found=False)
         if not action:

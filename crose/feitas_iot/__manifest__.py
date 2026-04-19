@@ -33,7 +33,7 @@
         "views/crose_component_views.xml",
         "views/crose_nr_package_views.xml",
         "views/mqtt_user_views.xml",
-        "views/edge_agent_views.xml",
+        "views/edge_node_views.xml",
         "views/nr_flow_views.xml",
         "views/node_views.xml",
         

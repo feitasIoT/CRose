@@ -29,8 +29,8 @@
         </record>
 
         <record id="action_fts_edge_agent" model="ir.actions.act_window">
-            <field name="name">Agents</field>
-            <field name="res_model">fts.edge.agent</field>
+            <field name="name">Edge Nodes</field>
+            <field name="res_model">fts.edge.node</field>
             <field name="view_mode">kanban,list,form</field>
             <field name="view_ids" eval="[
                 (5, 0, 0),
