@@ -24,7 +24,8 @@
                 <form string="System Component">
                     <header>
                         <button name="action_check_status" type="object" string="Check Status" class="oe_highlight"/>
-                        <button name="action_reset_credentials" type="object" string="重置凭据" class="btn-secondary" invisible="component_type == 'llm_provider'"/>
+                        <button name="action_reset_credentials" type="object" string="Reset Credentials" class="btn-secondary" invisible="component_type == 'llm_provider'"/>
+                        <button name="action_update_privileges" type="object" string="Update Privileges" class="btn-secondary" invisible="component_type != 'iotdb'"/>
                         <button name="action_view_packages" type="object" string="View Packages"
                                 invisible="component_type != 'npm'"/>
                         <field name="status" widget="statusbar"/>
@@ -57,11 +58,11 @@
                                     <list>
                                         <field name="component_id" readonly="1"/>
                                         <field name="username"/>
-                                        <field name="password_encrypted" password="True"/>
                                         <field name="is_primary"/>
                                         <field name="role"/>
-                                        <field name="modified_by" readonly="1"/>
-                                        <field name="modified_at" readonly="1"/>
+                                        <field name="iotdb_privileges"/>
+                                        <field name="modified_by" readonly="1" optional="hide"/>
+                                        <field name="modified_at" readonly="1" optional="hide"/>
                                     </list>
                                 </field>
                             </page>

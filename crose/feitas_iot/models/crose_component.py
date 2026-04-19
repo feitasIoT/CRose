@@ -527,6 +527,77 @@ class CroseComponent(models.Model):
                 },
             }
 
+    def _get_default_iotdb_privileges_for_role(self, role):
+        role = (role or "").strip().lower()
+        if role == "admin":
+            return ["ALL"]
+        if role == "operator":
+            return ["READ_DATA", "WRITE_DATA"]
+        if role == "viewer":
+            return ["READ_DATA"]
+        return []
+
+    def _iotdb_grant_privilege(self, login_user, login_password, target_user, privilege, path="root.**"):
+        safe_user = (target_user or "").strip()
+        safe_priv = (privilege or "").strip().upper()
+        safe_path = (path or "").strip()
+        if not safe_user or not safe_priv or not safe_path:
+            return
+        statements = [
+            f"GRANT {safe_priv} ON {safe_path} TO USER {safe_user}",
+            f"GRANT USER {safe_user} PRIVILEGES {safe_priv} ON {safe_path}",
+            f"GRANT {safe_priv} ON {safe_path} TO {safe_user}",
+        ]
+        last_error = None
+        for sql in statements:
+            try:
+                self._iotdb_exec_non_query(login_user, login_password, sql)
+                return
+            except Exception as e:
+                last_error = e
+        if last_error:
+            raise last_error
+
+    def action_update_privileges(self):
+        for component in self:
+            if component.component_type != "iotdb":
+                continue
+            if not component.account_ids:
+                raise UserError(_("No account records found for this component."))
+            primary = component.account_ids.filtered(lambda x: x.is_primary)[:1]
+            if not primary:
+                raise UserError(_("Please mark one account as primary before updating privileges."))
+            login_user = (primary.username or "").strip()
+            login_password = primary._get_plain_password()
+            if not login_user or not login_password:
+                raise UserError(_("Primary account password is not decryptable. Please set the primary password again."))
+
+            updated_lines = []
+            targets = component.account_ids.filtered(lambda x: (x.username or "").strip() and (x.username or "").lower() != "root")
+            for account in targets:
+                raw_privs = (account.iotdb_privileges or "").strip()
+                if raw_privs:
+                    privileges = [p.strip() for p in raw_privs.split(",") if p.strip()]
+                else:
+                    privileges = component._get_default_iotdb_privileges_for_role(account.role)
+                for privilege in privileges:
+                    component._iotdb_grant_privilege(login_user, login_password, account.username, privilege, "root.**")
+                updated_lines.append(f"{account.username}: {', '.join(privileges) if privileges else '-'}")
+
+            message = _("Privileges updated successfully.")
+            if updated_lines:
+                message = message + "\n" + "\n".join(updated_lines)
+            return {
+                "type": "ir.actions.client",
+                "tag": "display_notification",
+                "params": {
+                    "title": _("Update Complete"),
+                    "message": message,
+                    "type": "success",
+                    "sticky": True,
+                },
+            }
+
     def _get_staging_storage_path(self, component=None):
         return '/mnt/verdaccio-staging'
 
@@ -554,6 +625,7 @@ class CroseComponentAccount(models.Model):
         required=True,
         default="viewer",
     )
+    iotdb_privileges = fields.Char(string="IoTDB Privileges")
     modified_by = fields.Many2one("res.users", string="Modified By", related="write_uid", readonly=True)
     modified_at = fields.Datetime(string="Modified At", related="write_date", readonly=True)
 
