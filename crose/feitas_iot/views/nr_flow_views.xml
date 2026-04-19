@@ -73,7 +73,9 @@
             <field name="arch" type="xml">
                 <form string="Node-RED Flow">
                     <header>
-                        <button name="action_convert_to_atomic_messages" string="Convert to Atomic Messages" type="object" class="btn-primary"/>
+                        <button name="action_convert_to_atomic_messages" string="Convert to Atomic Messages" type="object" class="btn-primary"
+                            invisible="is_template"/>
+                        <button name="action_publish_app" string="Publish App" type="object" class="btn-primary" invisible="is_template or app_store_id"/>
                     </header>
                     <sheet>
                         <group>
@@ -84,15 +86,14 @@
                             </group>
                             <group>
                                 <field name="type"/>
-                                <field name="is_template"/>
+                                <field name="is_template" invisible="1"/>
+                                <field name="app_store_id" invisible="1" />
                                 <field name="data_model_id"/>
                             </group>
                             <group>
                                 <field name="tag_ids" widget="many2many_tags"/>
                                 <field name="heat"/>
-                                
                             </group>
-                            
                         </group>
                         <notebook>
                             <page string="Description">
@@ -101,7 +102,6 @@
                             <page string="Prompt">
                                 <field name="prompt" nolabel="1"/>
                             </page>
-                            
                             <page string="Content">
                                 <field name="content" widget="code" options="{'mode': 'javascript'}" nolabel="1"/>
                             </page>

@@ -11,10 +11,11 @@ class FtsNrFlow(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
     name = fields.Char(string="Name", required=True)
-    nr_id = fields.Char(string="Flow ID", required=True)
+    nr_id = fields.Char(string="Flow ID", required=False)
     type = fields.Char(string="Type")
     is_template = fields.Boolean("Is Template")
     content = fields.Text("Content")
+    app_store_id = fields.Many2one("fts.nr.flow", string="App")
 
     instance_id = fields.Many2one("fts.nr.instance", string="Instance", ondelete="cascade")
     data_model_id = fields.Many2one('fts.data.model', string="Data Model")
@@ -170,6 +171,20 @@ class FtsNrFlow(models.Model):
                 return value
             return json.dumps(parsed, ensure_ascii=False, indent=2)
         return value
+
+    def action_publish_app(self):
+        """
+            发布到app store。 复制->修改
+        """
+        for rec in self:
+            app = rec.copy({
+                "is_template": True,
+                "instance_id": False,
+                "nr_id": False
+            })
+            rec.write({
+                "app_store_id": app.id
+            })
 
     @api.model_create_multi
     def create(self, vals_list):

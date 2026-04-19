@@ -19,6 +19,8 @@
             <field name="name">Flows</field>
             <field name="res_model">fts.nr.flow</field>
             <field name="view_mode">kanban,list,form</field>
+            <field name="domain">[('is_template', '=', False)]</field>
+            <field name="context">{'default_is_template': False}</field>
         </record>
         <record id="action_fts_nr_flow_template" model="ir.actions.act_window">
             <field name="name">Template Applications</field>

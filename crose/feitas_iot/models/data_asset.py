@@ -4,6 +4,7 @@ from odoo import models, fields, api
 class DataAsset(models.Model):
     _name = 'fts.data.asset'
     _description = 'Data Asset'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
 
     name = fields.Char(string="Name", required=True)
     partner_id = fields.Many2one("res.partner", string="Provider", required=True)
