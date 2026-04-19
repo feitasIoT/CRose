@@ -105,13 +105,10 @@
                         </group>
                         <notebook>
                             <page string="Data Models">
-                                <field name="data_model_ids">
+                                <field name="data_modeling_ids">
                                     <list>
                                         <field name="name"/>
-                                        <field name="partner_id"/>
-                                        <field name="provider_id"/>
-                                        <field name="protocol"/>
-                                        <field name="nr_instance_id"/>
+                                        
                                         <field name="state"/>
                                     </list>
                                 </field>

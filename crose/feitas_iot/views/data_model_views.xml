@@ -52,7 +52,7 @@
                         <group>
                             <group>
                                 <field name="name"/>
-                                <field name="data_asset_id"/>
+                                <field name="data_asset_ids" widget="many2many_tags" />
                                 <field name="partner_id"/>
                                 <field name="provider_id" readonly="1"/>
                                 <field name="data_asset" readonly="1" groups="base.group_no_one" />

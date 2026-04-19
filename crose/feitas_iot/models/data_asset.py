@@ -10,6 +10,7 @@ class DataAsset(models.Model):
     position = fields.Char(string="Position")
     model = fields.Char(string="Model")
     data_model_ids = fields.One2many("fts.data.model", "data_asset_id", string="Data Models")
+    data_modeling_ids = fields.Many2many("fts.data.model", string="Modelings", relation="rel_data_asset_modeling")
     model_count = fields.Integer(string="Model Count", compute="_compute_health", store=True)
     health_status = fields.Selection(
         [

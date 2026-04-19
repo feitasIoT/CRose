@@ -32,12 +32,7 @@
             <field name="name">Edge Nodes</field>
             <field name="res_model">fts.edge.node</field>
             <field name="view_mode">kanban,list,form</field>
-            <field name="view_ids" eval="[
-                (5, 0, 0),
-                (0, 0, {'view_mode': 'kanban', 'view_id': ref('feitas_iot.view_fts_edge_agent_kanban')}),
-                (0, 0, {'view_mode': 'list', 'view_id': ref('feitas_iot.view_fts_edge_agent_tree')}),
-                (0, 0, {'view_mode': 'form', 'view_id': ref('feitas_iot.view_fts_edge_agent_form')})
-            ]"/>
+            <field name="view_ids" eval="[]"/>
         </record>
 
         <record id="action_fts_iot_overview" model="ir.actions.client">

@@ -27,6 +27,7 @@ class DataModel(models.Model):
     name = fields.Char(string='Code', required=True, copy=False)
     partner_id = fields.Many2one('res.partner', string='Requester', required=True)
     data_asset_id = fields.Many2one('fts.data.asset', string='Data Asset', required=True)
+    data_asset_ids = fields.Many2many("fts.data.asset", string="Assets", relation="rel_data_asset_modeling")
     provider_id = fields.Many2one('res.partner', string='Provider', related='data_asset_id.partner_id', store=True, readonly=True)
     protocol = fields.Selection([
         ('mobus-tcp', 'Modbus-TCP'),
