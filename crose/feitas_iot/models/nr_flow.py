@@ -29,6 +29,8 @@ class FtsNrFlow(models.Model):
 
     image = fields.Binary("Image", attachment=True)
 
+    node_ids = fields.One2many("fts.nr.node", "flow_id", string="Nodes")
+
     state = fields.Selection([
         ("active", "Active"),
         ("disabled", "Disabled")
@@ -135,35 +137,16 @@ class FtsNrFlow(models.Model):
     def action_view_nodes(self):
         """Open flow nodes together with their related config nodes."""
         self.ensure_one()
-        action = self.env.ref("feitas_iot.action_fts_nr_node", raise_if_not_found=False)
-        if action:
-            res = action.read()[0]
-            res["display_name"] = _("Nodes")
-            res["name"] = _("Nodes")
-            Node = self.env["fts.nr.node"]
-            nodes = Node.search([("flow_id", "=", self.id)])
-            to_process = nodes
-            seen_ids = set(nodes.ids)
-            config_ids = set()
-            while to_process:
-                cfgs = to_process.mapped("config_node_ids")
-                new_cfgs = cfgs.filtered(lambda r: r.id not in seen_ids)
-                if not new_cfgs:
-                    break
-                new_ids = set(new_cfgs.ids)
-                config_ids |= new_ids
-                seen_ids |= new_ids
-                to_process = new_cfgs
 
-            if config_ids:
-                res["domain"] = ["|", ("flow_id", "=", self.id), ("id", "in", sorted(config_ids))]
-            else:
-                res["domain"] = [("flow_id", "=", self.id)]
-            res["context"] = {
-                "default_flow_id": self.id,
-            }
-            return res
-        return {}
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Flow Nodes"),
+            "res_model": "fts.nr.node",
+            "view_mode": "list,form",
+            "target": "current",
+            "domain": [('flow_id', '=', self.id)],
+            "context": {},
+        }
 
     def _build_atomic_user_text(self):
         self.ensure_one()

@@ -16,9 +16,9 @@
             </field>
         </record>
 
-        <!-- Kanban view -->
-        <record id="view_fts_nr_flow_kanban" model="ir.ui.view">
-            <field name="name">fts.nr.flow.kanban</field>
+        <!-- Kanban view for app(template)-->
+        <record id="view_fts_nr_flow_app_kanban" model="ir.ui.view">
+            <field name="name">fts.nr.flow.app.kanban</field>
             <field name="model">fts.nr.flow</field>
             <field name="arch" type="xml">
                 <kanban class="o_kanban_mobile">
@@ -48,6 +48,38 @@
                                 <t t-if="record.image.raw_value">
                                     <field name="image" widget="image"/>
                                 </t>
+                            </main>
+                        </t>
+                        
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
+        <!-- for menu flows -->
+        <record id="view_fts_nr_flow_kanban" model="ir.ui.view">
+            <field name="name">fts.nr.flow.kanban</field>
+            <field name="model">fts.nr.flow</field>
+            <field name="priority">32</field>
+            <field name="arch" type="xml">
+                <kanban class="o_kanban_mobile">
+                    <field name="name"/>
+                    <field name="tag_ids"/>
+                    <templates>
+                        <t t-name="card" class="flex-row">
+                            <!-- <aside class="w-25 p-1">
+                                <field name="avatar_128" widget="image" alt="Avatar"/>
+                            </aside> -->
+                            <main class="w-100 ps-2 pt-1">
+                                <div>
+                                    <field class="fw-bold" name="name"/>
+                                </div>
+                                
+                                <div>
+                                    <span class="mb4 text-truncate" title="Tags">
+                                        <field name="tag_ids" />
+                                    </span>
+                                </div>
                             </main>
                         </t>
                         

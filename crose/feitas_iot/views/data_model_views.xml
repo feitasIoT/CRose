@@ -55,17 +55,12 @@
                                 <field name="data_asset_ids" widget="many2many_tags" />
                                 <field name="partner_id"/>
                                 <field name="provider_id" readonly="1"/>
-                                <field name="data_asset" readonly="1" groups="base.group_no_one" />
-                                <field name="topic" readonly="1" groups="base.group_no_one" />
-                                <field name="iotdb_topic" readonly="1" groups="base.group_no_one" />
                                 <field name="mqtt_topic_id" invisible="protocol != 'mqtt'"/>
                                 <field name="nr_instance_id"/>
-                                <field name="ai_model_name" groups="base.group_no_one"/>
-                                <field name="nr_flow_ids" widget="many2many_tags" style="margin-bottom: 10px !important"/>
-                                
+                                <field name="nr_flow_ids" widget="many2many_tags" 
+                                    domain="[('instance_id', '=', nr_instance_id), ('type', '=', 'tab')]"/>
                             </group>
                             <group>
-                                <field name="is_demo" groups="base.group_no_one" />
                                 <field name="protocol" />
                                 <field name="host" />
                                 <field name="tcp_port" />
@@ -82,12 +77,12 @@
                                 <group>
                                     <group>
                                         <field name="query_type"/>
-                                        
-                                        <field name="query_start_time" invisible="query_type != 'data'"/>
-                                        <field name="query_end_time" invisible="query_type != 'data'"/>
+                                        <field name="query_data_asset_ids" widget="many2many_tags" />
                                         <field name="query_interval" invisible="query_type != 'data'"/>
                                     </group>
                                     <group>
+                                        <field name="query_start_time" invisible="query_type != 'data'"/>
+                                        <field name="query_end_time" invisible="query_type != 'data'"/>
                                         <button name="action_test_query" type="object" string="Test" class="oe_highlight"/>
                                         <button name="action_open_spreadsheet" type="object" string="Spreadsheet" class="oe_highlight"/>
                                     </group>
@@ -108,8 +103,19 @@
                                         </list>
                                     </field>
                                 </group>
-
                             </page>
+                            <page name="others" string="Others" >
+                                <group>
+                                    <group>
+                                        <field name="is_demo" groups="base.group_no_one" />
+                                    </group>
+                                    <group>
+                                        <field name="data_asset" readonly="1" groups="base.group_no_one" />
+                                        <field name="topic" readonly="1" groups="base.group_no_one" />
+                                        <field name="iotdb_topic" readonly="1" groups="base.group_no_one" />
+                                    </group>
+                                </group>
+                            </page> 
                         </notebook>
                             
                     </sheet>

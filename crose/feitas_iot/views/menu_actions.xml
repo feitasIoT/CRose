@@ -15,19 +15,34 @@
                 (0, 0, {'view_mode': 'form', 'view_id': ref('feitas_iot.view_fts_instance_form')})
             ]"/>
         </record>
+
         <record id="action_fts_nr_flow" model="ir.actions.act_window">
             <field name="name">Flows</field>
             <field name="res_model">fts.nr.flow</field>
             <field name="view_mode">kanban,list,form</field>
             <field name="domain">[('is_template', '=', False)]</field>
-            <field name="context">{'default_is_template': False}</field>
+            <field name="context">
+                {
+                    'default_is_template': False,
+                    'search_default_group_by_instance': 1
+                }
+            </field>
+            <field name="view_ids" eval="[
+                (5, 0, 0),
+                (0, 0, {'view_mode': 'kanban', 'view_id': ref('feitas_iot.view_fts_nr_flow_kanban')})
+            ]"/>
         </record>
+
         <record id="action_fts_nr_flow_template" model="ir.actions.act_window">
             <field name="name">Apps</field>
             <field name="res_model">fts.nr.flow</field>
             <field name="view_mode">kanban,list,form</field>
             <field name="domain">[('is_template', '=', True)]</field>
             <field name="context">{'default_is_template': True}</field>
+            <field name="view_ids" eval="[
+                (5, 0, 0),
+                (0, 0, {'view_mode': 'kanban', 'view_id': ref('feitas_iot.view_fts_nr_flow_app_kanban')})
+            ]"/>
         </record>
 
         <record id="action_fts_edge_agent" model="ir.actions.act_window">

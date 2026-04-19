@@ -28,6 +28,7 @@ class DataModel(models.Model):
     partner_id = fields.Many2one('res.partner', string='Requester', required=True)
     data_asset_id = fields.Many2one('fts.data.asset', string='Data Asset', required=True)
     data_asset_ids = fields.Many2many("fts.data.asset", string="Assets", relation="rel_data_asset_modeling")
+    query_data_asset_ids = fields.Many2many("fts.data.asset", relation="rel_query_data_asset", string="Query Assets")
     provider_id = fields.Many2one('res.partner', string='Provider', related='data_asset_id.partner_id', store=True, readonly=True)
     protocol = fields.Selection([
         ('mobus-tcp', 'Modbus-TCP'),
@@ -45,6 +46,7 @@ class DataModel(models.Model):
         ('rtu-buffered', 'RTU Buffered'),
     ], string='TCP Type')
     slave_id = fields.Integer(string='Slave ID')
+    # 原则：约定优于配置，{{asset_name}}
     smb_share = fields.Char(string='Shared Directory', help='SMB shared directory path, for example: /share')
     username = fields.Char(string='Username')
     password = fields.Char(string='Password')
@@ -75,6 +77,7 @@ class DataModel(models.Model):
     log_ids = fields.One2many('fts.data.log', 'model_id', string='Logs')
     address_ids = fields.One2many('fts.data.address', 'model_id', string='Addresses')
     data_structure = fields.Text(string='Data Structure', required=True)
+    # FIXME: remove
     ai_model_name = fields.Char(string='AI Model', help='Model alias used by AI Flow inference, usually a loaded LoRA alias in vLLM.')
     state = fields.Selection([
         ('draft', 'Draft'),
@@ -103,6 +106,10 @@ class DataModel(models.Model):
             ])
             if existing:
                 raise ValidationError(_('The combination of Code and Provider must be unique.'))
+    
+    @api.onchange("data_asset_ids")
+    def _onchange_data_asset_ids(self):
+        self.query_data_asset_ids = [(6, 0, self.data_asset_ids.ids)]
 
     @api.depends('provider_id.name', 'name')
     def _compute_data_asset(self):
@@ -147,6 +154,23 @@ class DataModel(models.Model):
             for record in self.filtered(lambda s: s.protocol == "mqtt"):
                 record._ensure_mqtt_setup()
         return res
+
+    def copy(self, default=None):
+        self.ensure_one()
+        default = dict(default or {})
+        if not default.get("name"):
+            original_name = (self.name or "").strip() or "copy"
+            base_name = re.sub(r"\(\d+\)$", "", original_name).strip() or "copy"
+            provider_id = self.provider_id.id or self.data_asset_id.partner_id.id or False
+            i = 1
+            while True:
+                candidate = f"{base_name}({i})"
+                exists = self.search_count([("name", "=", candidate), ("provider_id", "=", provider_id)]) > 0
+                if not exists:
+                    default["name"] = candidate
+                    break
+                i += 1
+        return super(DataModel, self).copy(default)
 
     def _ensure_mqtt_setup(self):
         """
@@ -452,6 +476,7 @@ class DataModel(models.Model):
         return component
 
     def _get_vllm_endpoint_and_payload(self):
+        # FIXME: Delete
         self.ensure_one()
         component = self._get_vllm_component()
         metadata = {}

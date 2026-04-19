@@ -35,7 +35,7 @@
         "views/mqtt_user_views.xml",
         "views/edge_node_views.xml",
         "views/nr_flow_views.xml",
-        "views/node_views.xml",
+        "views/nr_node_views.xml",
         
         "views/data_address_views.xml",
         "views/data_asset_views.xml",
