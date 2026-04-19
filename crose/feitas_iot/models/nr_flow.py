@@ -27,6 +27,8 @@ class FtsNrFlow(models.Model):
     description = fields.Html("Description")
     prompt = fields.Text("Prompt")
 
+    image = fields.Binary("Image", attachment=True)
+
     state = fields.Selection([
         ("active", "Active"),
         ("disabled", "Disabled")

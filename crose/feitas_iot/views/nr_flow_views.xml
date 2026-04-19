@@ -24,29 +24,33 @@
                 <kanban class="o_kanban_mobile">
                     <field name="name"/>
                     <field name="tag_ids"/>
+                    <field name="image" />
                     <field name="heat"/>
                     <templates>
-                        <t t-name="card">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <strong class="o_kanban_record_title">
-                                    <field name="name"/>
-                                </strong>
-                                <span class="badge text-bg-warning" t-if="record.heat.raw_value">
-                                    <i class="fa fa-fire me-1" title="Heat"/><field name="heat"/>
-                                </span>
-                            </div>
-                            <div class="mb-2">
-                                <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color'}"/>
-                            </div>
-                            <div class="o_kanban_record_bottom mt-auto">
-                                <div class="oe_kanban_bottom_left">
-                                    <field name="instance_id"/>
+                        <t t-name="card" class="flex-row">
+                            <!-- <aside class="w-25 p-1">
+                                <field name="avatar_128" widget="image" alt="Avatar"/>
+                            </aside> -->
+                            <main class="w-100 ps-2 pt-1">
+                                <div>
+                                    <div class="text-success float-end mb4">
+                                        <i class="fa fa-fire me-1" title="Heat"/><field name="heat"/>
+                                    </div>
+                                    <field class="fw-bold" name="name"/>
                                 </div>
-                                <div class="oe_kanban_bottom_right">
-                                    <field name="activity_ids" widget="kanban_activity"/>
+                                
+                                <div>
+                                    <span class="mb4 text-truncate" title="Tags">
+                                        <field name="tag_ids" />
+                                    </span>
                                 </div>
-                            </div>
+
+                                <t t-if="record.image.raw_value">
+                                    <field name="image" widget="image"/>
+                                </t>
+                            </main>
                         </t>
+                        
                     </templates>
                 </kanban>
             </field>
@@ -81,18 +85,19 @@
                         <group>
                             <group>
                                 <field name="name"/>
-                                <field name="instance_id"/>
-                                <field name="nr_id"/>
-                            </group>
-                            <group>
-                                <field name="type"/>
-                                <field name="is_template" invisible="1"/>
-                                <field name="app_store_id" invisible="1" />
-                                <field name="data_model_id"/>
+                                <field name="instance_id" invisible="is_template"/>
+                                <field name="nr_id" invisible="is_template"/>
+                                <field name="heat" invisible="is_template == False"/>
                             </group>
                             <group>
                                 <field name="tag_ids" widget="many2many_tags"/>
-                                <field name="heat"/>
+                                <field name="type" invisible="is_template"/>
+                                <field name="is_template" invisible="1"/>
+                                <field name="app_store_id" invisible="1" />
+                                <field name="data_model_id" invisible="is_template"/>
+                            </group>
+                            <group>
+                                <field name="image" widget="image"/>
                             </group>
                         </group>
                         <notebook>
