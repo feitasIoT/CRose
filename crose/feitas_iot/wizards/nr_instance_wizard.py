@@ -240,27 +240,26 @@ class FtsNrInstanceWizard(models.TransientModel):
         if self.operation == "add":
             if not self.template_flow_ids:
                 raise UserError("Please select at least one template flow to add.")
-            created = []
+            created_flow_nr_ids = []
             for tmpl in self.template_flow_ids:
                 payload = self._build_flow_payload(tmpl)
+                payload["label"] = f"{tmpl.name} - {self.instance_id.name}"
                 payload = self.instance_id._nr_remap_payload_ids(payload)
                 payload = self._inject_iotdb_mqtt_broker_credentials(payload)
                 result = self._nr_post_json("/flow", payload)
                 new_nr_id = result.get("id") if isinstance(result, dict) else None
                 if not new_nr_id:
                     new_nr_id = payload["id"]
-                new_flow = self.env["fts.nr.flow"].create(
-                    {
-                        "name": f"{tmpl.name} - {self.instance_id.name}",
-                        "nr_id": new_nr_id,
-                        "type": tmpl.type,
-                        "is_template": False,
-                        "instance_id": self.instance_id.id,
-                        "content": tmpl.content,
-                    }
-                )
+                created_flow_nr_ids.append(new_nr_id)
 
-                created.append(new_flow.display_name)
+            self.instance_id.api_sync_flows()
+            created = self.env["fts.nr.flow"].search(
+                [
+                    ("instance_id", "=", self.instance_id.id),
+                    ("type", "=", "tab"),
+                    ("nr_id", "in", created_flow_nr_ids),
+                ]
+            ).mapped("display_name")
 
             return {
                 "type": "ir.actions.client",
