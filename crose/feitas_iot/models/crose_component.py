@@ -628,10 +628,11 @@ class CroseComponentAccount(models.Model):
     iotdb_privileges = fields.Char(string="IoTDB Privileges")
     modified_by = fields.Many2one("res.users", string="Modified By", related="write_uid", readonly=True)
     modified_at = fields.Datetime(string="Modified At", related="write_date", readonly=True)
-
-    _sql_constraints = [
-        ("component_username_unique", "unique(component_id, username)", "The username already exists in this component."),
-    ]
+    
+    _component_username_unique = models.Constraint(
+        "unique(component_id, username)",
+        message="The username already exists in this component.",
+    )
 
     def name_get(self):
         result = []

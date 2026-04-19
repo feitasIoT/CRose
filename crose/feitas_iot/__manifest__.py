@@ -27,6 +27,9 @@
         "security/ir.model.access.csv",
 
         "wizards/nr_instance_wizard_views.xml",
+        "wizards/data_model_ai_flow_wizard_views.xml",
+        "wizards/ai_knowledge_rag_wizard_views.xml",
+        "wizards/ai_chat_wizard_views.xml",
 
         "views/instance_views.xml",
         "views/editor_views.xml",
@@ -36,7 +39,6 @@
         "views/edge_node_views.xml",
         "views/nr_flow_views.xml",
         "views/nr_node_views.xml",
-        
         "views/data_address_views.xml",
         "views/data_asset_views.xml",
         "views/agent_package_views.xml",
@@ -44,10 +46,7 @@
         "views/data_model_views.xml",
         "views/mqtt_topic_views.xml",
         "views/ai_views.xml",
-        "wizards/ai_knowledge_rag_wizard_views.xml",
-        "wizards/ai_chat_wizard_views.xml",
         "views/ai_knowledge_views.xml",
-        "wizards/data_model_ai_flow_wizard_views.xml",
         "views/nr_tag_views.xml",
         "views/nr_flow_param_views.xml",
         "views/data_log_views.xml",

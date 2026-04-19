@@ -90,7 +90,8 @@ class DataModel(models.Model):
         ('abnormal', 'Exceptional'),
     ], string='Data Status', default='normal', required=True)
 
-    data_asset = fields.Char(string='Data Asset', compute='_compute_data_asset', store=True)
+    # FIXME：
+    data_asset = fields.Char(string='Data Asset?', compute='_compute_data_asset', store=True)
     topic = fields.Char(string='Topic', compute='_compute_topic', store=True)
     iotdb_topic = fields.Char(string='IoTDB Topic', compute='_compute_topic', store=True)
     is_demo = fields.Boolean(string='Demo', default=False)

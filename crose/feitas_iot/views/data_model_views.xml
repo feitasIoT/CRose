@@ -9,7 +9,6 @@
                     <field name="name"/>
                     <field name="data_asset_id"/>
                     <field name="provider_id"/>
-                    <field name="data_asset"/>
                     <field name="topic"/>
                     <field name="partner_id"/>
                     <field name="mqtt_topic_id"/>
