@@ -1,4 +1,5 @@
 import json
+import uuid
 
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
@@ -30,6 +31,61 @@ class FtsNrFlow(models.Model):
         ("active", "Active"),
         ("disabled", "Disabled")
     ], string="State", default="active")
+
+    def _nr_generate_id(self):
+        return f"{uuid.uuid4().hex[:7]}.{uuid.uuid4().hex[:7]}"
+
+    def _nr_collect_ids(self, value, out):
+        if isinstance(value, dict):
+            node_id = value.get("id")
+            if isinstance(node_id, str) and node_id:
+                out.add(node_id)
+            for v in value.values():
+                self._nr_collect_ids(v, out)
+            return
+        if isinstance(value, list):
+            for v in value:
+                self._nr_collect_ids(v, out)
+
+    def _nr_replace_ids(self, value, mapping):
+        if isinstance(value, dict):
+            replaced = {}
+            for k, v in value.items():
+                new_k = mapping.get(k, k) if isinstance(k, str) else k
+                replaced[new_k] = self._nr_replace_ids(v, mapping)
+            return replaced
+        if isinstance(value, list):
+            return [self._nr_replace_ids(v, mapping) for v in value]
+        if isinstance(value, str) and value in mapping:
+            return mapping[value]
+        return value
+
+    def _nr_regenerate_content_ids(self):
+        self.ensure_one()
+        raw = self.content or ""
+        try:
+            parsed = json.loads(raw) if isinstance(raw, str) else raw
+        except Exception:
+            return raw
+
+        if not isinstance(parsed, (dict, list)):
+            return raw
+
+        old_ids = set()
+        self._nr_collect_ids(parsed, old_ids)
+        if not old_ids:
+            return parsed
+
+        mapping = {}
+        used_new = set()
+        for old in old_ids:
+            new = self._nr_generate_id()
+            while new in used_new:
+                new = self._nr_generate_id()
+            mapping[old] = new
+            used_new.add(new)
+
+        return self._nr_replace_ids(parsed, mapping)
 
     def action_sync_to_knowledge(self):
         Document = self.env["fts.ai.knowledge.document"]
@@ -182,6 +238,9 @@ class FtsNrFlow(models.Model):
                 "instance_id": False,
                 "nr_id": False
             })
+            regenerated = app._nr_regenerate_content_ids()
+            if regenerated != (app.content or ""):
+                app.write({"content": regenerated})
             rec.write({
                 "app_store_id": app.id
             })

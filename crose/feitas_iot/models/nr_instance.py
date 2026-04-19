@@ -511,12 +511,74 @@ class FtsNrInstance(models.Model):
 
     def _nr_replace_ids(self, value, mapping):
         if isinstance(value, dict):
-            return {k: self._nr_replace_ids(v, mapping) for k, v in value.items()}
+            replaced = {}
+            for k, v in value.items():
+                new_k = mapping.get(k, k) if isinstance(k, str) else k
+                replaced[new_k] = self._nr_replace_ids(v, mapping)
+            return replaced
         if isinstance(value, list):
             return [self._nr_replace_ids(v, mapping) for v in value]
         if isinstance(value, str) and value in mapping:
             return mapping[value]
         return value
+
+    def _nr_remap_payload_ids(self, payload):
+        self.ensure_one()
+        if not isinstance(payload, dict):
+            return payload
+
+        payload_id = payload.get("id")
+        nodes = payload.get("nodes") or []
+        configs = payload.get("configs") or []
+        if not isinstance(nodes, list) or not isinstance(configs, list):
+            return payload
+
+        def _dedup_by_id(items):
+            seen = set()
+            result = []
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+                item_id = item.get("id")
+                if not item_id:
+                    result.append(item)
+                    continue
+                if item_id in seen:
+                    continue
+                seen.add(item_id)
+                result.append(item)
+            return result
+
+        nodes = _dedup_by_id(nodes)
+        configs = _dedup_by_id(configs)
+
+        ids = [
+            i.get("id")
+            for i in (nodes + configs)
+            if isinstance(i, dict) and i.get("id")
+        ]
+        if not ids:
+            payload["nodes"] = nodes
+            payload["configs"] = configs
+            return payload
+
+        mapping = {}
+        used_new = set()
+        for old_id in ids:
+            if old_id in mapping:
+                continue
+            new_id = self._nr_generate_id()
+            while new_id in used_new or (payload_id and new_id == payload_id):
+                new_id = self._nr_generate_id()
+            mapping[old_id] = new_id
+            used_new.add(new_id)
+
+        payload = dict(payload)
+        payload["nodes"] = self._nr_replace_ids(nodes, mapping)
+        payload["configs"] = self._nr_replace_ids(configs, mapping)
+        if "credentials" in payload:
+            payload["credentials"] = self._nr_replace_ids(payload.get("credentials"), mapping)
+        return payload
 
     def _nr_render_item_value(self, value):
         if value is None:
@@ -601,8 +663,9 @@ class FtsNrInstance(models.Model):
         nodes = [n for n in nodes if isinstance(n, dict)]
         configs = [c for c in configs if isinstance(c, dict)]
 
+        tab_id = flow.nr_id if (flow.instance_id and flow.instance_id.id == self.id and flow.nr_id) else self._nr_generate_id()
         payload = {
-            "id": self._nr_generate_id(),
+            "id": tab_id,
             "label": flow.name or "",
             "nodes": nodes,
             "configs": configs,
@@ -628,7 +691,7 @@ class FtsNrInstance(models.Model):
         }
 
         if base_nr_ids:
-            base_records = Node.search([("instance_id", "=", flow.instance_id.id), ("nr_id", "in", base_nr_ids)])
+            base_records = Node.search([("instance_id", "=", self.id), ("nr_id", "in", base_nr_ids)])
             queue = list(base_records)
             seen_cfg_rec_ids = set()
             while queue:
@@ -649,7 +712,7 @@ class FtsNrInstance(models.Model):
             if isinstance(n, dict) and n.get("id")
         ]
         if all_nr_ids:
-            node_records = Node.search([("instance_id", "=", flow.instance_id.id), ("nr_id", "in", all_nr_ids)])
+            node_records = Node.search([("instance_id", "=", self.id), ("nr_id", "in", all_nr_ids)])
             node_by_nr_id = {rec.nr_id: rec for rec in node_records if rec.nr_id}
             credentials_by_nr_id = {}
             for node_dict in payload["nodes"] + payload["configs"]:
@@ -700,10 +763,15 @@ class FtsNrInstance(models.Model):
                     self._nr_set_dict_path(node_dict, item.key, rendered)
 
         mapping = {}
+        used_new = set()
         for item in payload["nodes"] + payload["configs"]:
             old_id = item.get("id")
             if old_id and old_id not in mapping:
-                mapping[old_id] = self._nr_generate_id()
+                new_id = self._nr_generate_id()
+                while new_id in used_new or new_id == payload["id"]:
+                    new_id = self._nr_generate_id()
+                mapping[old_id] = new_id
+                used_new.add(new_id)
 
         if all_nr_ids:
             credentials = {}
@@ -714,9 +782,9 @@ class FtsNrInstance(models.Model):
 
         payload = self._nr_replace_ids(payload, mapping)
 
-        remapped_nodes = payload.get("nodes") or []
-        remapped_ids = [n.get("id") for n in remapped_nodes if isinstance(n, dict)]
-        if len(remapped_ids) != len(set(remapped_ids)):
+        remapped_items = (payload.get("nodes") or []) + (payload.get("configs") or [])
+        remapped_ids = [i.get("id") for i in remapped_items if isinstance(i, dict) and i.get("id")]
+        if len(remapped_ids) != len(set(remapped_ids)) or payload["id"] in set(remapped_ids):
             raise UserError(_("Duplicate node IDs exist in the flow, so it cannot be applied."))
 
         return payload

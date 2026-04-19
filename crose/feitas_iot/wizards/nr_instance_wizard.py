@@ -154,11 +154,6 @@ class FtsNrInstanceWizard(models.TransientModel):
         return list(selected.values())
 
     def _build_flow_payload(self, flow):
-        # 优先复用源实例已有的完整构建逻辑
-        source_instance = flow.instance_id
-        if source_instance:
-            return source_instance._nr_build_flow_payload(flow)
-
         raw = flow.content or "{}"
         try:
             parsed = json.loads(raw) if isinstance(raw, str) else raw
@@ -181,12 +176,18 @@ class FtsNrInstanceWizard(models.TransientModel):
                     configs.append(cfg)
                     cfg_ids.add(cfg_id)
 
-        return {
+        payload = {
             "id": self.instance_id._nr_generate_id(),
             "label": flow.name or "",
             "nodes": nodes,
             "configs": configs,
         }
+        tab_id = payload.get("id")
+        if tab_id:
+            for node in payload.get("nodes") or []:
+                if isinstance(node, dict) and isinstance(node.get("z"), str):
+                    node["z"] = tab_id
+        return payload
 
     def _get_component_account_credentials(self, component_type, username):
         component = self.env["crose.component"].search(
@@ -242,6 +243,7 @@ class FtsNrInstanceWizard(models.TransientModel):
             created = []
             for tmpl in self.template_flow_ids:
                 payload = self._build_flow_payload(tmpl)
+                payload = self.instance_id._nr_remap_payload_ids(payload)
                 payload = self._inject_iotdb_mqtt_broker_credentials(payload)
                 result = self._nr_post_json("/flow", payload)
                 new_nr_id = result.get("id") if isinstance(result, dict) else None
