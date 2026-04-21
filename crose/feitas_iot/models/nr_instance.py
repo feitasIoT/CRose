@@ -5,7 +5,7 @@ import uuid
 import requests
 
 from odoo import models, fields, _
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 
 class FtsNrInstance(models.Model):
@@ -201,17 +201,28 @@ class FtsNrInstance(models.Model):
 
     def action_view_flows(self):
         self.ensure_one()
-        action = self.env.ref("feitas_iot.action_fts_nr_flow", raise_if_not_found=False)
-        if action:
-            res = action.read()[0]
-            res["display_name"] = _("Applications")
-            res["name"] = _("Applications")
-            res["domain"] = [("instance_id", "=", self.id)]
-            res["context"] = {
-                "default_instance_id": self.id,
+        flows = self.flow_ids
+        if not flows:
+            raise ValidationError(_("No flows are linked to this instance."))
+        if len(flows) == 1:
+            return {
+                "type": "ir.actions.act_window",
+                "name": _("Flow"),
+                "res_model": "fts.nr.flow",
+                "view_mode": "form",
+                "target": "current",
+                "res_id": flows.id,
+                "context": {},
             }
-            return res
-        return {}
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Flows"),
+            "res_model": "fts.nr.flow",
+            "view_mode": "list,form",
+            "target": "current",
+            "domain": [("id", "in", flows.ids)],
+            "context": {},
+        }
 
     def action_view_logs(self):
         self.ensure_one()

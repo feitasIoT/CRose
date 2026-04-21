@@ -31,7 +31,7 @@
         "wizards/ai_knowledge_rag_wizard_views.xml",
         "wizards/ai_chat_wizard_views.xml",
 
-        "views/instance_views.xml",
+        "views/nr_instance_views.xml",
         "views/editor_views.xml",
         "views/crose_component_views.xml",
         "views/crose_nr_package_views.xml",
