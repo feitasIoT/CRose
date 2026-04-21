@@ -565,6 +565,31 @@ class DataModel(models.Model):
             },
         }
 
+    def action_open_flow(self):
+        self.ensure_one()
+        flows = self.nr_flow_ids
+        if not flows:
+            raise ValidationError(_("No flows are linked to this data model."))
+        if len(flows) == 1:
+            return {
+                "type": "ir.actions.act_window",
+                "name": _("Flow"),
+                "res_model": "fts.nr.flow",
+                "view_mode": "form",
+                "target": "current",
+                "res_id": flows.id,
+                "context": {},
+            }
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Flows"),
+            "res_model": "fts.nr.flow",
+            "view_mode": "list,form",
+            "target": "current",
+            "domain": [("id", "in", flows.ids)],
+            "context": {},
+        }
+
     def _action_generate_flow_ai_with_model(self, model, temperature=0.1, max_tokens=4096):
         self.ensure_one()
         if not self.nr_instance_id:
