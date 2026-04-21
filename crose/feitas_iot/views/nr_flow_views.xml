@@ -112,6 +112,7 @@
                         <button name="action_convert_to_atomic_messages" string="Convert to Atomic Messages" type="object" class="btn-primary"
                             invisible="is_template"/>
                         <button name="action_publish_app" string="Publish App" type="object" class="btn-primary" invisible="is_template or app_store_id"/>
+                        <button name="action_view_nodes" string="View Nodes" type="object" class="btn-secondary"/>
                     </header>
                     <sheet>
                         <group>
