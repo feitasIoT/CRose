@@ -80,6 +80,19 @@ class FtsNrInstanceWizard(models.TransientModel):
                 last_error = e
         raise UserError(f"Node-RED request failed: {last_error}")
 
+    def _nr_get_json(self, path, timeout=15):
+        headers = {"Node-RED-API-Version": "v2"}
+        last_error = None
+        for base_url in self._nr_candidate_base_urls():
+            url = f"{base_url}{path}"
+            try:
+                response = requests.get(url, headers=headers, timeout=timeout)
+                response.raise_for_status()
+                return response.json()
+            except Exception as e:
+                last_error = e
+        raise UserError(f"Node-RED request failed: {last_error}")
+
     def _nr_delete_json(self, path, timeout=15):
 
         headers = {"Node-RED-API-Version": "v2"}
@@ -235,6 +248,106 @@ class FtsNrInstanceWizard(models.TransientModel):
             payload["credentials"] = credentials_map
         return payload
 
+    def _collect_ids(self, value, out):
+        if isinstance(value, dict):
+            node_id = value.get("id")
+            if isinstance(node_id, str) and node_id:
+                out.add(node_id)
+            for v in value.values():
+                self._collect_ids(v, out)
+            return
+        if isinstance(value, list):
+            for v in value:
+                self._collect_ids(v, out)
+
+    def _deploy_subflow_deps(self, deps):
+        self.ensure_one()
+        deps = [d for d in deps if isinstance(d, dict)]
+        if not deps:
+            return {}
+
+        def _get_subflow_id(dep):
+            subflow_def = dep.get("subflow") if isinstance(dep.get("subflow"), dict) else None
+            if subflow_def and isinstance(subflow_def.get("id"), str) and subflow_def.get("id"):
+                return subflow_def.get("id")
+            if dep.get("type") == "subflow" and isinstance(dep.get("id"), str) and dep.get("id"):
+                return dep.get("id")
+            return None
+
+        subflow_ids = []
+        for dep in deps:
+            sid = _get_subflow_id(dep)
+            if sid:
+                subflow_ids.append(sid)
+
+        subflow_mapping = {}
+        used_new = set()
+        for sid in sorted(set(subflow_ids)):
+            new_id = self.instance_id._nr_generate_id()
+            while new_id in used_new:
+                new_id = self.instance_id._nr_generate_id()
+            subflow_mapping[sid] = new_id
+            used_new.add(new_id)
+
+        elements = []
+        for dep in deps:
+            ids = set()
+            self._collect_ids(dep, ids)
+            mapping = dict(subflow_mapping)
+            used = set(mapping.values())
+            for old in sorted(ids):
+                if old in mapping:
+                    continue
+                new_id = self.instance_id._nr_generate_id()
+                while new_id in used:
+                    new_id = self.instance_id._nr_generate_id()
+                mapping[old] = new_id
+                used.add(new_id)
+
+            remapped = self.instance_id._nr_replace_ids(dep, mapping)
+            if not isinstance(remapped, dict):
+                continue
+
+            subflow_def = remapped.get("subflow") if isinstance(remapped.get("subflow"), dict) else None
+            if not subflow_def and remapped.get("type") == "subflow":
+                subflow_def = remapped
+
+            nodes = remapped.get("nodes") if isinstance(remapped.get("nodes"), list) else []
+            configs = remapped.get("configs") if isinstance(remapped.get("configs"), list) else []
+
+            cred_payload = {"nodes": nodes, "configs": configs}
+            cred_payload = self._inject_iotdb_mqtt_broker_credentials(cred_payload)
+            nodes = cred_payload.get("nodes") if isinstance(cred_payload.get("nodes"), list) else []
+            configs = cred_payload.get("configs") if isinstance(cred_payload.get("configs"), list) else []
+
+            if isinstance(subflow_def, dict) and subflow_def.get("id"):
+                elements.append(subflow_def)
+            elements.extend([n for n in nodes if isinstance(n, dict) and n.get("id")])
+            elements.extend([c for c in configs if isinstance(c, dict) and c.get("id")])
+
+        if not elements:
+            return subflow_mapping
+
+        current = self._nr_get_json("/flows")
+        if isinstance(current, dict):
+            current_flows = current.get("flows") or []
+        else:
+            current_flows = current or []
+        current_flows = [f for f in current_flows if isinstance(f, dict) and f.get("id")]
+
+        by_id = {f["id"]: f for f in current_flows if isinstance(f.get("id"), str)}
+        order = [f["id"] for f in current_flows if isinstance(f.get("id"), str)]
+        for el in elements:
+            el_id = el.get("id")
+            if isinstance(el_id, str) and el_id:
+                by_id[el_id] = el
+                if el_id not in order:
+                    order.append(el_id)
+
+        merged = [by_id[i] for i in order if i in by_id]
+        self._nr_post_json("/flows", {"flows": merged})
+        return subflow_mapping
+
     def action_confirm(self):
         self.ensure_one()
         if self.operation == "add":
@@ -242,8 +355,31 @@ class FtsNrInstanceWizard(models.TransientModel):
                 raise UserError("Please select at least one template flow to add.")
             created_flow_nr_ids = []
             for tmpl in self.template_flow_ids:
+                raw = tmpl.content or "{}"
+                try:
+                    parsed = json.loads(raw) if isinstance(raw, str) else raw
+                except Exception:
+                    parsed = {}
+                if not isinstance(parsed, dict):
+                    parsed = {}
+                deps = parsed.get("subflow_deps") if isinstance(parsed.get("subflow_deps"), list) else []
+
                 payload = self._build_flow_payload(tmpl)
                 payload["label"] = f"{tmpl.name} - {self.instance_id.name}"
+
+                subflow_mapping = {}
+                if deps:
+                    subflow_mapping = self._deploy_subflow_deps(deps)
+                    if subflow_mapping:
+                        for node in payload.get("nodes") or []:
+                            if not isinstance(node, dict):
+                                continue
+                            node_type = node.get("type")
+                            if isinstance(node_type, str) and node_type.startswith("subflow:"):
+                                sid = node_type.split(":", 1)[1]
+                                if sid in subflow_mapping:
+                                    node["type"] = f"subflow:{subflow_mapping[sid]}"
+
                 payload = self.instance_id._nr_remap_payload_ids(payload)
                 payload = self._inject_iotdb_mqtt_broker_credentials(payload)
                 result = self._nr_post_json("/flow", payload)

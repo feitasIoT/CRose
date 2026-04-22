@@ -60,8 +60,13 @@ class FtsNrFlow(models.Model):
             return replaced
         if isinstance(value, list):
             return [self._nr_replace_ids(v, mapping) for v in value]
-        if isinstance(value, str) and value in mapping:
-            return mapping[value]
+        if isinstance(value, str):
+            if value in mapping:
+                return mapping[value]
+            if value.startswith("subflow:"):
+                subflow_id = value.split(":", 1)[1]
+                if subflow_id in mapping:
+                    return f"subflow:{mapping[subflow_id]}"
         return value
 
     def _nr_regenerate_content_ids(self):
@@ -223,6 +228,63 @@ class FtsNrFlow(models.Model):
                 "instance_id": False,
                 "nr_id": False
             })
+            raw = app.content or "{}"
+            try:
+                parsed = json.loads(raw) if isinstance(raw, str) else raw
+            except Exception:
+                parsed = {}
+            if not isinstance(parsed, dict):
+                parsed = {}
+
+            nodes = parsed.get("nodes")
+            nodes = nodes if isinstance(nodes, list) else []
+            subflow_ids = set()
+            for node in nodes:
+                if not isinstance(node, dict):
+                    continue
+                node_type = node.get("type")
+                if isinstance(node_type, str) and node_type.startswith("subflow:"):
+                    sid = node_type.split(":", 1)[1]
+                    if sid:
+                        subflow_ids.add(sid)
+
+            if subflow_ids and rec.instance_id:
+                Flow = self.env["fts.nr.flow"]
+                deps = []
+                existing_deps = parsed.get("subflow_deps")
+                if isinstance(existing_deps, list):
+                    deps.extend([d for d in existing_deps if isinstance(d, dict)])
+
+                existing_ids = set()
+                for dep in deps:
+                    subflow_def = dep.get("subflow") if isinstance(dep, dict) else None
+                    if isinstance(subflow_def, dict) and isinstance(subflow_def.get("id"), str):
+                        existing_ids.add(subflow_def.get("id"))
+
+                for sid in sorted(subflow_ids):
+                    if sid in existing_ids:
+                        continue
+                    subflow_flow = Flow.search(
+                        [
+                            ("instance_id", "=", rec.instance_id.id),
+                            ("type", "=", "subflow"),
+                            ("nr_id", "=", sid),
+                        ],
+                        limit=1,
+                    )
+                    if not subflow_flow or not subflow_flow.content:
+                        continue
+                    try:
+                        dep_parsed = json.loads(subflow_flow.content)
+                    except Exception:
+                        dep_parsed = None
+                    if isinstance(dep_parsed, dict):
+                        deps.append(dep_parsed)
+
+                if deps:
+                    parsed["subflow_deps"] = deps
+                    app.write({"content": parsed})
+
             regenerated = app._nr_regenerate_content_ids()
             if regenerated != (app.content or ""):
                 app.write({"content": regenerated})

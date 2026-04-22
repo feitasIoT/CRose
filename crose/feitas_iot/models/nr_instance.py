@@ -627,8 +627,13 @@ class FtsNrInstance(models.Model):
             return replaced
         if isinstance(value, list):
             return [self._nr_replace_ids(v, mapping) for v in value]
-        if isinstance(value, str) and value in mapping:
-            return mapping[value]
+        if isinstance(value, str):
+            if value in mapping:
+                return mapping[value]
+            if value.startswith("subflow:"):
+                subflow_id = value.split(":", 1)[1]
+                if subflow_id in mapping:
+                    return f"subflow:{mapping[subflow_id]}"
         return value
 
     def _nr_remap_payload_ids(self, payload):
