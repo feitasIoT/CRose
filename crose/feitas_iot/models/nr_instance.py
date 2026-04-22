@@ -357,6 +357,56 @@ class FtsNrInstance(models.Model):
                 ]
                 tab_ids = [t['id'] for t in tabs]
 
+                subflows = [
+                    node for node in flow_nodes
+                    if isinstance(node, dict) and node.get('type') == 'subflow' and node.get('id')
+                ]
+                subflow_ids = [s['id'] for s in subflows]
+
+                config_nodes = [
+                    node for node in flow_nodes
+                    if (
+                        isinstance(node, dict)
+                        and node.get('id')
+                        and not node.get('z')
+                        and node.get('type') not in ('tab', 'subflow')
+                    )
+                ]
+                config_by_id = {c['id']: c for c in config_nodes if isinstance(c.get('id'), str)}
+
+                nodes_by_z = {}
+                for node in flow_nodes:
+                    if not isinstance(node, dict):
+                        continue
+                    z = node.get('z')
+                    if not isinstance(z, str) or not z:
+                        continue
+                    if not node.get('id'):
+                        continue
+                    nodes_by_z.setdefault(z, []).append(node)
+
+                def _collect_strings(value, out):
+                    if isinstance(value, dict):
+                        for v in value.values():
+                            _collect_strings(v, out)
+                    elif isinstance(value, list):
+                        for v in value:
+                            _collect_strings(v, out)
+                    elif isinstance(value, str):
+                        out.add(value)
+
+                def _resolve_configs_for_nodes(nodes):
+                    strings = set()
+                    for n in nodes:
+                        _collect_strings(n, strings)
+                    resolved = []
+                    seen = set()
+                    for s in strings:
+                        if s in config_by_id and s not in seen:
+                            resolved.append(config_by_id[s])
+                            seen.add(s)
+                    return resolved
+
                 global_detail = instance.api_sync_flow_global()
                 global_vals = {
                     'name': 'Global',
@@ -419,6 +469,46 @@ class FtsNrInstance(models.Model):
                         global_nodes_by_nr_id=global_nodes_by_nr_id,
                     )
 
+                existing_subflows = Flow.search([
+                    ('instance_id', '=', instance.id),
+                    ('type', '=', 'subflow'),
+                    ('nr_id', 'in', subflow_ids),
+                ])
+                existing_subflow_by_nr_id = {rec.nr_id: rec for rec in existing_subflows}
+
+                for subflow in subflows:
+                    subflow_id = subflow['id']
+                    label = subflow.get('name') or subflow.get('label') or subflow_id
+                    subflow_nodes = nodes_by_z.get(subflow_id, [])
+                    flow_detail = {
+                        'id': subflow_id,
+                        'label': label,
+                        'nodes': subflow_nodes,
+                        'configs': _resolve_configs_for_nodes(subflow_nodes),
+                        'subflow': subflow,
+                    }
+                    vals = {
+                        'name': label,
+                        'nr_id': subflow_id,
+                        'type': 'subflow',
+                        'content': json.dumps(flow_detail, ensure_ascii=False),
+                        'instance_id': instance.id,
+                    }
+                    existing = existing_subflow_by_nr_id.get(subflow_id)
+                    if existing:
+                        existing.write(vals)
+                        flow_record = existing
+                    else:
+                        flow_record = Flow.create(vals)
+                    instance._sync_nr_nodes_for_flow(
+                        flow_record,
+                        flow_detail,
+                        include_nodes=True,
+                        include_configs=True,
+                        include_subflows=False,
+                        global_nodes_by_nr_id=global_nodes_by_nr_id,
+                    )
+
                 stale_flows = Flow.search([
                     ('instance_id', '=', instance.id),
                     ('type', '=', 'tab'),
@@ -426,6 +516,14 @@ class FtsNrInstance(models.Model):
                 ])
                 if stale_flows:
                     stale_flows.unlink()
+
+                stale_subflows = Flow.search([
+                    ('instance_id', '=', instance.id),
+                    ('type', '=', 'subflow'),
+                    ('nr_id', 'not in', subflow_ids),
+                ])
+                if stale_subflows:
+                    stale_subflows.unlink()
 
                 ok_count += 1
             except Exception as e:
