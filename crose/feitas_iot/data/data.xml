@@ -104,12 +104,12 @@
         <field name="metadata">{"db": 0}</field>
     </record>
 
-    <record id="component_nas" model="crose.component">
-        <field name="name">NAS</field>
-        <field name="component_type">nas</field>
-        <field name="host">crose-nas</field>
-        <field name="port">80</field>
-        <field name="metadata">{}</field>
+    <record id="component_webdav" model="crose.component">
+        <field name="name">webDAV</field>
+        <field name="component_type">webdav</field>
+        <field name="host">crose-webdav</field>
+        <field name="port">6065</field>
+        <field name="metadata">{"health_endpoint": "/api/health"}</field>
     </record>
 
     <record id="component_llama_factory" model="crose.component">

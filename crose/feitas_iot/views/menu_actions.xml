@@ -156,21 +156,6 @@
         <menuitem id="menu_fts_crose_config" 
             name="Infrastructure" web_icon="feitas_iot,static/description/icon.png" sequence="10"/>
 
-        <record id="action_fts_agent_release" model="ir.actions.act_window">
-            <field name="name">Agent Package</field>
-            <field name="res_model">ir.attachment</field>
-            <field name="view_mode">list,form</field>
-            <field name="domain">[('res_model', '=', 'crose.agent.package')]</field>
-            <field name="view_ids" eval="[
-                (5, 0, 0),
-                (0, 0, {'view_mode': 'list', 'view_id': ref('feitas_iot.view_fts_agent_package_list')})
-            ]"/>
-            <field name="context" eval="{'default_res_model': 'crose.agent.package'}"/>
-        </record>
-
-        <menuitem id="menu_fts_agent_release" 
-            name="Agent Package" parent="menu_fts_crose_config" action="action_fts_agent_release" sequence="10"/>
-
         <menuitem
             id="menu_crose_component"
             name="System Components"
@@ -178,19 +163,6 @@
             action="action_crose_component"
             sequence="20"
         />
-
-        <record id="action_fts_nr_tag" model="ir.actions.act_window">
-            <field name="name">Tags</field>
-            <field name="res_model">fts.nr.tag</field>
-            <field name="view_mode">list</field>
-        </record>
-
-        <record id="action_fts_ai_category" model="ir.actions.act_window">
-            <field name="name">Prompt Categories</field>
-            <field name="res_model">fts.ai.category</field>
-            <field name="view_mode">list,form</field>
-        </record>
-
 
         <!-- MQTT -->
         <menuitem id="menu_fts_mqtt_root" name="MQTT" parent="menu_fts_crose_config" sequence="40"/>
@@ -222,7 +194,34 @@
                   parent="menu_fts_mqtt_root"
                   action="action_fts_mqtt_topic"
                   sequence="10"/>
+
+        <record id="action_fts_agent_release" model="ir.actions.act_window">
+            <field name="name">Agent Package</field>
+            <field name="res_model">ir.attachment</field>
+            <field name="view_mode">list,form</field>
+            <field name="domain">[('res_model', '=', 'crose.agent.package')]</field>
+            <field name="view_ids" eval="[
+                (5, 0, 0),
+                (0, 0, {'view_mode': 'list', 'view_id': ref('feitas_iot.view_fts_agent_package_list')})
+            ]"/>
+            <field name="context" eval="{'default_res_model': 'crose.agent.package'}"/>
+        </record>
+
+        <menuitem id="menu_fts_agent_release" 
+            name="Agent Package" parent="menu_fts_crose_config" action="action_fts_agent_release" sequence="50"/>
         
+
+        <record id="action_fts_nr_tag" model="ir.actions.act_window">
+            <field name="name">Tags</field>
+            <field name="res_model">fts.nr.tag</field>
+            <field name="view_mode">list</field>
+        </record>
+
+        <record id="action_fts_ai_category" model="ir.actions.act_window">
+            <field name="name">Prompt Categories</field>
+            <field name="res_model">fts.ai.category</field>
+            <field name="view_mode">list,form</field>
+        </record>
 
     </data>
  </odoo>

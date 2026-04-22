@@ -209,13 +209,23 @@ services:
       - crose-net
   
   crose-webdav:
-    image: hacdias/webdav
+    build:
+      context: ./webdav
+      dockerfile: Dockerfile
     container_name: crose-webdav
+    depends_on:
+      redis:
+        condition: service_healthy
     ports:
       - "8080:6065"
     volumes:
       - crose_webdav:/data          # 映射到容器内的 /data
       - ./config/webdav/config.yaml:/config.yaml # 需要提供一个基础配置文件
+    environment:
+      WD_REDIS_ENABLED: "true"
+      WD_REDIS_ADDR: "redis:6379"
+      WD_REDIS_KEY_PREFIX: "webdav:"
+      WD_REDIS_SEED_FROM_CONFIG: "true"
     command: ["--config", "/config.yaml"]
     restart: unless-stopped
     networks:

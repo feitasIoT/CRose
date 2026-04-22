@@ -23,6 +23,7 @@ class CroseComponent(models.Model):
         ('vllm', 'vLLM'),
         ('llm_provider', 'LLM Provider'),
         ('nas', 'NAS'),
+        ('webdav', 'WebDAV'),
         ('npm', 'NPM Registry'),
         ('redis', 'Redis'),
         ('nodered', 'Node-RED')
@@ -62,6 +63,7 @@ class CroseComponent(models.Model):
             'llm_provider': {'chat_completions_path': '/v1/chat/completions', 'models_endpoint': '/v1/models', 'base_path': '/v1'},
             'npm': {'registry_url': 'http://verdaccio-staging:4873'},
             'redis': {'db': 0},
+            'webdav': {'health_endpoint': '/api/health'},
             'nodered': {'admin_path': '/admin', 'health_endpoint': '/'}
         }
 
@@ -73,6 +75,7 @@ class CroseComponent(models.Model):
             'llm_provider': 443,
             'npm': 4873,
             'redis': 6379,
+            'webdav': 6065,
             'nodered': 1880
         }
 
@@ -84,6 +87,7 @@ class CroseComponent(models.Model):
             'llama_factory': 'crose-ai-train',
             'vllm': 'crose-vllm',
             'npm': 'verdaccio-staging',
+            'webdav': 'crose-webdav',
             'nodered': 'nodered'
         }
 
@@ -404,6 +408,31 @@ class CroseComponent(models.Model):
                     'status': 'offline',
                     'last_check_time': fields.Datetime.now(),
                     'error_reason': _('Unexpected Node-RED response: %(code)s', code=response.status_code)
+                })
+        except Exception as e:
+            self.write({
+                'status': 'error',
+                'last_check_time': fields.Datetime.now(),
+                'error_reason': str(e)
+            })
+
+    def _check_status_webdav(self):
+        try:
+            metadata_dict = self._metadata_dict()
+            health_path = str(metadata_dict.get("health_endpoint") or "").strip()
+            if health_path:
+                endpoint = self._resolve_metadata_endpoint("health_endpoint")
+            else:
+                endpoint = f"{self._build_component_base_url()}/api/health"
+
+            response = requests.get(endpoint, timeout=5)
+            if response.status_code == 200:
+                self.write({'status': 'online', 'last_check_time': fields.Datetime.now(), 'error_reason': False})
+            else:
+                self.write({
+                    'status': 'offline',
+                    'last_check_time': fields.Datetime.now(),
+                    'error_reason': _('Unexpected WebDAV response: %(code)s', code=response.status_code)
                 })
         except Exception as e:
             self.write({
