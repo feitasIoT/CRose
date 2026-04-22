@@ -1,0 +1,377 @@
+# webdav
+
+[![Go Report Card](https://goreportcard.com/badge/github.com/hacdias/webdav?style=flat-square)](https://goreportcard.com/report/hacdias/webdav)
+[![Version](https://img.shields.io/github/release/hacdias/webdav.svg?style=flat-square)](https://github.com/hacdias/webdav/releases/latest)
+[![Docker Pulls](https://img.shields.io/docker/pulls/hacdias/webdav?style=flat-square)](https://hub.docker.com/r/hacdias/webdav)
+
+A simple and standalone [WebDAV](https://en.wikipedia.org/wiki/WebDAV) server.
+
+## Install
+
+For a manual install, please refer to the [releases](https://github.com/hacdias/webdav/releases) page and download the correct binary for your system. Alternatively, you can build or install it from source using the Go toolchain. You can either clone the repository and execute `go build`, or directly install it, using:
+
+```
+go install github.com/hacdias/webdav/v5@latest
+```
+
+### Homebrew
+
+If you have Homebrew available on your system, you can also install `webdav` using it: 
+
+```
+brew install webdav
+```
+
+### Docker
+
+Docker images are provided on both [GitHub's registry](https://github.com/hacdias/webdav/pkgs/container/webdav) and [Docker Hub](https://hub.docker.com/r/hacdias/webdav). You can pull the images using one of the following two commands. Note that this commands pull the latest released version. You can use specific tags to pin specific versions, or use `main` for the development branch.
+
+```bash
+# GitHub Registry
+docker pull ghcr.io/hacdias/webdav:latest
+
+# Docker Hub
+docker pull hacdias/webdav:latest
+```
+
+## Usage
+
+For usage information regarding the CLI, run `webdav --help`.
+
+### Container
+
+To run the container, you can refer to the `compose.yml` file which provides a minimal setup. Additionally, you also need to create a configuration file, as [explained below](#configuration).
+
+The equivalent Docker command to the aforementioned compose file would be as follows:
+
+```bash
+docker run \
+  -p 6065:6065 \
+  -v ./config.yml:/config.yml:ro \
+  -v ./data:/data \
+  ghcr.io/hacdias/webdav -c /config.yml
+```
+
+If you are using [fail2ban](#fail2ban-setup), it would be helpful to add the parameters listed below. They will assist in analyzing 
+the log.
+
+```bash
+--log-driver journald \
+--name webdav \
+```
+
+## Configuration
+
+The configuration can be provided as a YAML, JSON or TOML file. Below is an example of a YAML configuration file with 
+all the options available, as well as what they mean.
+
+```yaml
+address: 0.0.0.0
+port: 6065
+
+# TLS-related settings if you want to enable TLS directly.
+tls: false
+cert: cert.pem
+key: key.pem
+
+# Prefix to apply to the WebDAV path-ing. Default is '/'.
+prefix: /
+
+# Enable or disable debug logging. Default is 'false'.
+debug: false
+
+# Disable sniffing the files to detect their content type. Default is 'false'.
+noSniff: false
+
+# Whether the server runs behind a trusted proxy or not. When this is true,
+# the header X-Forwarded-For will be used for logging the remote addresses
+# of logging attempts (if available).
+behindProxy: false
+
+# The directory that will be able to be accessed by the users when connecting.
+# This directory will be used by users unless they have their own 'directory' defined.
+# By default it points to the working directory. In the case of the compose file above,
+# that is /data.
+directory: /data
+
+# The default permissions for users. This is a case insensitive option. Possible
+# permissions: C (Create), R (Read), U (Update), D (Delete). You can combine multiple
+# permissions. For example, to allow to read and create, set "RC". Default is "R".
+permissions: R
+
+# The default permissions rules for users. Default is none. Rules are applied
+# from last to first, that is, the first rule that matches the request, starting
+# from the end, will be applied to the request. Rule paths are always relative to
+# the user's directory.
+rules: []
+
+# The behavior of redefining the rules for users. It can be:
+# - overwrite: when a user has rules defined, these will overwrite any global
+#   rules already defined. That is, the global rules are not applicable to the
+#   user.
+# - append: when a user has rules defined, these will be appended to the global
+#   rules already defined. That is, for this user, their own specific rules will
+#   be checked first, and then the global rules.
+# Default is 'overwrite'.
+rulesBehavior: overwrite
+
+# Logging configuration
+log:
+  # Logging format ('console', 'json'). Default is 'console'.
+  format: console
+  # Enable or disable colors. Default is 'true'. Only applied if format is 'console'.
+  colors: true
+  # Logging outputs. You can have more than one output. Default is only 'stderr'.
+  outputs:
+    - stderr
+
+# CORS configuration
+cors:
+  # Whether or not CORS configuration should be applied. Default is 'false'.
+  enabled: true
+  credentials: true
+  # The following are the default CORS settings when it is enabled.
+  allowed_hosts:
+    - *
+  allowed_headers:
+    - Authorization
+    - Content-Type
+    - Depth
+    - Destination
+    - If
+    - Lock-Token
+    - Overwrite
+    - TimeOut
+    - Translate
+  allowed_methods:
+    - COPY
+    - DELETE
+    - GET
+    - HEAD
+    - LOCK
+    - UNLOCK
+    - MKCOL
+    - MOVE
+    - OPTIONS
+    - POST
+    - PROPFIND
+    - PROPPATCH
+    - PUT
+  exposed_headers: []
+
+# You define here the list of users.
+# Basic authentication is automatically be configured when users are detected 
+# below, else there will be no authentication.
+# Customize to your needs and don't forget to comment out the users you don't need.
+users:
+  # Example 'admin' user with plaintext password.
+  - username: admin
+    password: admin
+
+  # Example 'john' user with bcrypt encrypted password, with custom directory.
+  # Tip: you can generate a bcrypt-encrypted password by using the 'webdav bcrypt'
+  # command lint utility, or htpasswd on Linux.
+  - username: john
+    password: "{bcrypt}$2y$10$zEP6oofmXFeHaeMfBNLnP.DO8m.H.Mwhd24/TOX2MWLxAExXi4qgi"
+    directory: /data/john
+  # Example user whose details will be picked up from the environment.
+  - username: "{env}ENV_USERNAME"
+    password: "{env}ENV_PASSWORD"
+  # Example user with advanced control over his permissions
+  - username: basic
+    password: basic
+    permissions: CRUD # Override default permissions.
+    rules:
+      # With this rule, the user CANNOT access {user directory}/some/files.
+      - path: /some/file
+        permissions: none
+      # With this rule, the user CAN create, read, update and delete within
+      # {user directory}/public/access.
+      - path: /public/access/
+        permissions: CRUD
+      # With this rule, the user CAN read and update all files ending with .js.
+      # It uses a regular expression.
+      - regex: "^.+.js$"
+        permissions: RU
+  # Example user for android SeedVault backuping
+  - username: android
+    password: "{bcrypt}$2y$10$zEP6oofmXFeHaeMfBNLnP.DO8m.H.Mwhd24/TOX2MWLxAExXi4qgi"
+    directory: /data/android
+    permissions: CRUD
+
+# If you're delegating the authentication to a different service, you can proxy
+# the username using basic authentication, and then disable webdav's password
+# check using the option:
+# noPassword: true
+
+# Optional: store users and global permissions in Redis instead of the config file.
+redis:
+  enabled: false
+  addr: 127.0.0.1:6379
+  username: ""
+  password: ""
+  db: 0
+  key_prefix: "webdav:"
+  # When enabled, seeds Redis from the config file only if keys are missing.
+  seed_from_config: true
+
+# Optional: management API (OpenAPI + endpoints to manage users/global directory/permissions).
+# NOTE: protect the token. Anyone with it can manage users.
+management:
+  enabled: false
+  prefix: /api
+  openapi_path: /openapi.json
+  docs_path: /docs
+  token: "change-me"
+```
+
+### Management API
+
+When `management.enabled` is `true`, the server exposes a small JSON API under `management.prefix`:
+
+- OpenAPI JSON: `GET {prefix}{openapi_path}` (no auth)
+- Swagger UI: `GET {prefix}{docs_path}` (no auth)
+- Health: `GET {prefix}/health` (no auth)
+- Global permissions: `GET/PUT/PATCH {prefix}/global` (requires token)
+- Users: `GET/POST {prefix}/users` (requires token)
+- User by name: `GET/PUT/PATCH/DELETE {prefix}/users/{username}` (requires token)
+
+### CORS
+
+The `allowed_*` properties are optional, the default value for each of them will be `*`. `exposed_headers` is optional as well, but is not set if not defined. Setting `credentials` to `true` will allow you to:
+
+1. Use `withCredentials = true` in javascript.
+2. Use the `username:password@host` syntax.
+
+## Caveats
+
+### Reverse Proxy Service
+
+When using a reverse proxy implementation, like Caddy, Nginx, or Apache, note that you need to forward the correct headers in order to avoid 502 errors.
+
+#### Nginx Configuration Example
+
+```nginx
+location / {
+  proxy_pass http://127.0.0.1:8080;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header REMOTE-HOST $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header Host $host;
+  proxy_redirect off;
+
+  # Ensure COPY and MOVE commands work. Change https://example.com to the
+  # correct address where the WebDAV server will be deployed at.
+  set $dest $http_destination;
+  if ($http_destination ~ "^https://example.com(?<path>(.+))") {
+    set $dest /$path;
+  }
+  proxy_set_header Destination $dest;
+}
+```
+
+#### Caddy Configuration Example
+
+```Caddyfile
+example.com {
+    tls internal # for local development
+    # tls name@email.com # so that Caddy gets certs for you via Letsencrypt
+
+    # Rewrites destination to remove host and include only the path e.g. /test.txt
+    @hasDest header_regexp dest ^https?://[^/]+(.*)$
+    header @hasDest Destination {re.dest.1}
+
+    # if running on the same network in docker you can just point to the service name e.g. webdav:6065
+    reverse_proxy 127.0.0.1:6065 {
+        header_up X-Real-IP {remote_host}
+        header_up REMOTE-HOST {remote_host}
+    }
+}
+```
+
+## Examples
+
+### Systemd
+
+Example configuration of a [`systemd`](https://en.wikipedia.org/wiki/Systemd) service:
+
+```conf
+[Unit]
+Description=WebDAV
+After=network.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/webdav --config /opt/webdav.yml
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### Fail2Ban Setup
+
+To add security against brute-force attacks in your WebDAV server, you can configure Fail2Ban to ban IP addresses after a set number of failed login attempts.
+
+#### Filter Configuration
+
+Create a new filter rule under `filter.d/webdav.conf`:
+
+```ini
+[INCLUDES]
+before = common.conf
+
+[Definition]
+# Failregex to match "invalid password" and extract remote_address only
+failregex = ^.*invalid password\s*\{.*"remote_address":\s*"<HOST>:\d+"\s*\}
+            ^.*invalid username\s*\{.*"remote_address":\s*"<HOST>:\d+"\s*\}
+
+ignoreregex =
+```
+
+This configuration will capture invalid login attempts and extract the IP address to ban.
+
+#### Jail Configuration
+
+In `jail.d/webdav.conf`, define the jail that monitors your WebDAV log for failed login attempts:
+
+```ini
+[webdav]
+
+enabled = true
+port = [your_port]
+filter = webdav
+logpath = [your_log_path]
+banaction = iptables-allports
+ignoreself = false
+```
+
+- Replace `[your_port]` with the port your WebDAV server is running on.
+- Replace `[your_log_path]` with the path to your WebDAV log file.
+
+If you use it with Docker and `--log-driver journald`, replace `logpath` with `journalmatch = CONTAINER_NAME=[your_container_name]`
+
+#### Final Steps
+
+1. Restart Fail2Ban to apply these configurations:
+
+   ```bash
+   sudo systemctl restart fail2ban
+   ```
+
+2. Verify that Fail2Ban is running and monitoring your WebDAV logs:
+
+   ```bash
+   sudo fail2ban-client status webdav
+   ```
+
+With this setup, Fail2Ban will automatically block IP addresses that exceed the allowed number of failed login attempts.
+
+## Contributing
+
+Feel free to open an issue or a pull request.
+
+## License
+
+[MIT License](LICENSE) © [Henrique Dias](https://hacdias.com)
