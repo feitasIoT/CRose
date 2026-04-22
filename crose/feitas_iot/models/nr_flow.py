@@ -282,6 +282,93 @@ class FtsNrFlow(models.Model):
                         deps.append(dep_parsed)
 
                 if deps:
+                    global_flow = Flow.search(
+                        [
+                            ("instance_id", "=", rec.instance_id.id),
+                            ("type", "=", "global"),
+                            ("nr_id", "=", "global"),
+                        ],
+                        limit=1,
+                    )
+                    global_by_id = {}
+                    if global_flow and global_flow.content:
+                        try:
+                            global_parsed = json.loads(global_flow.content)
+                        except Exception:
+                            global_parsed = None
+                        if isinstance(global_parsed, dict):
+                            candidates = []
+                            for key in ("configs", "nodes", "subflows"):
+                                part = global_parsed.get(key)
+                                if isinstance(part, list):
+                                    candidates.extend([i for i in part if isinstance(i, dict) and i.get("id")])
+                            global_by_id = {i["id"]: i for i in candidates if isinstance(i.get("id"), str)}
+
+                    def _collect_strings(value, out):
+                        if isinstance(value, dict):
+                            for v in value.values():
+                                _collect_strings(v, out)
+                        elif isinstance(value, list):
+                            for v in value:
+                                _collect_strings(v, out)
+                        elif isinstance(value, str):
+                            out.add(value)
+
+                    def _is_config_node(item):
+                        return (
+                            isinstance(item, dict)
+                            and item.get("id")
+                            and item.get("type") not in ("tab", "subflow")
+                            and "wires" not in item
+                        )
+
+                    if global_by_id:
+                        def _resolve_configs_from_refs(refs, existing_ids):
+                            queue = [rid for rid in refs if rid in global_by_id]
+                            seen = set()
+                            resolved = []
+                            while queue:
+                                rid = queue.pop(0)
+                                if rid in seen or rid in existing_ids:
+                                    continue
+                                item = global_by_id.get(rid)
+                                if not item:
+                                    continue
+                                seen.add(rid)
+                                if _is_config_node(item):
+                                    resolved.append(item)
+                                    existing_ids.add(rid)
+                                    nested = set()
+                                    _collect_strings(item, nested)
+                                    for nid in nested:
+                                        if nid in global_by_id and nid not in seen and nid not in existing_ids:
+                                            queue.append(nid)
+                            return resolved
+
+                        for dep in deps:
+                            configs = dep.get("configs")
+                            if not isinstance(configs, list):
+                                configs = []
+                            configs = [c for c in configs if isinstance(c, dict) and c.get("id")]
+                            config_ids = {c.get("id") for c in configs if isinstance(c.get("id"), str)}
+
+                            refs = set()
+                            _collect_strings(dep, refs)
+                            configs.extend(_resolve_configs_from_refs(refs, config_ids))
+
+                            dep["configs"] = configs
+
+                        main_configs = parsed.get("configs")
+                        if not isinstance(main_configs, list):
+                            main_configs = []
+                        main_configs = [c for c in main_configs if isinstance(c, dict) and c.get("id")]
+                        main_config_ids = {c.get("id") for c in main_configs if isinstance(c.get("id"), str)}
+
+                        refs = set()
+                        _collect_strings(parsed.get("nodes") or [], refs)
+                        main_configs.extend(_resolve_configs_from_refs(refs, main_config_ids))
+                        parsed["configs"] = main_configs
+
                     parsed["subflow_deps"] = deps
                     app.write({"content": parsed})
 

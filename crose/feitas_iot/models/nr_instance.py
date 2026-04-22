@@ -368,8 +368,8 @@ class FtsNrInstance(models.Model):
                     if (
                         isinstance(node, dict)
                         and node.get('id')
-                        and not node.get('z')
                         and node.get('type') not in ('tab', 'subflow')
+                        and 'wires' not in node
                     )
                 ]
                 config_by_id = {c['id']: c for c in config_nodes if isinstance(c.get('id'), str)}
@@ -399,12 +399,23 @@ class FtsNrInstance(models.Model):
                     strings = set()
                     for n in nodes:
                         _collect_strings(n, strings)
+                    queue = [s for s in strings if s in config_by_id]
                     resolved = []
                     seen = set()
-                    for s in strings:
-                        if s in config_by_id and s not in seen:
-                            resolved.append(config_by_id[s])
-                            seen.add(s)
+                    while queue:
+                        rid = queue.pop(0)
+                        if rid in seen:
+                            continue
+                        cfg = config_by_id.get(rid)
+                        if not cfg:
+                            continue
+                        seen.add(rid)
+                        resolved.append(cfg)
+                        nested = set()
+                        _collect_strings(cfg, nested)
+                        for s in nested:
+                            if s in config_by_id and s not in seen:
+                                queue.append(s)
                     return resolved
 
                 global_detail = instance.api_sync_flow_global()
@@ -776,6 +787,9 @@ class FtsNrInstance(models.Model):
 
         nodes = [n for n in nodes if isinstance(n, dict)]
         configs = [c for c in configs if isinstance(c, dict)]
+        for c in configs:
+            if isinstance(c, dict) and "z" in c:
+                c.pop("z", None)
 
         tab_id = flow.nr_id if (flow.instance_id and flow.instance_id.id == self.id and flow.nr_id) else self._nr_generate_id()
         payload = {

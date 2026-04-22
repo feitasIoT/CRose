@@ -177,6 +177,31 @@ class FtsNrInstanceWizard(models.TransientModel):
         configs = parsed.get("configs", []) if isinstance(parsed, dict) else []
         nodes = [n for n in nodes if isinstance(n, dict)]
         configs = [c for c in configs if isinstance(c, dict) and c.get("id")]
+        if configs:
+            refs = set()
+            self._collect_strings(nodes, refs)
+            by_id = {c.get("id"): c for c in configs if isinstance(c.get("id"), str)}
+            queue = [rid for rid in refs if rid in by_id]
+            resolved = []
+            seen = set()
+            while queue:
+                rid = queue.pop(0)
+                if rid in seen:
+                    continue
+                cfg = by_id.get(rid)
+                if not cfg:
+                    continue
+                seen.add(rid)
+                resolved.append(cfg)
+                nested = set()
+                self._collect_strings(cfg, nested)
+                for nid in nested:
+                    if nid in by_id and nid not in seen:
+                        queue.append(nid)
+            configs = resolved
+        for c in configs:
+            if isinstance(c, dict) and "z" in c:
+                c.pop("z", None)
 
         if not configs:
             refs = set()
@@ -186,7 +211,9 @@ class FtsNrInstanceWizard(models.TransientModel):
             for cfg in global_configs:
                 cfg_id = cfg.get("id")
                 if cfg_id and cfg_id not in cfg_ids:
-                    configs.append(cfg)
+                    cfg_copy = dict(cfg)
+                    cfg_copy.pop("z", None)
+                    configs.append(cfg_copy)
                     cfg_ids.add(cfg_id)
 
         payload = {
@@ -260,11 +287,98 @@ class FtsNrInstanceWizard(models.TransientModel):
             for v in value:
                 self._collect_ids(v, out)
 
-    def _deploy_subflow_deps(self, deps):
+    def _expand_subflow_deps_configs(self, deps, source_instance):
+        deps = [d for d in deps if isinstance(d, dict)]
+        if not deps or not source_instance:
+            return deps
+
+        Flow = self.env["fts.nr.flow"]
+        global_flow = Flow.search(
+            [
+                ("instance_id", "=", source_instance.id),
+                ("type", "=", "global"),
+                ("nr_id", "=", "global"),
+            ],
+            limit=1,
+        )
+        if not global_flow or not global_flow.content:
+            return deps
+        try:
+            global_parsed = json.loads(global_flow.content)
+        except Exception:
+            return deps
+        if not isinstance(global_parsed, dict):
+            return deps
+
+        candidates = []
+        for key in ("configs", "nodes", "subflows"):
+            part = global_parsed.get(key)
+            if isinstance(part, list):
+                candidates.extend([i for i in part if isinstance(i, dict) and i.get("id")])
+        global_by_id = {i["id"]: i for i in candidates if isinstance(i.get("id"), str)}
+        if not global_by_id:
+            return deps
+
+        def _is_config_node(item):
+            return (
+                isinstance(item, dict)
+                and item.get("id")
+                and item.get("type") not in ("tab", "subflow")
+                and "wires" not in item
+            )
+
+        for dep in deps:
+            configs = dep.get("configs")
+            if not isinstance(configs, list):
+                configs = []
+            configs = [c for c in configs if isinstance(c, dict) and c.get("id")]
+            config_ids = {c.get("id") for c in configs if isinstance(c.get("id"), str)}
+
+            refs = set()
+            self._collect_strings(dep, refs)
+            queue = [rid for rid in refs if rid in global_by_id]
+            seen = set()
+            while queue:
+                rid = queue.pop(0)
+                if rid in seen or rid in config_ids:
+                    continue
+                item = global_by_id.get(rid)
+                if not item:
+                    continue
+                seen.add(rid)
+                if _is_config_node(item):
+                    configs.append(item)
+                    config_ids.add(rid)
+                    nested = set()
+                    self._collect_strings(item, nested)
+                    for nid in nested:
+                        if nid in global_by_id and nid not in seen and nid not in config_ids:
+                            queue.append(nid)
+
+            dep["configs"] = configs
+
+        return deps
+
+    def _deploy_subflow_deps(self, deps, base_configs=None):
         self.ensure_one()
         deps = [d for d in deps if isinstance(d, dict)]
         if not deps:
             return {}
+        base_configs = base_configs if isinstance(base_configs, list) else []
+        base_configs = [c for c in base_configs if isinstance(c, dict) and c.get("id")]
+
+        config_pool = {}
+        for dep in deps:
+            dep_configs = dep.get("configs")
+            if not isinstance(dep_configs, list):
+                continue
+            for cfg in dep_configs:
+                if isinstance(cfg, dict) and isinstance(cfg.get("id"), str):
+                    config_pool[cfg["id"]] = cfg
+        for cfg in base_configs:
+            cfg_id = cfg.get("id")
+            if isinstance(cfg_id, str) and cfg_id and cfg_id not in config_pool:
+                config_pool[cfg_id] = cfg
 
         def _get_subflow_id(dep):
             subflow_def = dep.get("subflow") if isinstance(dep.get("subflow"), dict) else None
@@ -291,8 +405,36 @@ class FtsNrInstanceWizard(models.TransientModel):
 
         elements = []
         for dep in deps:
+            dep_work = dict(dep)
+            dep_configs = dep_work.get("configs")
+            if not isinstance(dep_configs, list):
+                dep_configs = []
+            dep_configs = [c for c in dep_configs if isinstance(c, dict) and c.get("id")]
+            dep_cfg_ids = {c.get("id") for c in dep_configs if isinstance(c.get("id"), str)}
+
+            refs = set()
+            self._collect_strings(dep_work, refs)
+            queue = [rid for rid in refs if rid in config_pool]
+            seen = set()
+            while queue:
+                rid = queue.pop(0)
+                if rid in seen or rid in dep_cfg_ids:
+                    continue
+                cfg = config_pool.get(rid)
+                if not cfg:
+                    continue
+                seen.add(rid)
+                dep_configs.append(cfg)
+                dep_cfg_ids.add(rid)
+                nested = set()
+                self._collect_strings(cfg, nested)
+                for nid in nested:
+                    if nid in config_pool and nid not in seen and nid not in dep_cfg_ids:
+                        queue.append(nid)
+            dep_work["configs"] = dep_configs
+
             ids = set()
-            self._collect_ids(dep, ids)
+            self._collect_ids(dep_work, ids)
             mapping = dict(subflow_mapping)
             used = set(mapping.values())
             for old in sorted(ids):
@@ -304,7 +446,7 @@ class FtsNrInstanceWizard(models.TransientModel):
                 mapping[old] = new_id
                 used.add(new_id)
 
-            remapped = self.instance_id._nr_replace_ids(dep, mapping)
+            remapped = self.instance_id._nr_replace_ids(dep_work, mapping)
             if not isinstance(remapped, dict):
                 continue
 
@@ -319,6 +461,9 @@ class FtsNrInstanceWizard(models.TransientModel):
             cred_payload = self._inject_iotdb_mqtt_broker_credentials(cred_payload)
             nodes = cred_payload.get("nodes") if isinstance(cred_payload.get("nodes"), list) else []
             configs = cred_payload.get("configs") if isinstance(cred_payload.get("configs"), list) else []
+            for c in configs:
+                if isinstance(c, dict) and "z" in c:
+                    c.pop("z", None)
 
             if isinstance(subflow_def, dict) and subflow_def.get("id"):
                 elements.append(subflow_def)
@@ -363,13 +508,17 @@ class FtsNrInstanceWizard(models.TransientModel):
                 if not isinstance(parsed, dict):
                     parsed = {}
                 deps = parsed.get("subflow_deps") if isinstance(parsed.get("subflow_deps"), list) else []
+                base_configs = parsed.get("configs") if isinstance(parsed.get("configs"), list) else []
 
                 payload = self._build_flow_payload(tmpl)
                 payload["label"] = f"{tmpl.name} - {self.instance_id.name}"
 
                 subflow_mapping = {}
                 if deps:
-                    subflow_mapping = self._deploy_subflow_deps(deps)
+                    source_flow = self.env["fts.nr.flow"].search([("app_store_id", "=", tmpl.id)], limit=1)
+                    if source_flow and source_flow.instance_id:
+                        deps = self._expand_subflow_deps_configs(deps, source_flow.instance_id)
+                    subflow_mapping = self._deploy_subflow_deps(deps, base_configs=base_configs)
                     if subflow_mapping:
                         for node in payload.get("nodes") or []:
                             if not isinstance(node, dict):
