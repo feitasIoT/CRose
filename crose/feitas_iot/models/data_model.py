@@ -397,70 +397,203 @@ class DataModel(models.Model):
         return result
 
 
-
-    def action_start(self):
+    def action_send_flow(self):
+        """
+            场景；data modeling的data assets发生变化，需要向node-red发送特定节点的最新数据。包括：
+            1、name=data assets的function节点为特殊节点，msg.payload数据来自于app_param_ids，格式如下：
+            {
+                "15" : { 
+                    redisKey: "device:15:files",
+                    mqttTopic: "iot/device15"
+                },
+                "14" : {
+                    redisKey: "device:15:files",
+                    topic: "iot/device15"
+                }
+            }
+            app_param_ids的value字段可以写如下可格式化字符串：
+                {{name}}   name字段的值
+                {{provider_id.name}}   provider_id记录的name字段的值
+                {{data_asset_ids.name}}    遍历data_asset_ids时，对应data asset记录的name字段的值
+            2、待补充
+        """
         self.ensure_one()
         if not self.nr_instance_id:
             raise ValidationError(_("Please select a runtime instance before starting."))
-        template_flows = self.nr_flow_ids
-        if not template_flows:
-            raise ValidationError(_("Please select at least one flow template in Applications."))
-
-        Flow = self.env["fts.nr.flow"]
-        Line = self.env["instance.flow.line"]
-        created_flows = Flow.browse()
-
-        for template in template_flows:
-            vals = {
-                "name": f"{template.name} - {self.name}",
-                "nr_id": f"{uuid.uuid4().hex[:7]}.{uuid.uuid4().hex[:7]}",
-                "type": template.type,
-                "is_template": False,
-                "content": template.content,
-                "instance_id": self.nr_instance_id.id,
-                "data_model_id": self.id,
-                "tag_ids": [(6, 0, template.tag_ids.ids)],
-                "heat": template.heat,
-                "description": template.description,
-                "prompt": template.prompt,
-                "param_ids": [
-                    (
-                        0,
-                        0,
-                        {
-                            "name": p.name,
-                            "value": p.value,
-                            "type": p.type,
-                            "description": p.description,
-                            "model_id": self.id,
-                        },
-                    )
-                    for p in template.param_ids
-                ],
+        if not self.nr_flow_ids:
+            return {
+                "type": "ir.actions.client",
+                "tag": "display_notification",
+                "params": {
+                    "title": _("Update Complete"),
+                    "message": _("No flows are linked to this data model."),
+                    "type": "warning",
+                    "sticky": False,
+                },
             }
-            created_flows |= Flow.create(vals)
 
-        for flow in created_flows:
-            Line.create(
-                {
-                    "instance_id": self.nr_instance_id.id,
-                    "flow_id": flow.id,
-                }
+        placeholder_pattern = re.compile(r"\{\{\s*([a-zA-Z_][\w\.]*)\s*\}\}")
+
+        def _resolve_path(record, path):
+            current = record
+            for part in str(path).split("."):
+                if not part:
+                    return ""
+                if isinstance(current, models.BaseModel):
+                    if not current:
+                        return ""
+                    current = current[part] if part in current._fields else getattr(current, part, None)
+                else:
+                    current = getattr(current, part, None) if hasattr(current, part) else None
+                if current is None:
+                    return ""
+            if isinstance(current, models.BaseModel):
+                if not current:
+                    return ""
+                if len(current) > 1:
+                    return ", ".join(current.mapped("display_name"))
+                if "name" in current._fields:
+                    return current.name or ""
+                return current.id
+            return current
+
+        def _render_template(raw_value, asset):
+            if not isinstance(raw_value, str):
+                return raw_value
+
+            def _replace(match):
+                expr = match.group(1)
+                if expr == "data_asset_ids":
+                    resolved = asset.id if asset else ""
+                elif expr.startswith("data_asset_ids."):
+                    rel_path = expr.split(".", 1)[1]
+                    resolved = _resolve_path(asset, rel_path) if asset else ""
+                else:
+                    resolved = _resolve_path(self, expr)
+                if isinstance(resolved, (dict, list)):
+                    return json.dumps(resolved, ensure_ascii=False)
+                return "" if resolved is None else str(resolved)
+
+            return placeholder_pattern.sub(_replace, raw_value)
+
+        def _convert_param_value(param, asset):
+            rendered = _render_template(param.value or "", asset)
+            value_type = (param.type or "str").lower()
+
+            if value_type == "num":
+                try:
+                    value_text = str(rendered).strip()
+                    return int(value_text) if re.fullmatch(r"-?\d+", value_text) else float(value_text)
+                except Exception:
+                    return rendered
+            if value_type == "bool":
+                value_text = str(rendered).strip().lower()
+                if value_text in ("1", "true", "yes", "on"):
+                    return True
+                if value_text in ("0", "false", "no", "off", ""):
+                    return False
+                return rendered
+            if value_type == "json":
+                try:
+                    return json.loads(rendered) if isinstance(rendered, str) else rendered
+                except Exception:
+                    return rendered
+            return rendered
+
+        def _build_data_assets_payload():
+            assets = self.data_asset_ids or self.data_asset_id
+            payload = {}
+            for asset in assets:
+                item = {}
+                for param in self.app_param_ids:
+                    if not param.name:
+                        continue
+                    item[param.name] = _convert_param_value(param, asset)
+                payload[str(asset.id)] = item
+            return payload
+
+        def _is_data_assets_function_node(node):
+            if not isinstance(node, dict):
+                return False
+            if node.get("type") != "function":
+                return False
+            node_name = (node.get("name") or node.get("label") or "").strip().lower()
+            return node_name == "data assets"
+
+        def _nr_put_json(path, body, timeout=30):
+            headers = {
+                "Node-RED-API-Version": "v2",
+            }
+            last_error = None
+            for base_url in self.nr_instance_id._nr_candidate_base_urls():
+                url = f"{base_url}{path}"
+                try:
+                    response = requests.put(url, headers=headers, json=body, timeout=timeout)
+                    response.raise_for_status()
+                    try:
+                        return response.json()
+                    except Exception:
+                        return {}
+                except Exception as e:
+                    last_error = e
+            raise ValidationError(_("Failed to call Node-RED API: %(error)s", error=str(last_error)))
+
+        payload = _build_data_assets_payload()
+        func_value = "msg.payload = %s;\nreturn msg;" % json.dumps(payload, ensure_ascii=False, indent=2)
+
+        updated_flow_count = 0
+        updated_node_count = 0
+        not_found_flows = []
+        failed_flows = []
+
+        for flow in self.nr_flow_ids:
+            if not flow.nr_id:
+                failed_flows.append(_("%(flow)s (missing Flow ID)", flow=flow.display_name))
+                continue
+            try:
+                flow_detail = self.nr_instance_id.api_sync_flow_by_id(flow.nr_id)
+                nodes = flow_detail.get("nodes") if isinstance(flow_detail, dict) else None
+                if not isinstance(nodes, list):
+                    failed_flows.append(_("%(flow)s (invalid flow payload)", flow=flow.display_name))
+                    continue
+
+                matched = 0
+                for node in nodes:
+                    if _is_data_assets_function_node(node):
+                        node["func"] = func_value
+                        matched += 1
+
+                if matched <= 0:
+                    not_found_flows.append(flow.display_name)
+                    continue
+
+                flow_detail["nodes"] = nodes
+                _nr_put_json(f"/flow/{flow.nr_id}", flow_detail, timeout=30)
+                flow.sudo().write({"content": flow_detail})
+                updated_flow_count += 1
+                updated_node_count += matched
+            except Exception as e:
+                failed_flows.append(_("%(flow)s (%(error)s)", flow=flow.display_name, error=str(e)))
+
+        message_parts = [
+            _("Updated %(flow_count)s flows, %(node_count)s nodes.", flow_count=updated_flow_count, node_count=updated_node_count)
+        ]
+        if not_found_flows:
+            message_parts.append(
+                _("No matched node in: %(flows)s", flows=", ".join(not_found_flows[:10]))
             )
-
-        self.nr_instance_id.action_apply_flows()
+        if failed_flows:
+            message_parts.append(
+                _("Failed: %(flows)s", flows=", ".join(failed_flows[:10]))
+            )
 
         return {
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
-                "title": _("Start Complete"),
-                "message": _(
-                    "Created %(count)s flows on %(instance)s and pushed them to Node-RED.",
-                    count=len(created_flows),
-                    instance=self.nr_instance_id.display_name,
-                ),
-                "type": "success",
+                "title": _("Update Complete"),
+                "message": "\n".join(message_parts),
+                "type": "success" if not failed_flows and updated_flow_count > 0 else "warning",
                 "sticky": False,
             },
         }
