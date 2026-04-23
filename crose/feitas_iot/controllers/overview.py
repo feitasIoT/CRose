@@ -1,9 +1,15 @@
-from odoo import http
-from odoo.http import request
 import json
-from datetime import datetime, timedelta
-from odoo import fields
+import redis
 import contextlib
+import logging
+
+from datetime import datetime, timedelta, timezone
+
+from odoo import http, fields
+from odoo.http import request
+
+_logger = logging.getLogger(__name__)
+
 
 class OverviewController(http.Controller):
 
@@ -25,6 +31,14 @@ class OverviewController(http.Controller):
             if val > 10**9:
                 return val * 1000
         return None
+
+    def _datetime_to_epoch_ms(self, dt_value):
+        """Convert datetime to epoch milliseconds using UTC semantics."""
+        if dt_value.tzinfo is None:
+            dt_value = dt_value.replace(tzinfo=timezone.utc)
+        else:
+            dt_value = dt_value.astimezone(timezone.utc)
+        return int(dt_value.timestamp() * 1000)
 
     def _safe_float(self, raw):
         with contextlib.suppress(Exception):
@@ -85,7 +99,7 @@ class OverviewController(http.Controller):
         password = metadata.get("password")
         with contextlib.suppress(Exception):
             db_value = int(db_value)
-        import redis
+        
         return redis.Redis(
             host=redis_comp.host or "localhost",
             port=redis_comp.port or 6379,
@@ -98,8 +112,8 @@ class OverviewController(http.Controller):
 
     def _load_metrics_series_from_redis(self, env, time_range):
         start_dt, end_dt = self._range_start_dt(time_range)
-        start_ms = int(start_dt.timestamp() * 1000)
-        end_ms = int(end_dt.timestamp() * 1000)
+        start_ms = self._datetime_to_epoch_ms(start_dt)
+        end_ms = self._datetime_to_epoch_ms(end_dt)
         points = []
 
         redis_comp = self._get_redis_component(env)
@@ -126,7 +140,36 @@ class OverviewController(http.Controller):
                 if record:
                     points.append(record)
         elif history_type == "list":
-            values = client.lrange(key_history, -5000, -1)
+            def _peek_time(raw_values):
+                for raw_item in raw_values or []:
+                    rec = self._coerce_metric_record(raw_item)
+                    if rec and rec.get("time"):
+                        return rec["time"]
+                return None
+
+            head_values = client.lrange(key_history, 0, 2)
+            tail_values = client.lrange(key_history, -3, -1)
+            head_time = _peek_time(head_values)
+            tail_time = _peek_time(tail_values)
+
+            # If head timestamps are newer than tail, list is likely LPUSH-ed (newest at head).
+            # Otherwise treat it as RPUSH-ed (newest at tail).
+            if head_time and tail_time and head_time >= tail_time:
+                values = client.lrange(key_history, 0, 4999)
+                _logger.warning(
+                    "Overview metrics list order=head_newest key=%s head_time=%s tail_time=%s",
+                    key_history,
+                    head_time,
+                    tail_time,
+                )
+            else:
+                values = client.lrange(key_history, -5000, -1)
+                _logger.warning(
+                    "Overview metrics list order=tail_newest key=%s head_time=%s tail_time=%s",
+                    key_history,
+                    head_time,
+                    tail_time,
+                )
             for raw in values:
                 record = self._coerce_metric_record(raw)
                 if record and start_ms <= record["time"] <= end_ms:
@@ -158,8 +201,8 @@ class OverviewController(http.Controller):
 
     def _load_upload_activity_stats(self, env, time_range):
         start_dt, end_dt = self._range_start_dt(time_range)
-        start_ms = int(start_dt.timestamp() * 1000)
-        end_ms = int(end_dt.timestamp() * 1000)
+        start_ms = self._datetime_to_epoch_ms(start_dt)
+        end_ms = self._datetime_to_epoch_ms(end_dt)
         stats = {"total_activities": 0, "success": 0, "failed": 0}
         redis_comp = self._get_redis_component(env)
         if not redis_comp:
