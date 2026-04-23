@@ -83,8 +83,8 @@
                                     <group>
                                         <field name="query_start_time" invisible="query_type != 'data'"/>
                                         <field name="query_end_time" invisible="query_type != 'data'"/>
-                                        <button name="action_test_query" type="object" string="Test" class="oe_highlight"/>
-                                        <button name="action_open_spreadsheet" type="object" string="Spreadsheet" class="oe_highlight"/>
+                                        <button name="action_test_query" type="object" string="Query Summary" class="oe_highlight"/>
+                                        <button name="action_open_spreadsheet" type="object" string="View Datas" class="oe_highlight"/>
                                     </group>
                                 </group>
                             </page>

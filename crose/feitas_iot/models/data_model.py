@@ -1,12 +1,14 @@
-import base64
-import contextlib
+import re
 import json
 import math
-import logging
-import re
 import uuid
-from datetime import datetime
+import redis
+import base64
+import logging
 import requests
+import contextlib
+
+from datetime import datetime
 
 
 from odoo import models, fields, api, _
@@ -58,8 +60,6 @@ class DataModel(models.Model):
     query_start_time = fields.Datetime(string='Start Time')
     query_end_time = fields.Datetime(string='End Time')
     query_interval = fields.Integer(string='Interval (Seconds)', default=60)
-
-    redis_key = fields.Char(string='Redis Key', help='Fixed Redis key to query, e.g. check_db')
 
     @api.onchange('query_start_time')
     def _onchange_query_start_time(self):
@@ -272,8 +272,8 @@ class DataModel(models.Model):
         try:
             if self.query_type == 'data':
                 start_ts, end_ts, count_sql, result_sql = self._build_iotdb_sql()
-                count_df = self._execute_iotdb_query(count_sql)
-                count = int(count_df.iloc[0, 0]) if len(count_df) > 0 else 0
+                result_df = self._execute_iotdb_query(result_sql)
+                count = int(len(result_df)) if result_df is not None else 0
             else:
                 redis_value = self._execute_redis_query()
                 if redis_value is None:
@@ -810,8 +810,6 @@ class DataModel(models.Model):
             self.query_end_time = fields.Datetime.now()
         if not self.query_interval or self.query_interval <= 0:
             raise ValidationError(_("Please enter a valid interval in seconds."))
-        if not self.iotdb_topic:
-            raise ValidationError(_("Please configure the IoTDB Topic field before querying."))
 
         start_dt = fields.Datetime.to_datetime(self.query_start_time)
         end_dt = fields.Datetime.to_datetime(self.query_end_time)
@@ -819,8 +817,102 @@ class DataModel(models.Model):
         end_ts = int(end_dt.timestamp() * 1000)
 
         where_clause = f"time >= {start_ts} AND time <= {end_ts}"
-        result_sql = f"SELECT * FROM {self.iotdb_topic} WHERE {where_clause} LIMIT 10000"
-        count_sql = f"SELECT COUNT(*) FROM {self.iotdb_topic} WHERE {where_clause}"
+        mqtt_topic_param = self.app_param_ids.filtered(lambda p: (p.name or "").strip() == "iotDBDevice")[:1]
+
+        def _resolve_path(record, path):
+            current = record
+            for part in str(path).split("."):
+                if not part:
+                    return ""
+                if isinstance(current, models.BaseModel):
+                    if not current:
+                        return ""
+                    current = getattr(current, part, None)
+                else:
+                    current = getattr(current, part, None) if hasattr(current, part) else None
+                if current is None:
+                    return ""
+            if isinstance(current, models.BaseModel):
+                if not current:
+                    return ""
+                if len(current) > 1:
+                    names = current.mapped("display_name")
+                    return ", ".join([n for n in names if n])
+                if "name" in current._fields:
+                    return current.name or ""
+                return current.id
+            return current
+
+        def _render_topic_template(raw_value, asset):
+            if not isinstance(raw_value, str):
+                return raw_value
+            pattern = re.compile(r"\{\{\s*([a-zA-Z_][\w\.]*)\s*\}\}")
+
+            def _replace(match):
+                expr = match.group(1)
+                if expr == "data_asset_ids":
+                    return str(asset.id) if asset else ""
+                if expr.startswith("data_asset_ids."):
+                    rel = expr.split(".", 1)[1]
+                    return str(_resolve_path(asset, rel) or "") if asset else ""
+                resolved = _resolve_path(self, expr)
+                if isinstance(resolved, (dict, list)):
+                    return json.dumps(resolved, ensure_ascii=False)
+                return "" if resolved is None else str(resolved)
+
+            return pattern.sub(_replace, raw_value)
+
+        def _mqtt_to_iotdb_path(topic):
+            text = (topic or "").strip()
+            if not text:
+                return ""
+            converted = text.strip("/").replace("/", ".").strip(".")
+            if converted.startswith("root."):
+                converted = converted[5:]
+            elif converted == "root":
+                converted = ""
+            segments = [seg for seg in converted.split(".") if seg]
+            if not segments:
+                return ""
+
+            def _normalize_segment(seg):
+                raw = str(seg).strip()
+                if not raw:
+                    return ""
+                if raw in ("*", "**"):
+                    return raw
+                if raw.startswith("`") and raw.endswith("`") and len(raw) >= 2:
+                    return raw
+                if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", raw):
+                    return raw
+                return "`%s`" % raw.replace("`", "``")
+
+            normalized = [_normalize_segment(seg) for seg in segments]
+            normalized = [seg for seg in normalized if seg]
+            if not normalized:
+                return ""
+            return "root.%s" % ".".join(normalized)
+
+        topics = []
+        assets = self.query_data_asset_ids or self.data_asset_ids or self.data_asset_id
+        if mqtt_topic_param and assets:
+            for asset in assets:
+                mqtt_topic = str(_render_topic_template(mqtt_topic_param.value or "", asset)).strip()
+                iotdb_topic = _mqtt_to_iotdb_path(mqtt_topic)
+                if iotdb_topic:
+                    topics.append(iotdb_topic)
+
+        if not topics and self.iotdb_topic:
+            topics.append(self.iotdb_topic)
+        topics = list(dict.fromkeys([t for t in topics if t]))
+        if not topics:
+            raise ValidationError(_("Please configure iotDBDevice in app_param_ids or IoTDB Topic before querying."))
+
+        result_sql = [f"SELECT * FROM {topic} WHERE {where_clause} LIMIT 10000" for topic in topics]
+        count_sql = [f"SELECT COUNT(*) FROM {topic} WHERE {where_clause}" for topic in topics]
+        if len(result_sql) == 1:
+            result_sql = result_sql[0]
+            count_sql = count_sql[0]
         return start_ts, end_ts, count_sql, result_sql
 
     def _get_iotdb_connection_params(self):
@@ -841,16 +933,29 @@ class DataModel(models.Model):
         return host, str(port), username, password
 
     def _execute_iotdb_query(self, sql):
-        if not isinstance(sql, str):
-            raise ValidationError(_("The query statement must be a string."))
+        sql_list = []
+        if isinstance(sql, str):
+            sql_list = [sql]
+        elif isinstance(sql, (list, tuple, set)):
+            sql_list = [s for s in sql if isinstance(s, str) and s.strip()]
+        if not sql_list:
+            raise ValidationError(_("The query statement must be a string or a list of strings."))
         iotdb_ip, iotdb_port, iotdb_username, iotdb_password = self._get_iotdb_connection_params()
         from iotdb.Session import Session
+        import pandas as pd
 
         session = Session(iotdb_ip, iotdb_port, iotdb_username, iotdb_password)
         session.open(False)
         try:
-            result = session.execute_query_statement(sql)
-            return result.todf()
+            frames = []
+            for one_sql in sql_list:
+                result = session.execute_query_statement(one_sql)
+                frames.append(result.todf())
+            if len(frames) == 1:
+                return frames[0]
+            if not frames:
+                return pd.DataFrame()
+            return pd.concat(frames, ignore_index=True, sort=False)
         finally:
             try:
                 session.close()
@@ -912,16 +1017,20 @@ class DataModel(models.Model):
                 dataframe[column] = dataframe[column].map(_format_time_value)
 
         friendly_columns = [_friendly_name(col) for col in columns]
-        used = {}
-        deduped = []
+        dataframe.columns = friendly_columns
+
+        # Merge same-name columns into one column by taking the first non-null
+        # value row-wise. This prevents suffixes like _2 for multi-asset queries.
+        merged_data = {}
         for name in friendly_columns:
-            if name not in used:
-                used[name] = 1
-                deduped.append(name)
+            if name in merged_data:
+                continue
+            same_name_cols = dataframe.loc[:, dataframe.columns == name]
+            if same_name_cols.shape[1] == 1:
+                merged_data[name] = same_name_cols.iloc[:, 0]
             else:
-                used[name] += 1
-                deduped.append(f"{name}_{used[name]}")
-        dataframe.columns = deduped
+                merged_data[name] = same_name_cols.bfill(axis=1).iloc[:, 0]
+        dataframe = dataframe.__class__(merged_data)
         return dataframe
 
     def _get_redis_connection_params(self):
@@ -949,9 +1058,58 @@ class DataModel(models.Model):
 
     def _execute_redis_query(self):
         self.ensure_one()
-        import redis
+
+        def _resolve_path(record, path):
+            current = record
+            for part in str(path).split("."):
+                if not part:
+                    return ""
+                if isinstance(current, models.BaseModel):
+                    if not current:
+                        return ""
+                    current = getattr(current, part, None)
+                else:
+                    current = getattr(current, part, None) if hasattr(current, part) else None
+                if current is None:
+                    return ""
+            if isinstance(current, models.BaseModel):
+                if not current:
+                    return ""
+                if len(current) > 1:
+                    names = current.mapped("display_name")
+                    return ", ".join([n for n in names if n])
+                if "name" in current._fields:
+                    return current.name or ""
+                return current.id
+            return current
+
+        def _render_redis_key(raw_value):
+            if not isinstance(raw_value, str):
+                return raw_value
+            pattern = re.compile(r"\{\{\s*([a-zA-Z_][\w\.]*)\s*\}\}")
+
+            def _replace(match):
+                expr = match.group(1)
+                if expr == "data_asset_ids":
+                    return ",".join([str(i) for i in self.data_asset_ids.ids])
+                if expr.startswith("data_asset_ids."):
+                    rel = expr.split(".", 1)[1]
+                    values = [str(_resolve_path(asset, rel) or "") for asset in self.data_asset_ids]
+                    return ",".join([v for v in values if v])
+                resolved = _resolve_path(self, expr)
+                if isinstance(resolved, (dict, list)):
+                    return json.dumps(resolved, ensure_ascii=False)
+                return "" if resolved is None else str(resolved)
+
+            return pattern.sub(_replace, raw_value)
+
         host, port, username, password, db = self._get_redis_connection_params()
-        key_name = self.topic
+        redis_key_param = self.app_param_ids.filtered(lambda p: (p.name or "").strip() == "redisKey")[:1]
+        if not redis_key_param:
+            raise ValidationError(_("Please configure app_param_ids with name 'redisKey'."))
+        key_name = str(_render_redis_key(redis_key_param.value or "")).strip()
+        if not key_name:
+            raise ValidationError(_("The computed redisKey is empty. Please check app_param_ids value."))
         if password:
             client = redis.Redis(host=host, port=port, username=username, password=password, db=db, decode_responses=True)
         else:

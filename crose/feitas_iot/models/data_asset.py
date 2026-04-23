@@ -7,6 +7,7 @@ class DataAsset(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
     name = fields.Char(string="Name", required=True)
+    nick_name = fields.Char(string="Nick Name", required=True)
     partner_id = fields.Many2one("res.partner", string="Provider", required=True)
     position = fields.Char(string="Position")
     model = fields.Char(string="Model")
