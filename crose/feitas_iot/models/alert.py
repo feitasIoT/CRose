@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from odoo import models, fields
+from odoo import models, fields, api
 
 
 class FtsAlert(models.Model):
@@ -49,3 +49,33 @@ class FtsAlert(models.Model):
     occurred_at = fields.Datetime(string="Occurred At", default=fields.Datetime.now, required=True, index=True)
     resolved_at = fields.Datetime(string="Resolved At", readonly=True)
 
+    count = fields.Integer(string="Count", default=1)
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        if isinstance(vals_list, dict):
+            vals_list = [vals_list]
+
+        result_ids = []
+        for vals in vals_list:
+            vals = vals or {}
+            name = vals.get("name")
+            state = vals.get("state", "open")
+
+            if name and state == "open":
+                existing = self.search(
+                    [
+                        ("name", "=", name),
+                        ("state", "=", "open"),
+                    ],
+                    limit=1,
+                )
+                if existing:
+                    existing.count += 1
+                    result_ids.append(existing.id)
+                    continue
+
+            created = super(FtsAlert, self).create(vals)
+            result_ids.append(created.id)
+
+        return self.browse(result_ids)

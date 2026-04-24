@@ -11,6 +11,7 @@
                     <field name="source"/>
                     <field name="state"/>
                     <field name="name"/>
+                    <field name="count" />
                 </list>
             </field>
         </record>

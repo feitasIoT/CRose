@@ -11,7 +11,6 @@ class DataAsset(models.Model):
     partner_id = fields.Many2one("res.partner", string="Provider", required=True)
     position = fields.Char(string="Position")
     model = fields.Char(string="Model")
-    data_model_ids = fields.One2many("fts.data.model", "data_asset_id", string="Data Models")
     data_modeling_ids = fields.Many2many("fts.data.model", string="Modelings", relation="rel_data_asset_modeling")
     model_count = fields.Integer(string="Model Count", compute="_compute_health", store=True)
     health_status = fields.Selection(
@@ -25,10 +24,10 @@ class DataAsset(models.Model):
         store=True,
     )
 
-    @api.depends("data_model_ids", "data_model_ids.data_status")
+    @api.depends("data_modeling_ids", "data_modeling_ids.data_status")
     def _compute_health(self):
         for record in self:
-            models = record.data_model_ids
+            models = record.data_modeling_ids
             record.model_count = len(models)
             if not models:
                 record.health_status = "empty"
