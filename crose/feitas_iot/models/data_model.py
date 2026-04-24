@@ -7,6 +7,7 @@ import base64
 import logging
 import requests
 import contextlib
+from urllib.parse import quote
 
 from datetime import datetime
 
@@ -28,7 +29,7 @@ class DataModel(models.Model):
 
     name = fields.Char(string='Code', required=True, copy=False)
     partner_id = fields.Many2one('res.partner', string='Requester', required=True)
-    data_asset_id = fields.Many2one('fts.data.asset', string='Data Asset', required=True)
+    data_asset_id = fields.Many2one('fts.data.asset', string='Data Asset', required=False)
     data_asset_ids = fields.Many2many("fts.data.asset", string="Assets", relation="rel_data_asset_modeling")
     query_data_asset_ids = fields.Many2many("fts.data.asset", relation="rel_query_data_asset", string="Query Assets")
     provider_id = fields.Many2one('res.partner', string='Provider', related='data_asset_id.partner_id', store=True, readonly=True)
@@ -39,6 +40,7 @@ class DataModel(models.Model):
         ('http', 'HTTP'),
         ('coap', 'CoAP'),
         ('smb', 'SMB2'),
+        ('webdav', 'WebDAV'),
     ], string='Protocol', required=True)
     host = fields.Char(string='Host')
     tcp_port = fields.Integer(string='Port')
@@ -145,6 +147,8 @@ class DataModel(models.Model):
         records = super(DataModel, self).create(vals_list)
         for record in records.filtered(lambda s: s.protocol == "mqtt"):
             record._ensure_mqtt_setup()
+        for record in records.filtered(lambda s: s.protocol == "webdav" and s.state == "effective"):
+            record._ensure_webdav_setup()
         return records
 
     def write(self, vals):
@@ -154,6 +158,9 @@ class DataModel(models.Model):
         if any(f in vals for f in ['partner_id', 'provider_id', 'name']):
             for record in self.filtered(lambda s: s.protocol == "mqtt"):
                 record._ensure_mqtt_setup()
+        if any(f in vals for f in ['state', 'protocol', 'data_asset_id', 'data_asset_ids']):
+            for record in self.filtered(lambda s: s.protocol == "webdav" and s.state == "effective"):
+                record._ensure_webdav_setup()
         return res
 
     def copy(self, default=None):
@@ -235,6 +242,109 @@ class DataModel(models.Model):
               f"{_('Current Topic')}: {topic_name}<br/><br/>" \
               f"{_('Please provide the above parameters to the device or client for configuration.')}"
         self.message_post(body=msg)
+
+    def _ensure_webdav_setup(self):
+        """
+        Ensure WebDAV users/directories are provisioned for selected assets
+        once the data model becomes effective.
+        """
+        self.ensure_one()
+        webdav_comp = self.env['crose.component'].search(
+            [('component_type', '=', 'webdav'), ('status', '=', 'online')],
+            limit=1,
+        )
+        if not webdav_comp:
+            webdav_comp = self.env['crose.component'].search([('component_type', '=', 'webdav')], limit=1)
+        if not webdav_comp:
+            return
+
+        account = webdav_comp.account_ids.filtered(lambda a: a.is_primary)[:1] or webdav_comp.account_ids[:1]
+        token = account._get_plain_password() if account else ""
+        if not token:
+            raise ValidationError(
+                _("WebDAV management token is missing. Please configure it in the WebDAV component account password.")
+            )
+
+        metadata = webdav_comp._metadata_dict()
+        api_prefix = str(metadata.get("management_prefix") or metadata.get("api_prefix") or "/api").strip() or "/api"
+        if not api_prefix.startswith("/"):
+            api_prefix = f"/{api_prefix}"
+        base_url = webdav_comp._build_component_base_url()
+        users_endpoint = f"{base_url}{api_prefix}/users"
+
+        assets = self.data_asset_ids or self.data_asset_id
+        if not assets:
+            return
+
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        }
+        provisioned = []
+        for asset in assets:
+            nick_name = (asset.nick_name or "").strip()
+            if not nick_name:
+                continue
+            if "/" in nick_name or "\\" in nick_name:
+                raise ValidationError(
+                    _("Data Asset nick_name '%(name)s' cannot contain '/' or '\\\\' for WebDAV provisioning.", name=nick_name)
+                )
+            bootstrap_payload = {
+                "username": nick_name,
+                "password": nick_name,
+                "directory": "/data",
+                "permissions": "CRUD",
+            }
+            final_directory = f"/data/{nick_name}"
+            try:
+                # Step 1: ensure user exists and can create under /data.
+                response = requests.post(users_endpoint, headers=headers, json=bootstrap_payload, timeout=10)
+                response.raise_for_status()
+
+                # Step 2: create the real asset directory through WebDAV MKCOL.
+                mkcol_url = f"{base_url}/{quote(nick_name)}"
+                mkcol_resp = requests.request(
+                    "MKCOL",
+                    mkcol_url,
+                    auth=(nick_name, nick_name),
+                    timeout=10,
+                )
+                if mkcol_resp.status_code not in (201, 405):
+                    raise ValidationError(
+                        _(
+                            "WebDAV MKCOL failed for %(asset)s, status=%(status)s, body=%(body)s",
+                            asset=asset.display_name,
+                            status=mkcol_resp.status_code,
+                            body=(mkcol_resp.text or "")[:300],
+                        )
+                    )
+
+                # Step 3: switch user root directory to the dedicated asset directory.
+                final_payload = {
+                    "directory": final_directory,
+                    "permissions": "CRUD",
+                }
+                patch_resp = requests.patch(
+                    f"{users_endpoint}/{quote(nick_name)}",
+                    headers=headers,
+                    json=final_payload,
+                    timeout=10,
+                )
+                patch_resp.raise_for_status()
+                provisioned.append(nick_name)
+            except Exception as error:
+                raise ValidationError(
+                    _("Failed to provision WebDAV account for %(asset)s: %(error)s", asset=asset.display_name, error=str(error))
+                )
+
+        if provisioned:
+            self.message_post(
+                body=_(
+                    "WebDAV users/directories are ready: %(users)s. "
+                    "Rule: username=password=asset nick_name, directory=/data/<nick_name>.",
+                    users=", ".join(provisioned),
+                )
+            )
 
     @api.onchange('nr_flow_ids')
     def _onchange_nr_flow_ids(self):

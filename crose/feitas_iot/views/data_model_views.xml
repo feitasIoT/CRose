@@ -68,8 +68,8 @@
                                 <field name="tcp_type" invisible="protocol != 'tcp'" />
                                 <field name="slave_id" invisible="protocol != 'modbus'" />
                                 <field name="smb_share" invisible="protocol != 'smb'" />
-                                <field name="username" invisible="protocol != 'smb'" />
-                                <field name="password" invisible="protocol != 'smb'" />
+                                <field name="username" invisible="protocol not in ['smb', 'webdav']" />
+                                <field name="password" invisible="protocol not in ['smb', 'webdav']" />
                             </group>
                         </group>
                         <notebook>
