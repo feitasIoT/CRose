@@ -40,14 +40,12 @@
                     </header>
                     <sheet>
                         <div class="oe_button_box" name="button_box">
-                            <button name="%(feitas_iot.action_fts_data_address)d" type="action" class="oe_stat_button" icon="fa-sitemap">
+                            <button name="%(feitas_iot.action_fts_data_address)d" type="action" class="oe_stat_button" icon="fa-sitemap" invisible="protocol != 'modbus-tcp'">
                                 <field name="address_ids" widget="statinfo" string="Addresses"/>
                             </button>
                         </div>
                         <div class="oe_title">
-                            
                             <field name="description"/>
-                            
                         </div>
                         <group>
                             <group>
@@ -91,7 +89,7 @@
                             <page name="datas" string="Data Structure">
                                 <field name="data_structure" widget="code" options="{'mode': 'javascript'}" nolabel="1" colspan="2"/>
                             </page>
-                            <page name="application" string="Applications">
+                            <page name="application" string="Parameters">
                                 <group style="margin-bottom: 10px !important">
                                     
                                     <field name="app_param_ids" nolabel="1" colspan="4">

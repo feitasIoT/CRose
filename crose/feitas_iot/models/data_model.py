@@ -29,13 +29,13 @@ class DataModel(models.Model):
 
     name = fields.Char(string='Code', required=True, copy=False)
     partner_id = fields.Many2one('res.partner', string='Requester', required=True)
-    data_asset_id = fields.Many2one('fts.data.asset', string='Data Asset', required=False)
+    data_asset_id = fields.Many2one('fts.data.asset', string='Data Asset', required=False) # 废弃？
     data_asset_ids = fields.Many2many("fts.data.asset", string="Assets", relation="rel_data_asset_modeling")
     query_data_asset_ids = fields.Many2many("fts.data.asset", relation="rel_query_data_asset", string="Query Assets")
     provider_id = fields.Many2one('res.partner', string='Provider', related='data_asset_id.partner_id', store=True, readonly=True)
     protocol = fields.Selection([
-        ('mobus-tcp', 'Modbus-TCP'),
-        ('mobus-rtu', 'Modbus-RTU'),
+        ('modbus-tcp', 'Modbus-TCP'),
+        ('modbus-rtu', 'Modbus-RTU'),
         ('mqtt', 'MQTT'),
         ('http', 'HTTP'),
         ('coap', 'CoAP'),
@@ -78,7 +78,7 @@ class DataModel(models.Model):
     app_param_ids = fields.One2many("fts.nr.flow.param", "model_id", string='Application Parameters')
     log_ids = fields.One2many('fts.data.log', 'model_id', string='Logs')
     address_ids = fields.One2many('fts.data.address', 'model_id', string='Addresses')
-    data_structure = fields.Text(string='Data Structure', required=True)
+    data_structure = fields.Text(string='Data Structure', required=False, default="{}")
     # FIXME: remove
     ai_model_name = fields.Char(string='AI Model', help='Model alias used by AI Flow inference, usually a loaded LoRA alias in vLLM.')
     state = fields.Selection([
