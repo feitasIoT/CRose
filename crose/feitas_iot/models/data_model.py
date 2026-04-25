@@ -289,41 +289,59 @@ class DataModel(models.Model):
                 raise ValidationError(
                     _("Data Asset nick_name '%(name)s' cannot contain '/' or '\\\\' for WebDAV provisioning.", name=nick_name)
                 )
+            model_code = (self.name or "").strip()
+            if "/" in model_code or "\\" in model_code:
+                raise ValidationError(
+                    _("Data Model code '%(code)s' cannot contain '/' or '\\\\' for WebDAV provisioning.", code=model_code)
+                )
+            if not model_code:
+                raise ValidationError(_("Data Model code is empty, cannot provision WebDAV directories."))
+
+            model_asset_dir = f"{model_code}{nick_name}"
+
             bootstrap_payload = {
                 "username": nick_name,
                 "password": nick_name,
                 "directory": "/data",
                 "permissions": "CRUD",
             }
-            final_directory = f"/data/{nick_name}"
+            final_payload = {
+                "directory": "/data/%s" % model_asset_dir,
+                "permissions": "CRUD",
+            }
+            
             try:
                 # Step 1: ensure user exists and can create under /data.
                 response = requests.post(users_endpoint, headers=headers, json=bootstrap_payload, timeout=10)
                 response.raise_for_status()
 
-                # Step 2: create the real asset directory through WebDAV MKCOL.
-                mkcol_url = f"{base_url}/{quote(nick_name)}"
-                mkcol_resp = requests.request(
-                    "MKCOL",
-                    mkcol_url,
-                    auth=(nick_name, nick_name),
-                    timeout=10,
-                )
-                if mkcol_resp.status_code not in (201, 405):
-                    raise ValidationError(
-                        _(
-                            "WebDAV MKCOL failed for %(asset)s, status=%(status)s, body=%(body)s",
-                            asset=asset.display_name,
-                            status=mkcol_resp.status_code,
-                            body=(mkcol_resp.text or "")[:300],
-                        )
+                # Step 2: create model-asset directory and business sub-directories.
+                to_create = [
+                    f"/{model_asset_dir}",
+                    f"/{model_asset_dir}/上传",
+                    f"/{model_asset_dir}/成功",
+                    f"/{model_asset_dir}/失败",
+                ]
+                for rel_path in to_create:
+                    mkcol_url = f"{base_url}{quote(rel_path)}"
+                    mkcol_resp = requests.request(
+                        "MKCOL",
+                        mkcol_url,
+                        auth=(nick_name, nick_name),
+                        timeout=10,
                     )
+                    if mkcol_resp.status_code not in (201, 405):
+                        raise ValidationError(
+                            _(
+                                "WebDAV MKCOL failed for %(asset)s path %(path)s, status=%(status)s, body=%(body)s",
+                                asset=asset.display_name,
+                                path=rel_path,
+                                status=mkcol_resp.status_code,
+                                body=(mkcol_resp.text or "")[:300],
+                            )
+                        )
 
-                # Step 3: switch user root directory to the dedicated asset directory.
-                final_payload = {
-                    "directory": final_directory,
-                    "permissions": "CRUD",
-                }
+                # Step 3: switch user's root directory to its dedicated path.
                 patch_resp = requests.patch(
                     f"{users_endpoint}/{quote(nick_name)}",
                     headers=headers,
@@ -331,7 +349,7 @@ class DataModel(models.Model):
                     timeout=10,
                 )
                 patch_resp.raise_for_status()
-                provisioned.append(nick_name)
+                provisioned.append(f"{nick_name} -> /data/{model_asset_dir}")
             except Exception as error:
                 raise ValidationError(
                     _("Failed to provision WebDAV account for %(asset)s: %(error)s", asset=asset.display_name, error=str(error))
@@ -341,7 +359,8 @@ class DataModel(models.Model):
             self.message_post(
                 body=_(
                     "WebDAV users/directories are ready: %(users)s. "
-                    "Rule: username=password=asset nick_name, directory=/data/<nick_name>.",
+                    "Rule: username=password=asset nick_name, and create "
+                    "/data/<data_model_code><nick_name>/{上传,成功,失败}.",
                     users=", ".join(provisioned),
                 )
             )
