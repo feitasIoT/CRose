@@ -1,7 +1,6 @@
 # sphinx build directories
 _build/
 
-aidev/*
 
 data/crose/data/*
 data/db/data/*
