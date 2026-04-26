@@ -1,6 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
+        <record id="view_fts_alert_search" model="ir.ui.view">
+            <field name="name">fts.alert.search</field>
+            <field name="model">fts.alert</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name" string="Keyword" filter_domain="['|', '|', ('name', 'ilike', self), ('message', 'ilike', self), ('details', 'ilike', self)]"/>
+                    <filter name="archived" string="Archived" domain="[('active', '=', False)]" context="{'active_test': False}"/>
+                    <group>
+                        <filter name="group_by_source" string="Source" context="{'group_by': 'source'}"/>
+                        <filter name="group_by_state" string="Status" context="{'group_by': 'state'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
         <record id="view_fts_alert_list" model="ir.ui.view">
             <field name="name">fts.alert.list</field>
             <field name="model">fts.alert</field>
@@ -12,6 +27,7 @@
                     <field name="state"/>
                     <field name="name"/>
                     <field name="count" />
+                    <field name="write_date" />
                 </list>
             </field>
         </record>
@@ -21,6 +37,11 @@
             <field name="model">fts.alert</field>
             <field name="arch" type="xml">
                 <form string="Alert">
+                    <header>
+                        <button name="action_acknowledge" type="object" string="Acknowledge" class="btn-primary" invisible="state != 'open'"/>
+                        <button name="action_close" type="object" string="Close" class="btn-secondary" invisible="state == 'resolved'"/>
+                        <field name="state" widget="statusbar" options="{'clickable': '0'}"/>
+                    </header>
                     <sheet>
                         <div class="oe_title">
                             <h1>
@@ -31,7 +52,6 @@
                             <group>
                                 <field name="severity"/>
                                 <field name="source"/>
-                                <field name="state"/>
                             </group>
                             <group>
                                 <field name="occurred_at"/>
@@ -54,6 +74,7 @@
             <field name="name">Alerts</field>
             <field name="res_model">fts.alert</field>
             <field name="view_mode">list,form</field>
+            <field name="search_view_id" ref="view_fts_alert_search"/>
         </record>
     </data>
 </odoo>

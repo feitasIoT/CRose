@@ -119,6 +119,7 @@ services:
     build:
       context: ./node-red
       dockerfile: Dockerfile
+    user: "0:0"
     restart: always
     ports:
       - "8881:1880"
@@ -213,6 +214,7 @@ services:
       context: ./webdav
       dockerfile: Dockerfile
     container_name: crose-webdav
+    user: "0:0"
     depends_on:
       redis:
         condition: service_healthy

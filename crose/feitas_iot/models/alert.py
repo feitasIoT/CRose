@@ -48,8 +48,10 @@ class FtsAlert(models.Model):
     details = fields.Text(string="Details")
     occurred_at = fields.Datetime(string="Occurred At", default=fields.Datetime.now, required=True, index=True)
     resolved_at = fields.Datetime(string="Resolved At", readonly=True)
-
+    write_date = fields.Datetime(string="Last Updated on")
     count = fields.Integer(string="Count", default=1)
+    active = fields.Boolean(default=True)
+
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -79,3 +81,30 @@ class FtsAlert(models.Model):
             result_ids.append(created.id)
 
         return self.browse(result_ids)
+
+    def _get_similar_alerts_domain(self):
+        self.ensure_one()
+        return [
+            ("source", "=", self.source),
+            ("state", "=", self.state),
+            ("message", "=", self.message or False),
+        ]
+
+    def action_acknowledge(self):
+        for record in self:
+            alerts = self.search(record._get_similar_alerts_domain())
+            alerts.write({"state": "ack"})
+        return True
+
+    def action_close(self):
+        now = fields.Datetime.now()
+        for record in self:
+            alerts = self.search(record._get_similar_alerts_domain())
+            alerts.write(
+                {
+                    "state": "resolved",
+                    "resolved_at": now,
+                    "active": False,
+                }
+            )
+        return True

@@ -92,20 +92,22 @@
         </record>
 
         <menuitem
-            id="menu_fts_data_asset"
-            name="Assets"
-            parent="menu_crose_data_factory"
-            action="action_fts_data_asset"
-            sequence="5"
-        />
-
-        <menuitem
             id="menu_fts_data_model"
             name="Modeling"
             parent="menu_crose_data_factory"
             action="action_fts_data_model"
+            sequence="5"
+        />
+
+        <menuitem
+            id="menu_fts_data_asset"
+            name="Assets"
+            parent="menu_crose_data_factory"
+            action="action_fts_data_asset"
             sequence="10"
         />
+
+        
 
         <!-- Edge Management -->
         <menuitem id="menu_crose_edge_management" name="Edge Management" web_icon="feitas_iot,static/description/icon.png" sequence="7"/>
