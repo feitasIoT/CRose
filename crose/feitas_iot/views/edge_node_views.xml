@@ -24,7 +24,7 @@
                 <kanban>
                     <field name="name"/>
                     <field name="version"/>
-                    <field name="is_template"/>
+                    <field name="is_gateway"/>
                     <field name="status"/>
                     <field name="os_version"/>
                     <field name="ip_address"/>
@@ -39,7 +39,7 @@
                                         <strong class="text-truncate">
                                             <field name="name"/>
                                         </strong>
-                                        <span t-if="record.is_template.raw_value" class="badge text-bg-info ms-auto">Template</span>
+                                        <span t-if="record.is_gateway.raw_value" class="badge text-bg-info ms-auto">Gateway</span>
                                     </div>
                                     <div class="text-muted text-truncate">
                                         <span t-esc="record.ip_address.value"/>:<span t-esc="record.port.value"/>
@@ -48,7 +48,7 @@
                                         Agent: <span t-esc="record.ip_address.value"/>:<span t-esc="record.agent_port.value"/>
                                     </div>
                                     <div class="d-flex align-items-center justify-content-between">
-                                        <span class="badge text-bg-light">
+                                        <span class="text-bg-light">
                                             <field name="os_version"/>
                                         </span>
                                         <div class="feitas_iot_instance_kanban_actions d-flex align-items-center gap-1">

@@ -37,18 +37,5 @@
             <field name="view_mode">list,form</field>
         </record>
 
-        <!-- Server Action to Sync Topics -->
-        <record id="action_sync_mqtt_topics" model="ir.actions.server">
-            <field name="name">Synchronize MQTT Topics</field>
-            <field name="model_id" ref="model_fts_mqtt_topic"/>
-            <field name="binding_model_id" ref="model_fts_mqtt_topic"/>
-            <field name="binding_view_types">list,form</field>
-            <field name="state">code</field>
-            <field name="code">
-                action = env['fts.mqtt.topic'].action_sync_all()
-            </field>
-        </record>
-
-
     </data>
 </odoo>

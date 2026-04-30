@@ -4,6 +4,7 @@ import base64
 import hashlib
 import secrets
 import string
+from urllib.parse import quote
 import requests
 
 from odoo import models, fields, api, _
@@ -37,8 +38,21 @@ class CroseComponent(models.Model):
     port = fields.Integer(string="Port")
     metadata = fields.Text(string="Metadata")
     account_ids = fields.One2many("crose.component.account", "component_id", string="Accounts")
+    mqtt_user_count = fields.Integer(string="User Count", compute="_compute_mqtt_counts")
+    mqtt_topic_count = fields.Integer(string="Topic Count", compute="_compute_mqtt_counts")
     last_check_time = fields.Datetime(string="Last Check Time", readonly=True)
     error_reason = fields.Text(string="Error Reason", readonly=True)
+
+    def _compute_mqtt_counts(self):
+        topic_model = self.env["fts.mqtt.topic"].sudo()
+        account_model = self.env["crose.component.account"].sudo()
+        for component in self:
+            if component.component_type != "mqtt":
+                component.mqtt_user_count = 0
+                component.mqtt_topic_count = 0
+                continue
+            component.mqtt_user_count = account_model.search_count([("component_id", "=", component.id)])
+            component.mqtt_topic_count = topic_model.search_count([("broker_id", "=", component.id)])
 
     @api.onchange('component_type')
     def _onchange_component_type(self):
@@ -123,6 +137,173 @@ class CroseComponent(models.Model):
         if not host or not port:
             raise ValueError(_("Component host and port are required."))
         return f"http://{host}:{port}"
+
+    def _build_mqtt_api_base_url(self):
+        self.ensure_one()
+        host = (self.host or "").strip()
+        if not host:
+            raise UserError(_("MQTT component host is required."))
+        metadata_dict = self._metadata_dict()
+        api_port = metadata_dict.get("api_port") or metadata_dict.get("ws_port") or 8083
+        try:
+            api_port = int(api_port)
+        except Exception:
+            api_port = 8083
+        return f"http://{host}:{api_port}"
+
+    def _list_mqtt_accounts(self):
+        self.ensure_one()
+        base_url = self._build_mqtt_api_base_url()
+        page = 1
+        page_size = 200
+        result = []
+        while True:
+            response = requests.get(
+                f"{base_url}/v1/accounts",
+                params={"page": page, "page_size": page_size},
+                timeout=10,
+            )
+            response.raise_for_status()
+            payload = response.json() if response.content else {}
+            if not isinstance(payload, dict):
+                payload = {}
+            rows = payload.get("accounts") or []
+            if not isinstance(rows, list):
+                rows = []
+            result.extend([row for row in rows if isinstance(row, dict)])
+            total_count = payload.get("total_count") or 0
+            try:
+                total_count = int(total_count)
+            except Exception:
+                total_count = 0
+            if len(rows) < page_size:
+                break
+            if total_count and len(result) >= total_count:
+                break
+            page += 1
+        return result
+
+    def _upsert_component_account(self, username, password_value, role="viewer"):
+        self.ensure_one()
+        account_model = self.env["crose.component.account"].sudo()
+        username = (username or "").strip()
+        if not username:
+            return False
+        account = account_model.search(
+            [("component_id", "=", self.id), ("username", "=", username)],
+            limit=1,
+        )
+        vals = {
+            "component_id": self.id,
+            "username": username,
+            "password_encrypted": password_value or "",
+            "role": role or "viewer",
+        }
+        if account:
+            write_vals = {"role": role or account.role}
+            if password_value:
+                write_vals["password_encrypted"] = password_value
+            account.write(write_vals)
+            return account
+        return account_model.create(vals)
+
+    def api_create_users(self, username, password):
+        self.ensure_one()
+        if self.component_type != "mqtt":
+            raise UserError(_("Only MQTT components support account API synchronization."))
+        username = (username or "").strip()
+        if not username:
+            raise UserError(_("Username is required."))
+        password = password or self._generate_password(8)
+        base_url = self._build_mqtt_api_base_url()
+        url = f"{base_url}/v1/accounts/{quote(username)}"
+        response = requests.post(url, json={"password": password}, timeout=10)
+        response.raise_for_status()
+        self._upsert_component_account(username, password, role="viewer")
+        return True
+
+    def create_gmqtt_user(self, username, partner_id=False):
+        self.ensure_one()
+        username = (username or "").strip()
+        if not username:
+            raise UserError(_("Username is required."))
+        password = self._generate_password(8)
+        self.api_create_users(username, password)
+        if partner_id:
+            partner = self.env["res.partner"].sudo().browse(partner_id).exists()
+            if partner and not partner.mqtt_username:
+                partner.write({"mqtt_username": username})
+        return password
+
+    def action_view_component_accounts(self):
+        self.ensure_one()
+        return {
+            "name": _("Users"),
+            "res_model": "crose.component.account",
+            "type": "ir.actions.act_window",
+            "view_mode": "list,form",
+            "domain": [("component_id", "=", self.id)],
+            "context": {"default_component_id": self.id},
+            "target": "current",
+        }
+
+    def action_view_mqtt_topics(self):
+        self.ensure_one()
+        return {
+            "name": _("Topics"),
+            "res_model": "fts.mqtt.topic",
+            "type": "ir.actions.act_window",
+            "view_mode": "list,form",
+            "domain": [("broker_id", "=", self.id)],
+            "context": {"default_broker_id": self.id},
+            "target": "current",
+        }
+
+    def action_synchronize_mqtt_accounts(self):
+        created = 0
+        updated = 0
+        for component in self:
+            if component.component_type != "mqtt":
+                continue
+            remote_accounts = component._list_mqtt_accounts()
+            existing = {
+                acc.username: acc
+                for acc in component.account_ids.sudo().filtered(lambda a: (a.username or "").strip())
+            }
+            for row in remote_accounts:
+                username = (row.get("username") or "").strip()
+                if not username:
+                    continue
+                # gmqtt list API returns hashed password only; keep as sync snapshot.
+                remote_password = (row.get("password") or "").strip()
+                password_value = f"sha256${remote_password}" if remote_password else ""
+                if username in existing:
+                    vals = {}
+                    if password_value:
+                        vals["password_encrypted"] = password_value
+                    if vals:
+                        existing[username].write(vals)
+                        updated += 1
+                else:
+                    self.env["crose.component.account"].sudo().create(
+                        {
+                            "component_id": component.id,
+                            "username": username,
+                            "password_encrypted": password_value or component._generate_password(8),
+                            "role": "viewer",
+                        }
+                    )
+                    created += 1
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": _("Synchronization Complete"),
+                "message": _("Synchronized users. Created: %(created)s, Updated: %(updated)s", created=created, updated=updated),
+                "type": "success",
+                "sticky": False,
+            },
+        }
 
     def _resolve_metadata_endpoint(self, key_name):
         self.ensure_one()

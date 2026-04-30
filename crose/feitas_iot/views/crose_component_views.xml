@@ -24,6 +24,7 @@
                 <form string="System Component">
                     <header>
                         <button name="action_check_status" type="object" string="Check Status" class="oe_highlight"/>
+                        <button name="action_synchronize_mqtt_accounts" type="object" string="Synchronize" class="btn-secondary" invisible="component_type != 'mqtt'"/>
                         <button name="action_reset_credentials" type="object" string="Reset Credentials" class="btn-secondary" invisible="component_type == 'llm_provider'"/>
                         <button name="action_update_privileges" type="object" string="Update Privileges" class="btn-secondary" invisible="component_type != 'iotdb'"/>
                         <button name="action_view_packages" type="object" string="View Packages"
@@ -31,6 +32,14 @@
                         <field name="status" widget="statusbar"/>
                     </header>
                     <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_view_component_accounts" type="object" class="oe_stat_button" icon="fa-users" invisible="component_type != 'mqtt'">
+                                <field name="mqtt_user_count" widget="statinfo" string="Users"/>
+                            </button>
+                            <button name="action_view_mqtt_topics" type="object" class="oe_stat_button" icon="fa-tags" invisible="component_type != 'mqtt'">
+                                <field name="mqtt_topic_count" widget="statinfo" string="Topics"/>
+                            </button>
+                        </div>
                         <div class="alert alert-danger mb-2" role="alert" invisible="status == 'online' or not error_reason">
                             <strong>Check failed:</strong> <field name="error_reason" nolabel="1"/>
                         </div>
@@ -55,8 +64,7 @@
                             </page>
                             <page string="Accounts">
                                 <field name="account_ids" nolabel="1">
-                                    <list>
-                                        <field name="component_id" readonly="1"/>
+                                    <list editable="bottom">
                                         <field name="username"/>
                                         <field name="is_primary"/>
                                         <field name="role"/>

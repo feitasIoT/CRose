@@ -203,9 +203,9 @@ class DataModel(models.Model):
             if not username:
                 username = f"user_{partner.id}"
 
-            existing_local = self.env['fts.mqtt.user'].search([
-                ('name', '=', username),
-                ('partner_id', '=', partner.id)
+            existing_local = self.env['crose.component.account'].search([
+                ('component_id', '=', broker.id),
+                ('username', '=', username),
             ], limit=1)
 
             if existing_local:

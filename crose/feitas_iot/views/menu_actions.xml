@@ -166,37 +166,6 @@
             sequence="20"
         />
 
-        <!-- MQTT -->
-        <menuitem id="menu_fts_mqtt_root" name="MQTT" parent="menu_fts_crose_config" sequence="40"/>
-
-        <record id="action_fts_mqtt_user" model="ir.actions.act_window">
-            <field name="name">MQTT Users</field>
-            <field name="res_model">fts.mqtt.user</field>
-            <field name="view_mode">list,form</field>
-        </record>
-
-        <menuitem
-            id="menu_fts_mqtt_user"
-            name="MQTT Users"
-            parent="menu_fts_mqtt_root"
-            action="action_fts_mqtt_user"
-            sequence="5"
-        />
-
-        <!-- Explicit menu entry as a fallback when the action menu is unavailable -->
-        <menuitem id="menu_fts_mqtt_topic_sync"
-                  name="Synchronize Topics Now"
-                  parent="menu_fts_mqtt_root"
-                  action="action_sync_mqtt_topics"
-                  sequence="11"/>
-
-        <!-- Menu -->
-        <menuitem id="menu_fts_mqtt_topic"
-                  name="Topics"
-                  parent="menu_fts_mqtt_root"
-                  action="action_fts_mqtt_topic"
-                  sequence="10"/>
-
         <record id="action_fts_agent_release" model="ir.actions.act_window">
             <field name="name">Agent Package</field>
             <field name="res_model">ir.attachment</field>
