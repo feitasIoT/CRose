@@ -72,6 +72,7 @@
                 <form string="Node">
                     <header>
                         <button name="action_generate_config" type="object" string="Generate config" class="btn-primary" invisible="status != 'draft'"/>
+                        <button name="action_confirm" type="object" string="Confirm" class="oe_highlight" invisible="status != 'draft'"/>
                         <button name="action_view_logs" type="object" string="Logs" class="btn-secondary" invisible="status != 'online'"/>
                         <field name="status" widget="statusbar" options="{'clickable': '1'}"/>
                     </header>

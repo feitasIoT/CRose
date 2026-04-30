@@ -85,5 +85,18 @@
             <field name="res_model">crose.component</field>
             <field name="view_mode">list,form</field>
         </record>
+
+        <record id="view_crose_component_account_tree" model="ir.ui.view">
+            <field name="name">crose.component.account.tree</field>
+            <field name="model">crose.component.account</field>
+            <field name="arch" type="xml">
+                <list>
+                    <field name="username"/>
+
+                </list>
+            </field>
+        </record>
+
+
     </data>
 </odoo>

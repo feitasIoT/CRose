@@ -61,6 +61,7 @@ class FtsEdgeNode(models.Model):
     status = fields.Selection(
         [
             ("draft", "Draft"),
+            ("confirm", "Confirm"),
             ("online", "Online"),
             ("offline", "Offline"),
             ("error", "Error"),
@@ -80,6 +81,37 @@ class FtsEdgeNode(models.Model):
 
 
 #-------------actions--------------
+
+    def action_confirm(self):
+        for node in self:
+            if node.status != "draft":
+                continue
+            broker = node.mqtt_broker_id
+            if not broker or broker.component_type != "mqtt":
+                broker = self.env["crose.component"].search(
+                    [("component_type", "=", "mqtt"), ("status", "=", "online")],
+                    limit=1,
+                )
+                if not broker:
+                    broker = self.env["crose.component"].search(
+                        [("component_type", "=", "mqtt")],
+                        limit=1,
+                    )
+            if not broker:
+                raise UserError(_("No MQTT broker found in System Components."))
+
+            username = f"mqtt_edgenode_{node.id}"
+            password = broker._generate_password(8)
+            broker.api_create_users(username, password)
+
+            node.write(
+                {
+                    "status": "confirm",
+                    "mqtt_broker_id": broker.id,
+                    "username": username,
+                    "password": password,
+                }
+            )
 
     def message_post(self, **kwargs):
         message = super().message_post(**kwargs)
