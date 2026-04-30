@@ -1,0 +1,14 @@
+services:
+  frps:
+    image: frp/frps:local
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile-for-frps
+    restart: unless-stopped
+    command: ["-c", "/etc/frp/frps.toml"]
+    ports:
+      - "7000:7000"
+      - "7000:7000/udp"
+      - "7500:7500"
+    volumes:
+      - "./conf/frps.toml:/etc/frp/frps.toml:ro"
