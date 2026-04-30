@@ -197,6 +197,7 @@ class FtsNrInstance(models.Model):
                 'instance_id': self.id,
                 'node_red_url': f"http://{self.ip_address}:{editor_port}",
                 'use_edge_proxy': self.instance_type == "remote",
+                'rewrite_browser_host': self.instance_type == "local",
             }
             return res
         return {}

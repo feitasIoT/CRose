@@ -280,8 +280,11 @@ class FtsEdgeNode(models.Model):
             res = action.read()[0]
             res["display_name"] = _("Remote Desktop")
             res["name"] = _("Remote Desktop")
+            use_edge_proxy = not self.is_gateway
             res["params"] = {
                 "node_red_url": f"http://{self.ip_address}:{self.port}/vnc.html",
+                "use_edge_proxy": use_edge_proxy,
+                "rewrite_browser_host": False,
             }
             return res
         return {}
