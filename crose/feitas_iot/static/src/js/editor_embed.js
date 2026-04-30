@@ -14,6 +14,11 @@ class NodeREDEmbed extends Component {
         const params = this.props.action.params || {};
         const url = params.node_red_url;
         if (url) {
+            if (params.use_edge_proxy === false) {
+                const parsed = new URL(url, window.location.origin);
+                parsed.hostname = window.location.hostname;
+                return parsed.toString();
+            }
             const parsed = new URL(url, window.location.origin);
             const edgeHost = parsed.hostname;
             const edgePath = parsed.pathname || "/";

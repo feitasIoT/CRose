@@ -1,6 +1,7 @@
 import json
 import re
 import uuid
+from urllib.parse import quote
 
 import requests
 
@@ -195,6 +196,7 @@ class FtsNrInstance(models.Model):
             res['params'] = {
                 'instance_id': self.id,
                 'node_red_url': f"http://{self.ip_address}:{editor_port}",
+                'use_edge_proxy': self.instance_type == "remote",
             }
             return res
         return {}
@@ -574,10 +576,11 @@ class FtsNrInstance(models.Model):
 
     def _nr_candidate_base_urls(self):
         self.ensure_one()
-        host = (self.ip_address or "").strip()
+        raw_host = (self.ip_address or "").strip()
         port = int(self.port or 1880)
-        if not host:
+        if not raw_host:
             return []
+        host = raw_host
         if host.startswith("http://"):
             host = host[7:]
         elif host.startswith("https://"):
@@ -589,7 +592,18 @@ class FtsNrInstance(models.Model):
             if maybe_port.isdigit():
                 host = maybe_host
                 port = int(maybe_port)
-        return [f"http://{host}:{port}"]
+        host = host.strip().lower()
+        if not host:
+            return []
+
+        if self.instance_type == "local":
+            return [f"http://{host}:{port}"]
+
+        config = self.env["ir.config_parameter"].sudo()
+        proxy_base = (config.get_param("feitas_iot.nodered_proxy_base_url") or "http://nginx").strip()
+        proxy_base = proxy_base.rstrip("/")
+        encoded_host = quote(host, safe="")
+        return [f"{proxy_base}/edge-proxy/{encoded_host}"]
 
     def _nr_get_json(self, path, timeout=15):
         self.ensure_one()
