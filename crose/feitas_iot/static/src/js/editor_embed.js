@@ -12,15 +12,14 @@ class NodeREDEmbed extends Component {
     
     get iframeSrc() {
         const params = this.props.action.params || {};
-        let url = params.node_red_url;
+        const url = params.node_red_url;
         if (url) {
-            const browserHost = window.location.hostname;
             const parsed = new URL(url, window.location.origin);
-            parsed.hostname = browserHost;
-            url = parsed.toString();
-        }
-        if (url) {
-            return url;
+            const edgeHost = parsed.hostname;
+            const edgePath = parsed.pathname || "/";
+            const normalizedPath = edgePath.startsWith("/") ? edgePath.slice(1) : edgePath;
+            const base = `http://${window.location.hostname}/edge-proxy/${edgeHost}/`;
+            return `${base}${normalizedPath}${parsed.search || ""}${parsed.hash || ""}`;
         }
         const instanceId = params.instance_id;
         return instanceId ? `/node-red/editor/${instanceId}` : '/node-red/editor';

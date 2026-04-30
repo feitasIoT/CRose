@@ -1,4 +1,16 @@
 services:
+
+  # 2. Nginx 容器：作为流量分发入口
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./config/nginx:/etc/nginx/conf.d
+    networks:
+      - crose-net
+
   crose-db:
     image: pgvector/pgvector:0.8.2-pg14-trixie
     restart: always
@@ -230,6 +242,22 @@ services:
       WD_REDIS_SEED_FROM_CONFIG: "true"
     command: ["--config", "/config.yaml"]
     restart: unless-stopped
+    networks:
+      - crose-net
+  
+  frps:
+    image: frp/frps:local
+    build:
+      context: ./frp
+      dockerfile: dockerfiles/Dockerfile-for-frps
+    restart: unless-stopped
+    command: ["-c", "/etc/frp/frps.toml"]
+    ports:
+      - "7000:7000"
+      - "7000:7000/udp"
+      - "7500:7500"
+    volumes:
+      - "./config/frps/frps.toml:/etc/frp/frps.toml:ro"
     networks:
       - crose-net
 
