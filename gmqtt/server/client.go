@@ -248,6 +248,31 @@ func (client *client) Connection() net.Conn {
 	return client.rwc
 }
 
+func (client *client) remoteAddr() string {
+	if client.rwc == nil || client.rwc.RemoteAddr() == nil {
+		return ""
+	}
+	return client.rwc.RemoteAddr().String()
+}
+
+func (client *client) localAddr() string {
+	if client.rwc == nil || client.rwc.LocalAddr() == nil {
+		return ""
+	}
+	return client.rwc.LocalAddr().String()
+}
+
+func (client *client) statusText() string {
+	switch client.Status() {
+	case Connecting:
+		return "connecting"
+	case Connected:
+		return "connected"
+	default:
+		return "unknown"
+	}
+}
+
 func (client *client) setConnecting() {
 	atomic.StoreInt32(&client.status, Connecting)
 }
@@ -257,7 +282,7 @@ func (client *client) setConnected(time time.Time) {
 	atomic.StoreInt32(&client.status, Connected)
 }
 
-//Status returns client's status
+// Status returns client's status
 func (client *client) Status() int32 {
 	return atomic.LoadInt32(&client.status)
 }
@@ -270,10 +295,29 @@ func (client *client) IsConnected() bool {
 func (client *client) setError(err error) {
 	client.errOnce.Do(func() {
 		if err != nil && err != io.EOF {
-			zaplog.Warn("connection lost",
+			fields := []zap.Field{
 				zap.String("client_id", client.opts.ClientID),
-				zap.String("remote_addr", client.rwc.RemoteAddr().String()),
-				zap.Error(err))
+				zap.String("remote_addr", client.remoteAddr()),
+				zap.String("local_addr", client.localAddr()),
+				zap.String("status", client.statusText()),
+				zap.Uint8("version", uint8(client.version)),
+				zap.String("error_type", fmt.Sprintf("%T", err)),
+				zap.Error(err),
+			}
+			if codeErr, ok := err.(*codes.Error); ok {
+				fields = append(fields,
+					zap.Uint8("mqtt_code", codeErr.Code),
+					zap.String("mqtt_reason_string", string(codeErr.ReasonString)),
+				)
+			}
+			if netErr, ok := err.(net.Error); ok {
+				fields = append(fields,
+					zap.Bool("network_timeout", netErr.Timeout()),
+					zap.Bool("network_temporary", netErr.Temporary()),
+				)
+			}
+			zaplog.Warn("connection lost",
+				fields...)
 			client.err = err
 			if client.version == packets.Version5 {
 				if code, ok := err.(*codes.Error); ok {
@@ -550,6 +594,17 @@ func (client *client) connectWithTimeOut() (ok bool) {
 					break
 				}
 				conn = p.(*packets.Connect)
+				if ce := zaplog.Check(zapcore.DebugLevel, "received connect packet"); ce != nil {
+					ce.Write(
+						zap.String("remote_addr", client.remoteAddr()),
+						zap.String("local_addr", client.localAddr()),
+						zap.String("requested_client_id", string(conn.ClientID)),
+						zap.String("username", string(conn.Username)),
+						zap.Bool("clean_start", conn.CleanStart),
+						zap.Uint16("keep_alive", conn.KeepAlive),
+						zap.Uint8("version", uint8(conn.Version)),
+					)
+				}
 				var resp *EnhancedAuthResponse
 				authOpts, resp, err = client.connectHandler(conn)
 				if err != nil {
@@ -596,6 +651,24 @@ func (client *client) connectWithTimeOut() (ok bool) {
 			}
 			// authentication fail
 			if err != nil {
+				codeErr := converError(err)
+				requestedClientID := ""
+				username := ""
+				if conn != nil {
+					requestedClientID = string(conn.ClientID)
+					username = string(conn.Username)
+				}
+				zaplog.Warn("connect rejected",
+					zap.String("remote_addr", client.remoteAddr()),
+					zap.String("local_addr", client.localAddr()),
+					zap.String("requested_client_id", requestedClientID),
+					zap.String("username", username),
+					zap.Uint8("version", uint8(client.version)),
+					zap.Uint8("mqtt_code", codeErr.Code),
+					zap.String("mqtt_reason_string", string(codeErr.ReasonString)),
+					zap.String("error_type", fmt.Sprintf("%T", err)),
+					zap.Error(err),
+				)
 				sendErrConnack(client, err)
 				return
 			}
@@ -1287,7 +1360,7 @@ func (client *client) disconnectHandler(dis *packets.Disconnect) *codes.Error {
 	return nil
 }
 
-//读处理
+// 读处理
 func (client *client) readHandle() {
 	var err error
 	defer func() {
@@ -1441,7 +1514,7 @@ func (client *client) pollMessageHandler() {
 	}
 }
 
-//server goroutine结束的条件:1客户端断开连接 或 2发生错误
+// server goroutine结束的条件:1客户端断开连接 或 2发生错误
 func (client *client) serve() {
 	defer client.internalClose()
 	readWg := &sync.WaitGroup{}
