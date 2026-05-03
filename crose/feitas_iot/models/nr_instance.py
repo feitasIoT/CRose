@@ -5,7 +5,7 @@ from urllib.parse import quote
 
 import requests
 
-from odoo import models, fields, _
+from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 
 
@@ -33,6 +33,13 @@ class FtsNrInstance(models.Model):
         ondelete="restrict",
         required=False,
     )
+    component_id = fields.Many2one("crose.component", string="Component")
+    mqtt_broker_id = fields.Many2one("crose.component", string="MQTT Broker", domain="[('component_type', '=', 'mqtt')]")
+    mqtt_account_id = fields.Many2one(
+        "crose.component.account",
+        string="MQTT Account",
+        domain="[('component_id', '=', mqtt_broker_id)]",
+    )
     status = fields.Selection(
         [
             ("online", "Online"),
@@ -47,8 +54,57 @@ class FtsNrInstance(models.Model):
     flow_line_ids = fields.One2many("instance.flow.line", "instance_id", string="Flow Lines")
     npm_registry_id = fields.Many2one("crose.component", string="NPM Registry", domain=[('component_type', '=', 'npm')])
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        account_model = self.env["crose.component.account"].sudo()
+        for instance in records:
+            if instance.mqtt_account_id:
+                continue
+            broker = instance.mqtt_broker_id
+            if not broker or broker.component_type != "mqtt":
+                continue
+            username = f"mqtt_instance_{instance.id}"
+            password = broker._generate_password(8)
+            broker.api_create_users(username, password)
+            account = account_model.search(
+                [("component_id", "=", broker.id), ("username", "=", username)],
+                limit=1,
+            )
+            if account:
+                instance.mqtt_account_id = account.id
+        records._sync_local_status_from_component()
+        return records
+
+    def write(self, vals):
+        result = super().write(vals)
+        if not self.env.context.get("skip_local_status_sync"):
+            self._sync_local_status_from_component()
+        return result
+
+    @api.onchange("instance_type", "component_id")
+    def _onchange_local_status_from_component(self):
+        for instance in self:
+            if instance.instance_type == "local":
+                instance.status = instance._get_local_component_status()
+
+    def _get_local_component_status(self):
+        self.ensure_one()
+        valid_statuses = {"online", "offline", "error"}
+        component_status = (self.component_id.status or "").strip()
+        return component_status if component_status in valid_statuses else "offline"
+
+    def _sync_local_status_from_component(self):
+        for instance in self.filtered(lambda r: r.instance_type == "local"):
+            target_status = instance._get_local_component_status()
+            if instance.status != target_status:
+                instance.with_context(skip_local_status_sync=True).write({"status": target_status})
+
     def update_status(self):
         for instance in self:
+            if instance.instance_type == "local":
+                instance.status = instance._get_local_component_status()
+                continue
             if not instance.ip_address:
                 instance.status = "offline"
                 continue

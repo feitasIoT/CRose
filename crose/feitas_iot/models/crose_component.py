@@ -43,6 +43,32 @@ class CroseComponent(models.Model):
     last_check_time = fields.Datetime(string="Last Check Time", readonly=True)
     error_reason = fields.Text(string="Error Reason", readonly=True)
 
+    def write(self, vals):
+        need_sync_local_instances = (
+            "status" in vals and not self.env.context.get("skip_component_instance_status_sync")
+        )
+        result = super().write(vals)
+        if need_sync_local_instances:
+            self._sync_related_local_instance_status()
+        return result
+
+    def _sync_related_local_instance_status(self):
+        instance_model = self.env["fts.nr.instance"].sudo()
+        valid_statuses = {"online", "offline", "error"}
+        for component in self:
+            target_status = (
+                component.status if (component.status or "").strip() in valid_statuses else "offline"
+            )
+            local_instances = instance_model.search(
+                [("instance_type", "=", "local"), ("component_id", "=", component.id)]
+            )
+            to_update = local_instances.filtered(lambda rec: rec.status != target_status)
+            if to_update:
+                to_update.with_context(
+                    skip_local_status_sync=True,
+                    skip_component_instance_status_sync=True,
+                ).write({"status": target_status})
+
     def _compute_mqtt_counts(self):
         topic_model = self.env["fts.mqtt.topic"].sudo()
         account_model = self.env["crose.component.account"].sudo()

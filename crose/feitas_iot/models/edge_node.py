@@ -44,8 +44,11 @@ class FtsEdgeNode(models.Model):
     npm_registry_id = fields.Many2one("crose.component", string="NPM Registry", domain=[('component_type', '=', 'npm')])
     # MQTT Config
     mqtt_broker_id = fields.Many2one("crose.component", string="MQTT Broker", domain=[('component_type', '=', 'mqtt')])
-    username = fields.Char(string="Username")
-    password = fields.Char(string="Password")
+    mqtt_account_id = fields.Many2one(
+        "crose.component.account",
+        string="MQTT Account",
+        domain="[('component_id', '=', mqtt_broker_id)]",
+    )
 
     # Instance Config
     instance_id = fields.Many2one(
@@ -79,6 +82,12 @@ class FtsEdgeNode(models.Model):
         if self.template_id:
             self.version = self.template_id.version
 
+    @api.onchange("mqtt_broker_id")
+    def _onchange_mqtt_broker_id(self):
+        for node in self:
+            if node.mqtt_account_id and node.mqtt_account_id.component_id != node.mqtt_broker_id:
+                node.mqtt_account_id = False
+
 
 #-------------actions--------------
 
@@ -103,13 +112,16 @@ class FtsEdgeNode(models.Model):
             username = f"mqtt_edgenode_{node.id}"
             password = broker._generate_password(8)
             broker.api_create_users(username, password)
+            account = self.env["crose.component.account"].sudo().search(
+                [("component_id", "=", broker.id), ("username", "=", username)],
+                limit=1,
+            )
 
             node.write(
                 {
                     "status": "confirm",
                     "mqtt_broker_id": broker.id,
-                    "username": username,
-                    "password": password,
+                    "mqtt_account_id": account.id if account else False,
                 }
             )
 

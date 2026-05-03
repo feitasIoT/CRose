@@ -112,8 +112,7 @@
                                     </group>
                                     <group string="MQTT Configuration">
                                         <field name="mqtt_broker_id"/>
-                                        <field name="username"/>
-                                        <field name="password" password="True"/>
+                                        <field name="mqtt_account_id"/>
                                     </group>
                                 </group>
                             </page>

@@ -86,9 +86,12 @@
                                 <field name="editor_port"/>
                             </group>
                             <group string="Agent">
-                                <field name="edge_node_id"/>
+                                <field name="edge_node_id" invisible="instance_type == 'local'"/>
                                 <field name="ip_address"/>
+                                <field name="component_id" invisible="instance_type == 'remote'"/>
                                 <field name="npm_registry_id"/>
+                                <field name="mqtt_broker_id" />
+                                <field name="mqtt_account_id" />
                             </group>
                         </group>
                         
