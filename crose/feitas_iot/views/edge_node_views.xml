@@ -78,7 +78,9 @@
                     </header>
                     <sheet>
                         <div class="oe_button_box" name="button_box">
-                            <!-- TODO: Add button for node_ids -->
+                            <button name="action_view_instances" type="object" class="oe_stat_button" icon="fa-th-large">
+                                <field name="instance_count" widget="statinfo" string="Instances"/>
+                            </button>
                         </div>
                         <group>
                             <group>

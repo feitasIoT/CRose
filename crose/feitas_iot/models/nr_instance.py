@@ -74,13 +74,31 @@ class FtsNrInstance(models.Model):
             if account:
                 instance.mqtt_account_id = account.id
         records._sync_local_status_from_component()
+        records._sync_edge_node_status()
         return records
 
     def write(self, vals):
+        old_edge_node_ids = self.mapped("edge_node_id").ids
         result = super().write(vals)
         if not self.env.context.get("skip_local_status_sync"):
             self._sync_local_status_from_component()
+        if "status" in vals or "edge_node_id" in vals:
+            self._sync_edge_node_status(extra_node_ids=old_edge_node_ids)
         return result
+
+    def unlink(self):
+        edge_node_ids = self.mapped("edge_node_id").ids
+        result = super().unlink()
+        if edge_node_ids:
+            self.env["fts.edge.node"].browse(edge_node_ids)._compute_status_from_instances()
+        return result
+
+    def _sync_edge_node_status(self, extra_node_ids=None):
+        edge_nodes = self.mapped("edge_node_id")
+        if extra_node_ids:
+            edge_nodes |= self.env["fts.edge.node"].browse(extra_node_ids)
+        if edge_nodes:
+            edge_nodes._compute_status_from_instances()
 
     @api.onchange("instance_type", "component_id")
     def _onchange_local_status_from_component(self):

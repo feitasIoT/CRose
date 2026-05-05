@@ -51,6 +51,12 @@ class FtsEdgeNode(models.Model):
     )
 
     # Instance Config
+    instance_ids = fields.One2many(
+        "fts.nr.instance",
+        "edge_node_id",
+        string="Instances",
+    )
+    instance_count = fields.Integer(string="Instance Count", compute="_compute_instance_count")
     instance_id = fields.Many2one(
         "fts.nr.instance",
         string="Related Instance",
@@ -76,6 +82,10 @@ class FtsEdgeNode(models.Model):
     flow_ids = fields.One2many("agent.flow.line", "agent_id", string="Flows")
 
 #-------------onchange--------------
+    @api.depends("instance_ids")
+    def _compute_instance_count(self):
+        for node in self:
+            node.instance_count = len(node.instance_ids)
 
     @api.onchange('template_id')
     def _onchange_template_id(self):
@@ -90,6 +100,24 @@ class FtsEdgeNode(models.Model):
 
 
 #-------------actions--------------
+
+    def _compute_status_from_instances(self):
+        for node in self:
+            statuses = set(node.instance_ids.mapped("status"))
+            if not statuses:
+                continue
+            if statuses == {"online"}:
+                target_status = "online"
+            elif statuses == {"offline"}:
+                target_status = "offline"
+            elif "online" in statuses and ("offline" in statuses or "error" in statuses):
+                target_status = "error"
+            elif "error" in statuses:
+                target_status = "error"
+            else:
+                target_status = "offline"
+            if node.status != target_status:
+                node.status = target_status
 
     def action_confirm(self):
         for node in self:
