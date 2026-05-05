@@ -8,7 +8,7 @@ from urllib.parse import quote
 import requests
 
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, AccessError
 
 
 class CroseComponent(models.Model):
@@ -912,6 +912,22 @@ class CroseComponentAccount(models.Model):
     def _get_plain_password(self):
         self.ensure_one()
         return self._decrypt_password(self.password_encrypted)
+
+    def action_show_password(self):
+        self.ensure_one()
+        if not self.env.user.has_group("base.group_system"):
+            raise AccessError(_("Only system administrators can view passwords."))
+        plain_password = self._get_plain_password() or _("(empty)")
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": _("Password"),
+                "message": _("%(username)s: %(password)s", username=self.username, password=plain_password),
+                "type": "warning",
+                "sticky": True,
+            },
+        }
 
     def _encrypt_password(self, value):
         if not value:

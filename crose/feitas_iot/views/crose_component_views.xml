@@ -92,7 +92,11 @@
             <field name="arch" type="xml">
                 <list>
                     <field name="username"/>
-
+                    <button name="action_show_password"
+                            type="object"
+                            string="View Password"
+                            class="btn-link"
+                            groups="base.group_system"/>
                 </list>
             </field>
         </record>
