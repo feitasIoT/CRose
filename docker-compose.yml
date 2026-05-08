@@ -55,8 +55,6 @@ services:
       - ./config/crose/odoo.conf:/etc/odoo/odoo.conf
       - ./crose:/mnt/extra-addons/crose
       - crose_odoo:/var/lib/odoo
-      - crose_verdaccio_staging:/mnt/verdaccio-staging:ro
-      - crose_verdaccio_prod:/mnt/verdaccio-prod:rw
       - crose-datasets:/mnt/ai-datasets
       - crose-loras:/mnt/ai-loras
     environment:
@@ -197,30 +195,6 @@ services:
     networks:
       - crose-net
 
-  verdaccio-staging:
-    image: verdaccio/verdaccio:latest
-    container_name: verdaccio-staging
-    restart: always
-    ports:
-      - "4873:4873"
-    volumes:
-      - ./config/verdaccio/staging:/verdaccio/conf
-      - crose_verdaccio_staging:/verdaccio/storage
-    networks:
-      - crose-net
-
-  verdaccio-prod:
-    image: verdaccio/verdaccio:latest
-    container_name: verdaccio-prod
-    restart: always
-    ports:
-      - "4874:4873"
-    volumes:
-      - ./config/verdaccio/production:/verdaccio/conf
-      - crose_verdaccio_prod:/verdaccio/storage
-    networks:
-      - crose-net
-  
   crose-webdav:
     build:
       context: ./webdav
@@ -231,7 +205,7 @@ services:
       redis:
         condition: service_healthy
     ports:
-      - "8080:6065"
+      - "6065:6065"
     volumes:
       - crose_webdav:/data          # 映射到容器内的 /data
       - ./config/webdav/config.yaml:/config.yaml # 需要提供一个基础配置文件
@@ -261,6 +235,18 @@ services:
     networks:
       - crose-net
 
+  nexus:
+    image: sonatype/nexus3
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+      - "8080:8080"
+    environment:
+      NEXUS_SECURITY_RANDOMPASSWORD: "false"
+    volumes:
+      - nexus_data:/nexus-data
+    networks:
+      - crose-net
 
 volumes:
   crose_pgvector:
@@ -272,13 +258,12 @@ volumes:
   crose_iotdb_logs:
   crose_nodered_prod:
   crose_nodered_staging:
-  crose_verdaccio_prod:
-  crose_verdaccio_staging:
   crose_webdav:
   crose-datasets:
     name: crose-datasets
   crose-loras:
     name: crose-loras
+  nexus_data:
   
 networks:
   crose-net:

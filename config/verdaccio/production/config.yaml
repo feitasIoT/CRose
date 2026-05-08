@@ -1,8 +1,0 @@
-storage: /verdaccio/storage
-# 移除所有 uplinks 定义
-packages:
-  '@*/*':
-    access: $all
-    # 不配置 proxy，找不到则直接返回 404
-  '**':
-    access: $all
