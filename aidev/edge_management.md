@@ -2,6 +2,16 @@
 # Edge Management
 
 ## Edge Nodes
+### 增加gateway节点
+
+### 增加边缘节点
+- 创建，更新所属gateway的检测流程，检测instance是否包含node-red、docker等服务。如果有node-red，自动创建
+
+### 增加旧节点时
+- 旧节点可能需要通过ssh登录
+
+### 增加新节点时
+
 ### 状态
 边缘节点的状态分多个指标，包括：ip ping结果，docker状态及运行的容器、vnc等。但是系统要做的简单，也就是说正常情况下用户只需要知道正常状态即可，不需要知道ping的数据，docker或vnc的状态，所以，还是要通过节点中的Node-RED实例来获取状态，变化时发送mqtt消息。
 
@@ -17,5 +27,10 @@ CRose平台有的component包括Node-RED Prod和Node-RED Stage，它们被称为
 - local instance，通过gmqtt broker
 - gateway，同local instance
 - remote instance，mqtt桥接，通过gateway来传递状态
+
+### 创建instance
+- 类型默认Remote Instance，用户选择Edge Node，系统自动填写Name和Ip Address，用户可以修改
+- node-red上增加流程，通过gateway向CRose发布状态。
+
 
 ## Flows

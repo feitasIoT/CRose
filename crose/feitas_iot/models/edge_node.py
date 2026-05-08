@@ -38,6 +38,16 @@ class FtsEdgeNode(models.Model):
     node_ids = fields.One2many("fts.edge.node", "gateway_id", string="Nodes")
     
     ip_address = fields.Char(string="IP Address")
+    another_ip_address = fields.Char(string="Another IP Address")
+
+    ssh_username = fields.Char(string="SSH Username")
+    ssh_password = fields.Char(string="SSH Password")
+    ssh_port = fields.Integer(string="SSH Port", default=22)
+    use_frp = fields.Boolean(string="Use FRP")
+
+    has_nodered = fields.Boolean()
+    has_docker = fields.Boolean()
+
     port = fields.Integer(string="Port", default=6080)
     agent_port = fields.Integer(string="Agent Port", default=18080)
     os_version = fields.Selection([('rasp', 'Raspberry'), ('ubuntu', 'Ubuntu')], string="OS Distribution")
@@ -120,6 +130,9 @@ class FtsEdgeNode(models.Model):
                 node.status = target_status
 
     def action_confirm(self):
+        """
+            gateway节点，确认时自动分配mqtt broker和account
+        """
         for node in self:
             if node.status != "draft":
                 continue
@@ -371,6 +384,9 @@ class FtsEdgeNode(models.Model):
             res["domain"] = [("edge_node_id", "=", self.id)]
             res["context"] = {
                 "default_edge_node_id": self.id,
+                "default_instance_type": "remote",
+                "default_name": f"{self.name}-?",
+                "default_ip_address": self.ip_address
             }
             return res
         return {}

@@ -90,19 +90,32 @@
                                 <field name="template_id" invisible="is_template"/>
                                 <field name="os_version"/>
                                 <!-- <field name="nr_node"/> -->
+                                <field name="port"/>
+                                <field name="agent_port"/>
                             </group>
                             <group>
                                 <field name="is_gateway" />
                                 <field name="gateway_id" invisible="is_gateway"/>
                                 <field name="ip_address"/>
-                                <field name="port"/>
-                                <field name="agent_port"/>
+                                <field name="another_ip_address"/>
+                                
+                                <field name="use_frp"/>
+                                
                                 
                             </group>
                         </group>
                         <notebook>
                             <page string="Basic Configuration">
                                 <group>
+                                    <group>
+                                        <field name="ssh_username"/>
+                                        <field name="ssh_password" password="True"/>
+                                        <field name="ssh_port"/>
+                                    </group>
+                                    <group>
+                                        <field name="has_nodered" />
+                                        <field name="has_docker" />
+                                    </group>
                                     <group string="Applications">
                                         <field name="instance_id"/>
 

@@ -267,10 +267,11 @@ class FtsNrInstance(models.Model):
             res["display_name"] = _("Node-RED Editor")
             res["name"] = _("Node-RED Editor")
             editor_port = self.editor_port or self.port
+            use_edge_proxy = self.instance_type == "remote" and bool(self.edge_node_id.use_frp)
             res['params'] = {
                 'instance_id': self.id,
                 'node_red_url': f"http://{self.ip_address}:{editor_port}",
-                'use_edge_proxy': self.instance_type == "remote",
+                'use_edge_proxy': use_edge_proxy,
                 'rewrite_browser_host': self.instance_type == "local",
             }
             return res
