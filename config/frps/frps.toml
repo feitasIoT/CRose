@@ -1,4 +1,4 @@
 bindPort = 7000
-
+auth.token = "feitascrose2026"
 # 添加虚拟主机监听端口
-vhostHTTPPort = 8080 
+vhostHTTPPort = 7080 

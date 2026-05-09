@@ -1,0 +1,24 @@
+
+FROM --platform=$BUILDPLATFORM node:22 AS web-builder
+COPY web/ /web/
+WORKDIR /web
+RUN npm install && cd frpc && npm run build
+
+
+FROM --platform=$BUILDPLATFORM golang:1.25 AS building
+ARG TARGETOS
+ARG TARGETARCH
+
+COPY . /building
+COPY --from=web-builder /web/frpc/dist /building/web/frpc/dist
+WORKDIR /building
+
+
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
+    go build -trimpath -ldflags "-s -w" -tags frpc -o bin/frpc ./cmd/frpc
+
+
+FROM alpine:3
+RUN apk add --no-cache tzdata
+COPY --from=building /building/bin/frpc /usr/bin/frpc
+ENTRYPOINT ["/usr/bin/frpc"]
