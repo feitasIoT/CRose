@@ -1,0 +1,30 @@
+FROM --platform=$BUILDPLATFORM golang:1.25-alpine3.23 AS builder
+
+ARG TARGETOS
+ARG TARGETARCH
+
+RUN apk add --no-cache make git ca-certificates
+
+WORKDIR /go/src/github.com/DrmagicE/gmqtt
+COPY . .
+
+ENV GO111MODULE=on
+ENV GOPROXY=https://goproxy.cn,direct
+ENV GOSUMDB=off
+
+# Cross-compile for the target platform provided by docker buildx.
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
+    go build -trimpath -ldflags "-s -w" -o /out/gmqttd ./cmd/gmqttd
+
+FROM alpine:3.23
+
+WORKDIR /gmqttd
+COPY --from=builder /out/gmqttd /gmqttd/gmqttd
+RUN mkdir -p /etc/gmqtt
+COPY ./cmd/gmqttd/default_config.yml /etc/gmqtt/gmqttd.yml
+
+ENV PATH=$PATH:/gmqttd
+EXPOSE 1883 8883 8082 8083 8084
+
+RUN chmod +x /gmqttd/gmqttd
+ENTRYPOINT ["gmqttd","start"]
