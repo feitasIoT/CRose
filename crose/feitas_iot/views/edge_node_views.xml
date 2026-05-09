@@ -98,10 +98,11 @@
                                 <field name="gateway_id" invisible="is_gateway"/>
                                 <field name="ip_address"/>
                                 <field name="another_ip_address"/>
-                                
+                                <field name="is_frpc" invisible="not is_gateway"/>
+                                <field name="frpc_webserver_port" invisible="not is_gateway"/>
+                                <field name="frpc_webserver_username" invisible="not is_gateway"/>
+                                <field name="frpc_webserver_password" password="True" invisible="not is_gateway"/>
                                 <field name="use_frp"/>
-                                
-                                
                             </group>
                         </group>
                         <notebook>
@@ -151,6 +152,15 @@
                     <chatter/>
                 </form>
             </field>
+        </record>
+
+        <record id="action_fts_edge_node_initialize" model="ir.actions.server">
+            <field name="name">Initialize</field>
+            <field name="model_id" ref="model_fts_edge_node"/>
+            <field name="binding_model_id" ref="model_fts_edge_node"/>
+            <field name="binding_type">action</field>
+            <field name="state">code</field>
+            <field name="code">action = records.action_initialize()</field>
         </record>
 
     </data>

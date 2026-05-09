@@ -5,7 +5,25 @@
 ### 增加gateway节点
 
 ### 增加边缘节点
-- 创建，更新所属gateway的检测流程，检测instance是否包含node-red、docker等服务。如果有node-red，自动创建
+- 创建，填写名称、选择网关、填写IP地址。
+- 动作-初始化，
+  - 创建Node-red实例记录，类型=Remote、名称={节点名称}-NR、节点来自于所属边缘节点、IP地址自动生成域名，例如：nr{record id}.edge.local
+  - 调用/api/proxies接口动态新增一个代理，其中name取domain的第一节，type=http，localIP=，localPort=，customDomains使用前面生成的域名。frpc部署在边缘节点所选网关。
+
+`
+curl -u admin:admin -X POST http://localhost:7400/api/proxies \
+-H "Content-Type: application/json" \
+-d '{
+  "name": "test-proxy",
+  "type": "tcp",
+  "localIP": "127.0.0.1",
+  "localPort": 8080,
+  "remotePort": 6000
+}'
+`
+
+
+更新所属gateway的检测流程，检测instance是否包含node-red、docker等服务。如果有node-red，自动创建
 
 ### 增加旧节点时
 - 旧节点可能需要通过ssh登录

@@ -43,6 +43,12 @@ class FtsEdgeNode(models.Model):
     ssh_username = fields.Char(string="SSH Username")
     ssh_password = fields.Char(string="SSH Password")
     ssh_port = fields.Integer(string="SSH Port", default=22)
+    
+    is_frpc = fields.Boolean(string="Is FRPC")
+    frpc_webserver_port = fields.Integer(string="FRPC Webserver Port", default=7400)
+    frpc_webserver_username = fields.Char(string="FRPC Webserver Username", default="admin")
+    frpc_webserver_password = fields.Char(string="FRPC Webserver Password", default="admin")
+
     use_frp = fields.Boolean(string="Use FRP")
 
     has_nodered = fields.Boolean()
@@ -165,6 +171,130 @@ class FtsEdgeNode(models.Model):
                     "mqtt_account_id": account.id if account else False,
                 }
             )
+
+    def action_initialize(self):
+        """
+            初始化边缘节点：
+            1) 创建远程 Node-RED 实例（name={节点名}-NR, ip=nr{node.id}.edge.local）
+            2) 调用网关 FRPC WebServer 的 /api/proxies 创建 HTTP 代理
+        """
+        Instance = self.env["fts.nr.instance"].sudo()
+        initialized_count = 0
+        created_instance_count = 0
+        created_proxy_count = 0
+        error_messages = []
+
+        for node in self:
+            try:
+                if node.is_gateway:
+                    raise UserError(_("Gateway nodes do not require this initialization action."))
+                if not node.gateway_id:
+                    raise UserError(_("Please set a Gateway first."))
+                if not node.ip_address:
+                    raise UserError(_("Please set the edge node IP Address first."))
+
+                gateway = node.gateway_id
+                if not gateway.is_frpc:
+                    raise UserError(_("FRPC is not enabled on the selected Gateway."))
+                if not gateway.frpc_webserver_port:
+                    raise UserError(_("Please configure FRPC Webserver Port on the selected Gateway."))
+                if not gateway.ip_address:
+                    raise UserError(_("Please configure Gateway IP Address first."))
+
+                domain = f"nr{node.id}.edge.local"
+                proxy_name = domain.split(".", 1)[0]
+
+                instance = Instance.search(
+                    [("edge_node_id", "=", node.id), ("instance_type", "=", "remote"), ("name", "=", f"{node.name}-NR")],
+                    limit=1,
+                )
+                if instance:
+                    update_vals = {}
+                    if instance.ip_address != domain:
+                        update_vals["ip_address"] = domain
+                    if not instance.port:
+                        update_vals["port"] = 1880
+                    if update_vals:
+                        instance.write(update_vals)
+                else:
+                    vals = {
+                        "name": f"{node.name}-NR",
+                        "instance_type": "remote",
+                        "edge_node_id": node.id,
+                        "ip_address": domain,
+                        "port": 1880,
+                    }
+                    if node.mqtt_broker_id:
+                        vals["mqtt_broker_id"] = node.mqtt_broker_id.id
+                    instance = Instance.create(vals)
+                    created_instance_count += 1
+
+                proxy_api_base = f"http://{gateway.ip_address}:{gateway.frpc_webserver_port}/api/store/proxies"
+                auth = (gateway.frpc_webserver_username or "", gateway.frpc_webserver_password or "")
+                payload = {
+                    "name": proxy_name,
+                    "type": "http",
+                    "http": {
+                        "localIP": node.ip_address,
+                        "localPort": int(instance.port or 1880),
+                        "customDomains": [domain],
+                    },
+                }
+                check_response = requests.get(
+                    f"{proxy_api_base}/{proxy_name}",
+                    auth=auth,
+                    timeout=15,
+                )
+                if check_response.status_code == 200:
+                    response = requests.put(
+                        f"{proxy_api_base}/{proxy_name}",
+                        auth=auth,
+                        headers={"Content-Type": "application/json"},
+                        json=payload,
+                        timeout=15,
+                    )
+                elif check_response.status_code == 404:
+                    response = requests.post(
+                        proxy_api_base,
+                        auth=auth,
+                        headers={"Content-Type": "application/json"},
+                        json=payload,
+                        timeout=15,
+                    )
+                else:
+                    raise UserError(
+                        _("Failed to check FRPC store proxy (HTTP %(status)s): %(detail)s", status=check_response.status_code, detail=check_response.text)
+                    )
+
+                if response.status_code >= 400:
+                    raise UserError(
+                        _("FRPC store proxy upsert failed (HTTP %(status)s): %(detail)s", status=response.status_code, detail=response.text)
+                    )
+
+                initialized_count += 1
+                created_proxy_count += 1
+            except Exception as e:
+                error_messages.append(f"{node.display_name}: {str(e)}")
+
+        msg = _(
+            "Initialized: %(ok)s, Created instances: %(ins)s, Created proxies: %(proxy)s",
+            ok=initialized_count,
+            ins=created_instance_count,
+            proxy=created_proxy_count,
+        )
+        if error_messages:
+            msg = f"{msg}\n" + "\n".join(error_messages[:5])
+
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": _("Initialization Complete"),
+                "message": msg,
+                "type": "success" if not error_messages else "warning",
+                "sticky": False,
+            },
+        }
 
     def message_post(self, **kwargs):
         message = super().message_post(**kwargs)
