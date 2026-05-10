@@ -80,20 +80,12 @@
         <field name="metadata">{"health_endpoint": "/health", "embed_endpoint": "/embed", "train_api_path": "/v1/train", "train_status_api_path": "/v1/train/{job_id}", "load_adapter_api_path": "/v1/vllm/adapters/load", "unload_adapter_api_path": "/v1/vllm/adapters/unload", "infer_api_path": "/v1/vllm/chat"}</field>
     </record>
 
-    <record id="component_registry_stage" model="crose.component">
-        <field name="name">Registry Stage</field>
+    <record id="component_nexus" model="crose.component">
+        <field name="name">Nexus</field>
         <field name="component_type">npm</field>
-        <field name="host">verdaccio-staging</field>
-        <field name="port">4873</field>
-        <field name="metadata">{"registry_url": "/"}</field>
-    </record>
-
-    <record id="component_registr_prod" model="crose.component">
-        <field name="name">Registry Prod</field>
-        <field name="component_type">npm</field>
-        <field name="host">verdaccio-prod</field>
-        <field name="port">4873</field>
-        <field name="metadata">{"registry_url": "/"}</field>
+        <field name="host">nexus</field>
+        <field name="port">8081</field>
+        <field name="metadata">{"health_endpoint": "/"}</field>
     </record>
 
     <record id="component_redis" model="crose.component">
@@ -136,7 +128,6 @@
         <field name="port">1880</field>
         <field name="editor_port">8880</field>
         <field name="component_id" ref="component_nodered" />
-        <field name="npm_registry_id" ref="component_registr_prod"/>
         <field name="mqtt_broker_id" ref="component_mqtt_broker" />
     </record>
 
@@ -147,7 +138,6 @@
         <field name="port">1880</field>
         <field name="editor_port">8881</field>
         <field name="component_id" ref="component_nodered_staging" />
-        <field name="npm_registry_id" ref="component_registry_stage"/>
         <field name="mqtt_broker_id" ref="component_mqtt_broker" />
     </record>
 
