@@ -27,6 +27,10 @@
                     <field name="is_gateway"/>
                     <field name="status"/>
                     <field name="os_version"/>
+                    <field name="is_frpc"/>
+                    <field name="has_mqtt_broker"/>
+                    <field name="has_nodered"/>
+                    <field name="has_docker"/>
                     <field name="ip_address"/>
                     <field name="port"/>
                     <field name="agent_port"/>
@@ -48,9 +52,19 @@
                                         Agent: <span t-esc="record.ip_address.value"/>:<span t-esc="record.agent_port.value"/>
                                     </div>
                                     <div class="d-flex align-items-center justify-content-between">
-                                        <span class="text-bg-light">
-                                            <field name="os_version"/>
-                                        </span>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span t-if="record.is_frpc.raw_value" class="fa fa-random text-success" title="FRPC"/>
+                                            <span t-else="" class="fa fa-random text-muted" title="FRPC"/>
+
+                                            <span t-if="record.has_mqtt_broker.raw_value" class="fa fa-rss text-success" title="MQTT Broker"/>
+                                            <span t-else="" class="fa fa-rss text-muted" title="MQTT Broker"/>
+
+                                            <span t-if="record.has_nodered.raw_value" class="fa fa-sitemap text-success" title="Node-RED"/>
+                                            <span t-else="" class="fa fa-sitemap text-muted" title="Node-RED"/>
+
+                                            <span t-if="record.has_docker.raw_value" class="fa fa-cubes text-success" title="Docker"/>
+                                            <span t-else="" class="fa fa-cubes text-muted" title="Docker"/>
+                                        </div>
                                         <div class="feitas_iot_instance_kanban_actions d-flex align-items-center gap-1">
                                             <button type="object" name="action_open_vnc" class="btn btn-link btn-sm p-0 oe_kanban_action" title="Remote Desktop" icon="fa-eye"/>
                                             <button type="object" name="action_view_instances" class="btn btn-link btn-sm p-0 oe_kanban_action" title="Instances" icon="fa-th-large"/>
@@ -99,10 +113,9 @@
                                 <field name="ip_address"/>
                                 <field name="another_ip_address"/>
                                 <field name="is_frpc" invisible="not is_gateway"/>
-                                <field name="frpc_webserver_port" invisible="not is_gateway"/>
-                                <field name="frpc_webserver_username" invisible="not is_gateway"/>
-                                <field name="frpc_webserver_password" password="True" invisible="not is_gateway"/>
-                                <field name="use_frp"/>
+                                <field name="has_nodered" />
+                                <field name="has_docker" />
+                                <field name="has_mqtt_broker" />
                             </group>
                         </group>
                         <notebook>
@@ -114,8 +127,12 @@
                                         <field name="ssh_port"/>
                                     </group>
                                     <group>
-                                        <field name="has_nodered" />
-                                        <field name="has_docker" />
+                                        <field name="frpc_webserver_port" invisible="not is_gateway"/>
+                                        <field name="frpc_webserver_username" invisible="not is_gateway"/>
+                                        <field name="frpc_webserver_password" password="True" invisible="not is_gateway"/>
+                                    </group>
+                                    <group>
+                                        <field name="use_frp"/>
                                     </group>
                                     <group string="Applications">
                                         <field name="instance_id"/>

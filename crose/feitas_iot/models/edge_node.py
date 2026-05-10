@@ -45,14 +45,15 @@ class FtsEdgeNode(models.Model):
     ssh_port = fields.Integer(string="SSH Port", default=22)
     
     is_frpc = fields.Boolean(string="Is FRPC")
+    has_mqtt_broker = fields.Boolean(string="Has MQTT Broker")
+    has_nodered = fields.Boolean()
+    has_docker = fields.Boolean()
+
     frpc_webserver_port = fields.Integer(string="FRPC Webserver Port", default=7400)
     frpc_webserver_username = fields.Char(string="FRPC Webserver Username", default="admin")
     frpc_webserver_password = fields.Char(string="FRPC Webserver Password", default="admin")
 
     use_frp = fields.Boolean(string="Use FRP")
-
-    has_nodered = fields.Boolean()
-    has_docker = fields.Boolean()
 
     port = fields.Integer(string="Port", default=6080)
     agent_port = fields.Integer(string="Agent Port", default=18080)
