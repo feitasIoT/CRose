@@ -1,0 +1,54 @@
+body.fi-login-layout main {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+}
+
+body.fi-login-layout .fi-login-left-pane {
+    flex: 0 0 70%;
+    min-height: 100vh;
+    overflow: hidden;
+    background: #0a3d68;
+}
+
+body.fi-login-layout .fi-login-left-pane img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+body.fi-login-layout .container.fi-login-right-pane {
+    flex: 0 0 30%;
+    max-width: none;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    margin: 0;
+    background: #fff;
+}
+
+body.fi-login-layout .container.fi-login-right-pane .card {
+    width: 100%;
+    max-width: 420px;
+    box-shadow: none;
+    border: none;
+}
+
+@media (max-width: 992px) {
+    body.fi-login-layout main {
+        flex-direction: column;
+    }
+
+    body.fi-login-layout .fi-login-left-pane {
+        flex: 0 0 auto;
+        min-height: 38vh;
+    }
+
+    body.fi-login-layout .container.fi-login-right-pane {
+        flex: 1 0 auto;
+        min-height: 62vh;
+    }
+}

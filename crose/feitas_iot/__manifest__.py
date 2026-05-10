@@ -52,6 +52,7 @@
         "views/nr_flow_param_views.xml",
         "views/data_log_views.xml",
         "views/res_partner_views.xml",
+        "views/login_layout_templates.xml",
 
         "views/menu_actions.xml",
         "views/crose_settings_views.xml",
@@ -68,6 +69,9 @@
             'feitas_iot/static/src/xml/editor_templates.xml',
             'feitas_iot/static/src/xml/overview_templates.xml',
             'feitas_iot/static/src/scss/instance_kanban.scss',
+        ],
+        'web.assets_frontend': [
+            'feitas_iot/static/src/scss/login_layout.scss',
         ],
     },
     "installable": True,

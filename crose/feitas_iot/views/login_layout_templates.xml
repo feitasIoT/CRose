@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="feitas_iot_login_layout" inherit_id="web.login_layout">
+        <xpath expr="//t[@t-set='body_classname']" position="replace">
+            <t t-set="body_classname" t-value="'bg-100 fi-login-layout'"/>
+        </xpath>
+
+        <xpath expr="//div[hasclass('container')]" position="before">
+            <div class="fi-login-left-pane">
+                <img src="/feitas_iot/static/description/login_background.jpg" alt="Login Background"/>
+            </div>
+        </xpath>
+
+        <xpath expr="//div[hasclass('container')]" position="attributes">
+            <attribute name="class" add="fi-login-right-pane" separator=" "/>
+        </xpath>
+
+        <xpath expr="//a[@href='/web/database/manager']" position="replace"/>
+        <xpath expr="//a[contains(@href, 'odoo.com')]" position="replace"/>
+    </template>
+</odoo>
