@@ -122,6 +122,8 @@ services:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
       - /etc/os-release:/host/etc/os-release:ro
+    environment:
+      - npm_config_registry=http://nexus:8081/repository/nrnpm/
     networks:
       - crose-net
 
@@ -138,6 +140,8 @@ services:
       - crose_nodered_staging:/data
       - crose_webdav:/mnt/webdav
       - ./demo/samba:/mnt/samba
+    environment:
+      - npm_config_registry=http://nexus:8081/repository/npm/
     networks:
       - crose-net
 
