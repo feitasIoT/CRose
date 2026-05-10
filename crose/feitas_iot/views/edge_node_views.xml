@@ -95,6 +95,9 @@
                             <button name="action_view_instances" type="object" class="oe_stat_button" icon="fa-th-large">
                                 <field name="instance_count" widget="statinfo" string="Instances"/>
                             </button>
+                            <button name="action_view_gateway_mqtt_users" type="object" class="oe_stat_button" icon="fa-users" invisible="not is_gateway">
+                                <field name="gateway_mqtt_user_count" widget="statinfo" string="MQTT Users"/>
+                            </button>
                         </div>
                         <group>
                             <group>

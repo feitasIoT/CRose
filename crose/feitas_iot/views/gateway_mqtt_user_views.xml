@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_fts_gateway_mqtt_user_tree" model="ir.ui.view">
+            <field name="name">fts.gateway.mqtt.user.tree</field>
+            <field name="model">fts.gateway.mqtt.user</field>
+            <field name="arch" type="xml">
+                <list>
+                    <field name="gateway_id"/>
+                    <field name="edge_node_id"/>
+                    <field name="instance_id"/>
+                    <field name="username"/>
+                    <field name="modified_by" optional="hide"/>
+                    <field name="modified_at" optional="hide"/>
+                    <button name="action_show_password"
+                            type="object"
+                            string="View Password"
+                            class="btn-link"
+                            groups="base.group_system"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_fts_gateway_mqtt_user_form" model="ir.ui.view">
+            <field name="name">fts.gateway.mqtt.user.form</field>
+            <field name="model">fts.gateway.mqtt.user</field>
+            <field name="arch" type="xml">
+                <form string="Gateway MQTT User">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="gateway_id"/>
+                                <field name="edge_node_id"/>
+                                <field name="instance_id"/>
+                            </group>
+                            <group>
+                                <field name="username"/>
+                                <field name="password_encrypted" password="True"/>
+                                <field name="modified_by" readonly="1"/>
+                                <field name="modified_at" readonly="1"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>

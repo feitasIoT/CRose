@@ -33,3 +33,4 @@ access_crose_nr_package,crose.nr.package,model_crose_nr_package,base.group_user,
 access_crose_component_account_internal,crose.component.account,model_crose_component_account,feitas_iot.group_feitas_iot_internal,1,0,0,0
 access_crose_component_account_admin,crose.component.account,model_crose_component_account,feitas_iot.group_feitas_iot_admin,1,1,1,1
 access_fts_nr_instance_wizard,fts.nr.instance.wizard,model_fts_nr_instance_wizard,base.group_user,1,1,1,1
+access_fts_gateway_mqtt_user,fts.gateway.mqtt.user,model_fts_gateway_mqtt_user,base.group_user,1,1,1,1

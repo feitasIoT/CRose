@@ -22,3 +22,4 @@ from . import knowledge
 from . import ai_knowledge
 from . import nr_tag
 from . import nr_flow_param
+from . import gateway_mqtt_user
