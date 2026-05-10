@@ -1,5 +1,7 @@
 import json
+import re
 import requests
+from urllib.parse import quote
 
 from odoo import models, fields, api
 from odoo.exceptions import UserError
@@ -61,6 +63,17 @@ class FtsNrInstanceWizard(models.TransientModel):
             if parts[-1].isdigit():
                 host = parts[0]
                 port = int(parts[-1])
+        host = host.strip().lower()
+        if not host:
+            return []
+
+        use_edge_proxy = bool(inst and inst.instance_type == "remote" and inst.edge_node_id and inst.edge_node_id.use_frp)
+        if use_edge_proxy:
+            config = self.env["ir.config_parameter"].sudo()
+            proxy_base = (config.get_param("feitas_iot.nodered_proxy_base_url") or "http://nginx").strip().rstrip("/")
+            encoded_host = quote(host, safe="")
+            return [f"{proxy_base}/edge-proxy/{encoded_host}"]
+
         return [f"http://{host}:{port}"]
 
     def _nr_post_json(self, path, body, timeout=15):
@@ -287,6 +300,238 @@ class FtsNrInstanceWizard(models.TransientModel):
             for v in value:
                 self._collect_ids(v, out)
 
+    def _resolve_record_path(self, record, path):
+        current = record
+        for part in str(path).split("."):
+            if not part:
+                return ""
+            if isinstance(current, models.BaseModel):
+                if not current:
+                    return ""
+                current = current[part] if part in current._fields else None
+            elif isinstance(current, dict):
+                current = current.get(part)
+            else:
+                current = getattr(current, part, None) if hasattr(current, part) else None
+            if current is None:
+                return ""
+        if isinstance(current, models.BaseModel):
+            if not current:
+                return ""
+            if len(current) > 1:
+                return ", ".join(current.mapped("display_name"))
+            current = current[:1]
+            if "name" in current._fields:
+                return current.name or ""
+            return current.id
+        return current
+
+    def _get_remote_gateway_mqtt_user(self, raise_if_missing=False):
+        self.ensure_one()
+        instance = self.instance_id
+        if not instance or instance.instance_type != "remote":
+            return False
+
+        edge_node = instance.edge_node_id
+        gateway = edge_node if edge_node and edge_node.is_gateway else (edge_node.gateway_id if edge_node else False)
+        if not gateway:
+            if raise_if_missing:
+                raise UserError("Remote instance has no gateway configured. Please configure the edge node gateway first.")
+            return False
+
+        user_model = self.env["fts.gateway.mqtt.user"].sudo()
+        mqtt_user = user_model.search(
+            [("gateway_id", "=", gateway.id), ("instance_id", "=", instance.id)],
+            limit=1,
+        )
+        if not mqtt_user and edge_node:
+            mqtt_user = user_model.search(
+                [("gateway_id", "=", gateway.id), ("edge_node_id", "=", edge_node.id)],
+                limit=1,
+            )
+        if mqtt_user:
+            return mqtt_user
+        if raise_if_missing:
+            raise UserError(
+                "No gateway MQTT user is assigned to this remote instance. "
+                "Please initialize the edge node or create a gateway MQTT user first."
+            )
+        return False
+
+    def _render_flow_param_value(self, param):
+        raw_value = param.value or ""
+        value_type = (param.type or "str").lower()
+        if not isinstance(raw_value, str):
+            return raw_value
+
+        text = raw_value
+        record_pattern = re.compile(r"%\s*record\.([a-zA-Z_][\w\.]*)\s*%")
+
+        def _replace_record(match):
+            resolved = self._resolve_record_path(self.instance_id, match.group(1))
+            if isinstance(resolved, (dict, list)):
+                return json.dumps(resolved, ensure_ascii=False)
+            return "" if resolved is None else str(resolved)
+
+        rendered = record_pattern.sub(_replace_record, text)
+
+        if value_type == "num":
+            try:
+                value_text = str(rendered).strip()
+                return int(value_text) if re.fullmatch(r"-?\d+", value_text) else float(value_text)
+            except Exception:
+                return rendered
+        if value_type == "bool":
+            value_text = str(rendered).strip().lower()
+            if value_text in ("1", "true", "yes", "on"):
+                return True
+            if value_text in ("0", "false", "no", "off", ""):
+                return False
+            return rendered
+        if value_type == "json":
+            try:
+                return json.loads(rendered) if isinstance(rendered, str) else rendered
+            except Exception:
+                return rendered
+        return rendered
+
+    def _set_value_with_reference(self, target, path_parts, value, node_by_id):
+        current = target
+        for index, part in enumerate(path_parts):
+            if not isinstance(current, dict) or not part:
+                return False
+            is_last = index == len(path_parts) - 1
+            if is_last:
+                existing = current.get(part)
+                if isinstance(existing, str) and existing in node_by_id and not isinstance(value, (dict, list)):
+                    # Do not overwrite config-node reference IDs (e.g. mqtt out.broker).
+                    return False
+                current[part] = value
+                return True
+            nxt = current.get(part)
+            if isinstance(nxt, str) and nxt in node_by_id:
+                current = node_by_id[nxt]
+                continue
+            if not isinstance(nxt, dict):
+                nxt = {}
+                current[part] = nxt
+            current = nxt
+        return False
+
+    def _sync_mqtt_credentials_in_payload(self, payload):
+        credentials_map = payload.get("credentials")
+        if not isinstance(credentials_map, dict):
+            credentials_map = {}
+        for item in (payload.get("nodes") or []) + (payload.get("configs") or []):
+            if not isinstance(item, dict) or item.get("type") != "mqtt-broker":
+                continue
+            node_id = item.get("id")
+            if not node_id:
+                continue
+            node_credentials = item.get("credentials") if isinstance(item.get("credentials"), dict) else {}
+            user_value = node_credentials.get("user", item.get("user"))
+            password_value = node_credentials.get("password", item.get("password"))
+            if user_value is None and password_value is None:
+                continue
+            item["credentials"] = {
+                "user": "" if user_value is None else user_value,
+                "password": "" if password_value is None else password_value,
+            }
+            credentials_map[node_id] = dict(item["credentials"])
+        if credentials_map:
+            payload["credentials"] = credentials_map
+        return payload
+
+    def _apply_remote_instance_mqtt_credentials(self, payload):
+        instance = self.instance_id
+        if not isinstance(payload, dict) or not instance or instance.instance_type != "remote":
+            return payload
+
+        mqtt_user = self._get_remote_gateway_mqtt_user(raise_if_missing=True)
+        username = (mqtt_user.username or "").strip()
+        password = mqtt_user._get_plain_password() or ""
+        if not username:
+            raise UserError("Gateway MQTT user is empty. Please check gateway MQTT user configuration.")
+
+        credentials_map = payload.get("credentials")
+        if not isinstance(credentials_map, dict):
+            credentials_map = {}
+        for item in (payload.get("nodes") or []) + (payload.get("configs") or []):
+            if not isinstance(item, dict) or item.get("type") != "mqtt-broker":
+                continue
+            if str(item.get("name") or "").strip().lower() == "iotdb":
+                continue
+            item["credentials"] = {
+                "user": username,
+                "password": password,
+            }
+            item["user"] = username
+            item["password"] = password
+            node_id = item.get("id")
+            if node_id:
+                credentials_map[node_id] = {
+                    "user": username,
+                    "password": password,
+                }
+        if credentials_map:
+            payload["credentials"] = credentials_map
+        return payload
+
+    def _ensure_payload_configs_from_source_global(self, payload, source_instance):
+        if not isinstance(payload, dict) or not source_instance:
+            return payload
+        nodes = [n for n in (payload.get("nodes") or []) if isinstance(n, dict)]
+        configs = [c for c in (payload.get("configs") or []) if isinstance(c, dict) and c.get("id")]
+        if not nodes:
+            return payload
+
+        refs = set()
+        self._collect_strings(nodes, refs)
+        if not refs:
+            return payload
+
+        existing_ids = {c.get("id") for c in configs if isinstance(c.get("id"), str)}
+        global_configs = self._resolve_global_configs(source_instance, refs)
+        for cfg in global_configs:
+            cfg_id = cfg.get("id") if isinstance(cfg, dict) else None
+            if not cfg_id or cfg_id in existing_ids:
+                continue
+            cfg_copy = dict(cfg)
+            cfg_copy.pop("z", None)
+            configs.append(cfg_copy)
+            existing_ids.add(cfg_id)
+
+        payload["configs"] = configs
+        return payload
+
+    def _apply_flow_params_to_payload(self, flow, payload):
+        if not flow.param_ids or not isinstance(payload, dict):
+            return payload
+        nodes = [n for n in payload.get("nodes") or [] if isinstance(n, dict)]
+        configs = [c for c in payload.get("configs") or [] if isinstance(c, dict)]
+        all_items = nodes + configs
+        if not all_items:
+            return payload
+        node_by_id = {n.get("id"): n for n in all_items if isinstance(n.get("id"), str)}
+
+        for param in flow.param_ids:
+            name = (param.name or "").strip()
+            if not name:
+                continue
+            path_parts = [p.strip() for p in name.split("/") if p and p.strip()]
+            if len(path_parts) < 2:
+                continue
+            node_type = path_parts[0]
+            target_path = path_parts[1:]
+            target_nodes = [n for n in all_items if n.get("type") == node_type]
+            if not target_nodes:
+                continue
+            value = self._render_flow_param_value(param)
+            for node in target_nodes:
+                self._set_value_with_reference(node, target_path, value, node_by_id)
+
+        return self._sync_mqtt_credentials_in_payload(payload)
+
     def _expand_subflow_deps_configs(self, deps, source_instance):
         deps = [d for d in deps if isinstance(d, dict)]
         if not deps or not source_instance:
@@ -509,15 +754,17 @@ class FtsNrInstanceWizard(models.TransientModel):
                     parsed = {}
                 deps = parsed.get("subflow_deps") if isinstance(parsed.get("subflow_deps"), list) else []
                 base_configs = parsed.get("configs") if isinstance(parsed.get("configs"), list) else []
+                source_flow = self.env["fts.nr.flow"].search([("app_store_id", "=", tmpl.id)], limit=1)
+                source_instance = source_flow.instance_id if source_flow and source_flow.instance_id else False
 
                 payload = self._build_flow_payload(tmpl)
                 payload["label"] = f"{tmpl.name} - {self.instance_id.name}"
+                payload = self._ensure_payload_configs_from_source_global(payload, source_instance)
 
                 subflow_mapping = {}
                 if deps:
-                    source_flow = self.env["fts.nr.flow"].search([("app_store_id", "=", tmpl.id)], limit=1)
-                    if source_flow and source_flow.instance_id:
-                        deps = self._expand_subflow_deps_configs(deps, source_flow.instance_id)
+                    if source_instance:
+                        deps = self._expand_subflow_deps_configs(deps, source_instance)
                     subflow_mapping = self._deploy_subflow_deps(deps, base_configs=base_configs)
                     if subflow_mapping:
                         for node in payload.get("nodes") or []:
@@ -531,6 +778,8 @@ class FtsNrInstanceWizard(models.TransientModel):
 
                 payload = self.instance_id._nr_remap_payload_ids(payload)
                 payload = self._inject_iotdb_mqtt_broker_credentials(payload)
+                payload = self._apply_flow_params_to_payload(tmpl, payload)
+                payload = self._apply_remote_instance_mqtt_credentials(payload)
                 result = self._nr_post_json("/flow", payload)
                 new_nr_id = result.get("id") if isinstance(result, dict) else None
                 if not new_nr_id:
