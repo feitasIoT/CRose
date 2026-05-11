@@ -49,6 +49,7 @@ class FtsNrInstance(models.Model):
         string="Status",
         required=True,
         default="offline",
+        tracking=True
     )
     flow_ids = fields.One2many("fts.nr.flow", "instance_id", string="Flows")
     flow_line_ids = fields.One2many("instance.flow.line", "instance_id", string="Flow Lines")
