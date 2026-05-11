@@ -247,6 +247,20 @@ class OverviewController(http.Controller):
                 _consume_record(client.hgetall(key))
         return stats
 
+    def _build_status_summary(self, env, model_name, domain=None):
+        domain = list(domain or [])
+        model = env[model_name]
+        total = model.search_count(domain)
+        online = model.search_count(domain + [("status", "=", "online")])
+        abnormal = model.search_count(domain + [("status", "=", "error")])
+        offline = max(total - online - abnormal, 0)
+        return {
+            "total": total,
+            "online": online,
+            "offline": offline,
+            "abnormal": abnormal,
+        }
+
     @http.route('/feitas_iot/get_component_status', type='jsonrpc', auth='user')
     def get_component_status(self, time_range="today"):
         env = request.env
@@ -326,6 +340,17 @@ class OverviewController(http.Controller):
         online_devices = env['fts.edge.node'].search_count([('status', '=', 'online')])
         total_devices = env['fts.edge.node'].search_count([])
         offline_devices = max(total_devices - online_devices, 0)
+        gateway_summary = self._build_status_summary(
+            env,
+            "fts.edge.node",
+            [("is_gateway", "=", True)],
+        )
+        edge_node_summary = self._build_status_summary(
+            env,
+            "fts.edge.node",
+            [("is_gateway", "=", False)],
+        )
+        instance_summary = self._build_status_summary(env, "fts.nr.instance")
         asset = {
             'devices_total': total_devices,
             'digital_models': env['fts.data.model'].search_count([]),
@@ -333,6 +358,11 @@ class OverviewController(http.Controller):
             'commands_today': env['ir.config_parameter'].sudo().get_param('feitas_iot.overview.commands_today', '0'),
             'online_devices': online_devices,
             'offline_devices': offline_devices,
+            'status_summary': {
+                'gateway': gateway_summary,
+                'edge_node': edge_node_summary,
+                'instance': instance_summary,
+            },
         }
         return {
             'components': components,

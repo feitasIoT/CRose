@@ -27,6 +27,7 @@
                 <t t-set="throughput" t-value="dashboard.throughput || {}"/>
                 <t t-set="valueDelivery" t-value="dashboard.value_delivery || {}"/>
                 <t t-set="asset" t-value="dashboard.asset_insight || {}"/>
+                <t t-set="statusSummary" t-value="asset.status_summary || {}"/>
 
                 <div class="border rounded p-2 bg-white mb-3">
                     <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
@@ -166,6 +167,81 @@
                     <div class="col-12 col-xl-4">
                         <div class="border rounded p-3 bg-white h-100">
                             <h5 class="m-0 mb-3">Asset Insight</h5>
+
+                            <div class="border rounded p-2 bg-light mb-3">
+                                <div class="row g-2 text-center">
+                                    <div class="col-3">
+                                        Gateways
+                                    </div>
+                                    <div class="col-3">
+                                        <div class="text-muted small">Total</div>
+                                        <div class="fw-semibold"><t t-esc="(statusSummary.gateway || {}).total || 0"/></div>
+                                    </div>
+                                    <div class="col-2">
+                                        <div class="text-muted small">Online</div>
+                                        <div class="fw-semibold text-success"><t t-esc="(statusSummary.gateway || {}).online || 0"/></div>
+                                    </div>
+                                    <div class="col-2">
+                                        <div class="text-muted small">Offline</div>
+                                        <div class="fw-semibold text-secondary"><t t-esc="(statusSummary.gateway || {}).offline || 0"/></div>
+                                    </div>
+                                    <div class="col-2">
+                                        <div class="text-muted small">Alert</div>
+                                        <div class="fw-semibold text-danger"><t t-esc="(statusSummary.gateway || {}).abnormal || 0"/></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="border rounded p-2 bg-light mb-3">
+
+                                <div class="row g-2 text-center">
+                                    <div class="col-3">
+                                        Edge Nodes
+                                    </div>
+                                    <div class="col-3">
+                                        <div class="text-muted small">Total</div>
+                                        <div class="fw-semibold"><t t-esc="(statusSummary.edge_node || {}).total || 0"/></div>
+                                    </div>
+                                    <div class="col-2">
+                                        <div class="text-muted small">Online</div>
+                                        <div class="fw-semibold text-success"><t t-esc="(statusSummary.edge_node || {}).online || 0"/></div>
+                                    </div>
+                                    <div class="col-2">
+                                        <div class="text-muted small">Offline</div>
+                                        <div class="fw-semibold text-secondary"><t t-esc="(statusSummary.edge_node || {}).offline || 0"/></div>
+                                    </div>
+                                    <div class="col-2">
+                                        <div class="text-muted small">Alert</div>
+                                        <div class="fw-semibold text-danger"><t t-esc="(statusSummary.edge_node || {}).abnormal || 0"/></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="border rounded p-2 bg-light mb-3">
+
+                                <div class="row g-2 text-center">
+                                    <div class="col-3">
+                                        Instances
+                                    </div>
+                                    <div class="col-3">
+                                        <div class="text-muted small">Total</div>
+                                        <div class="fw-semibold"><t t-esc="(statusSummary.instance || {}).total || 0"/></div>
+                                    </div>
+                                    <div class="col-2">
+                                        <div class="text-muted small">Online</div>
+                                        <div class="fw-semibold text-success"><t t-esc="(statusSummary.instance || {}).online || 0"/></div>
+                                    </div>
+                                    <div class="col-2">
+                                        <div class="text-muted small">Offline</div>
+                                        <div class="fw-semibold text-secondary"><t t-esc="(statusSummary.instance || {}).offline || 0"/></div>
+                                    </div>
+                                    <div class="col-2">
+                                        <div class="text-muted small">Alert</div>
+                                        <div class="fw-semibold text-danger"><t t-esc="(statusSummary.instance || {}).abnormal || 0"/></div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="border rounded p-2 bg-light mb-3">
                                 <div class="text-muted small mb-1">Device Online Ratio</div>
                                 <div class="progress mb-1" style="height: 10px;">
