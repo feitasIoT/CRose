@@ -85,7 +85,19 @@
         <field name="component_type">npm</field>
         <field name="host">nexus</field>
         <field name="port">8081</field>
-        <field name="metadata">{"health_endpoint": "/"}</field>
+        <field name="metadata">{
+            "health_endpoint": "/",
+            "node-red-stage": "/",
+            "node-red-prod": "/",
+            "docker-image": "/"
+        }</field>
+    </record>
+
+    <record id="component_nexus_account_admin" model="crose.component.account">
+        <field name="component_id" ref="component_nexus"/>
+        <field name="username">admin</field>
+        <field name="password_encrypted">admin123</field>
+        <field name="role">admin</field>
     </record>
 
     <record id="component_redis" model="crose.component">

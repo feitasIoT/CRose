@@ -101,7 +101,12 @@ class CroseComponent(models.Model):
             'llama_factory': {'health_endpoint': '/health', 'train_api_path': '/v1/train', 'train_status_api_path': '/v1/train/{job_id}'},
             'vllm': {'health_endpoint': '/v1/models', 'chat_completions_path': '/v1/chat/completions', 'temperature': 0.1},
             'llm_provider': {'chat_completions_path': '/v1/chat/completions', 'models_endpoint': '/v1/models', 'base_path': '/v1'},
-            'npm': {'health_endpoint': '/'},
+            'npm': {
+                'health_endpoint': '/',
+                'node-red-stage': '/service/rest/v1/search?repository=npm',
+                'node-red-prod': '/service/rest/v1/search?repository=nrnpm',
+                'docker-image': '/',
+            },
             'redis': {'db': 0},
             'webdav': {'health_endpoint': '/api/health'},
             'nodered': {'admin_path': '/admin', 'health_endpoint': '/'}
