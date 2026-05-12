@@ -679,6 +679,9 @@ class FtsNrInstance(models.Model):
         if self.instance_type == "local":
             return [f"http://{host}:{port}"]
 
+        if not self.edge_node_id or not self.edge_node_id.use_frp:
+            return [f"http://{host}:{port}"]
+
         config = self.env["ir.config_parameter"].sudo()
         proxy_base = (config.get_param("feitas_iot.nodered_proxy_base_url") or "http://nginx").strip()
         proxy_base = proxy_base.rstrip("/")

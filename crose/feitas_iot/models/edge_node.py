@@ -222,7 +222,7 @@ class FtsEdgeNode(models.Model):
 
                 domain = f"nr{node.id}.edge.local"
                 proxy_name = domain.split(".", 1)[0]
-                instance_host = node.ip_address if node.is_gateway else domain
+                instance_host = domain if node.use_frp else node.ip_address
                 instance_name = f"{node.name}-NR"
 
                 instance = Instance.search(
@@ -251,7 +251,7 @@ class FtsEdgeNode(models.Model):
                     instance = Instance.create(vals)
                     note_lines.append(_("Node-RED instance created: %(name)s", name=instance.display_name))
 
-                if node.is_gateway:
+                if node.is_gateway or not node.use_frp:
                     note_lines.append(_("Gateway node: FRPC proxy step skipped."))
                 else:
                     if not gateway.is_frpc:
