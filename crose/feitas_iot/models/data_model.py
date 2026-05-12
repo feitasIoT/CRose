@@ -650,13 +650,11 @@ class DataModel(models.Model):
             return node_name == "data assets"
 
         def _nr_put_json(path, body, timeout=30):
-            headers = {
-                "Node-RED-API-Version": "v2",
-            }
             last_error = None
             for base_url in self.nr_instance_id._nr_candidate_base_urls():
                 url = f"{base_url}{path}"
                 try:
+                    headers = self.nr_instance_id._nr_headers_for(base_url)
                     response = requests.put(url, headers=headers, json=body, timeout=timeout)
                     response.raise_for_status()
                     try:

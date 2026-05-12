@@ -78,11 +78,12 @@ class FtsNrInstanceWizard(models.TransientModel):
 
     def _nr_post_json(self, path, body, timeout=15):
 
-        headers = {"Node-RED-API-Version": "v2"}
+        inst = self.instance_id
         last_error = None
         for base_url in self._nr_candidate_base_urls():
             url = f"{base_url}{path}"
             try:
+                headers = inst._nr_headers_for(base_url) if inst else {"Node-RED-API-Version": "v2"}
                 response = requests.post(url, headers=headers, json=body, timeout=timeout)
                 response.raise_for_status()
                 try:
@@ -94,11 +95,12 @@ class FtsNrInstanceWizard(models.TransientModel):
         raise UserError(f"Node-RED request failed: {last_error}")
 
     def _nr_get_json(self, path, timeout=15):
-        headers = {"Node-RED-API-Version": "v2"}
+        inst = self.instance_id
         last_error = None
         for base_url in self._nr_candidate_base_urls():
             url = f"{base_url}{path}"
             try:
+                headers = inst._nr_headers_for(base_url) if inst else {"Node-RED-API-Version": "v2"}
                 response = requests.get(url, headers=headers, timeout=timeout)
                 response.raise_for_status()
                 return response.json()
@@ -108,11 +110,12 @@ class FtsNrInstanceWizard(models.TransientModel):
 
     def _nr_delete_json(self, path, timeout=15):
 
-        headers = {"Node-RED-API-Version": "v2"}
+        inst = self.instance_id
         last_error = None
         for base_url in self._nr_candidate_base_urls():
             url = f"{base_url}{path}"
             try:
+                headers = inst._nr_headers_for(base_url) if inst else {"Node-RED-API-Version": "v2"}
                 response = requests.delete(url, headers=headers, timeout=timeout)
                 response.raise_for_status()
                 return True

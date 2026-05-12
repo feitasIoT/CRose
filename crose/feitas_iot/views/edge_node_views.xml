@@ -139,6 +139,8 @@
                                     </group>
                                     <group string="Applications">
                                         <field name="instance_id"/>
+                                        <field name="nodered_username" invisible="not has_nodered"/>
+                                        <field name="nodered_password" password="True" invisible="not has_nodered"/>
 
                                         <field name="flow_ids" nolabel="1" colspan="2">
                                             <list editable="bottom">

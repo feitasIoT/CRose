@@ -52,6 +52,9 @@ class FtsEdgeNode(models.Model):
     has_nodered = fields.Boolean()
     has_docker = fields.Boolean()
 
+    nodered_username = fields.Char(string="Node-RED Username")
+    nodered_password = fields.Char(string="Node-RED Password")
+
     frpc_webserver_port = fields.Integer(string="FRPC Webserver Port", default=7400)
     frpc_webserver_username = fields.Char(string="FRPC Webserver Username", default="admin")
     frpc_webserver_password = fields.Char(string="FRPC Webserver Password", default="admin")

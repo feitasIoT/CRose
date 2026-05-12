@@ -1,5 +1,6 @@
 import json
 import re
+import time
 import uuid
 from urllib.parse import quote
 
@@ -54,6 +55,8 @@ class FtsNrInstance(models.Model):
     flow_ids = fields.One2many("fts.nr.flow", "instance_id", string="Flows")
     flow_line_ids = fields.One2many("instance.flow.line", "instance_id", string="Flow Lines")
     npm_registry_id = fields.Many2one("crose.component", string="NPM Registry", domain=[('component_type', '=', 'npm')])
+
+    _nr_token_cache = {}
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -682,16 +685,86 @@ class FtsNrInstance(models.Model):
         encoded_host = quote(host, safe="")
         return [f"{proxy_base}/edge-proxy/{encoded_host}"]
 
-    def _nr_get_json(self, path, timeout=15):
+    def _nr_auth(self):
+        self.ensure_one()
+        node = self.edge_node_id
+        if not node:
+            return None
+        username = (node.nodered_username or "").strip()
+        password = (node.nodered_password or "").strip()
+        if not username or not password:
+            return None
+        return (username, password)
+
+    def _nr_invalidate_token(self, base_url):
+        self.ensure_one()
+        username = (self.edge_node_id.nodered_username or "").strip() if self.edge_node_id else ""
+        cache_key = (self.id, str(base_url), username)
+        self._nr_token_cache.pop(cache_key, None)
+
+    def _nr_get_bearer_token(self, base_url, *, timeout=10):
+        self.ensure_one()
+        creds = self._nr_auth()
+        if not creds:
+            return ""
+        username, password = creds
+        cache_key = (self.id, str(base_url), username)
+        cached = self._nr_token_cache.get(cache_key) or {}
+        token = cached.get("token") or ""
+        expires_at = float(cached.get("expires_at") or 0.0)
+        now = time.time()
+        if token and expires_at > now:
+            return token
+
+        token_url = f"{str(base_url).rstrip('/')}/auth/token"
+        data = {
+            "client_id": "node-red-admin",
+            "grant_type": "password",
+            "scope": "*",
+            "username": username,
+            "password": password,
+        }
+        response = requests.post(
+            token_url,
+            data=data,
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            timeout=timeout,
+        )
+        if response.status_code == 404:
+            return ""
+        response.raise_for_status()
+        payload = response.json() if response.content else {}
+        token = (payload.get("access_token") or "").strip() if isinstance(payload, dict) else ""
+        expires_in = int(payload.get("expires_in") or 0) if isinstance(payload, dict) else 0
+        if not token:
+            return ""
+        skew = 15
+        expires_at = now + max(expires_in - skew, 0)
+        self._nr_token_cache[cache_key] = {"token": token, "expires_at": expires_at}
+        return token
+
+    def _nr_headers_for(self, base_url):
         self.ensure_one()
         headers = {
-            'Node-RED-API-Version': 'v2',
+            "Node-RED-API-Version": "v2",
         }
+        token = self._nr_get_bearer_token(base_url)
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
+        return headers
+
+    def _nr_get_json(self, path, timeout=15):
+        self.ensure_one()
         last_error = None
         for base_url in self._nr_candidate_base_urls():
             url = f"{base_url}{path}"
             try:
+                headers = self._nr_headers_for(base_url)
                 response = requests.get(url, headers=headers, timeout=timeout)
+                if response.status_code == 401 and "Authorization" in headers:
+                    self._nr_invalidate_token(base_url)
+                    headers = self._nr_headers_for(base_url)
+                    response = requests.get(url, headers=headers, timeout=timeout)
                 response.raise_for_status()
                 return response.json()
             except Exception as e:
@@ -700,14 +773,16 @@ class FtsNrInstance(models.Model):
 
     def _nr_post_json(self, path, body, timeout=15):
         self.ensure_one()
-        headers = {
-            "Node-RED-API-Version": "v2",
-        }
         last_error = None
         for base_url in self._nr_candidate_base_urls():
             url = f"{base_url}{path}"
             try:
+                headers = self._nr_headers_for(base_url)
                 response = requests.post(url, headers=headers, json=body, timeout=timeout)
+                if response.status_code == 401 and "Authorization" in headers:
+                    self._nr_invalidate_token(base_url)
+                    headers = self._nr_headers_for(base_url)
+                    response = requests.post(url, headers=headers, json=body, timeout=timeout)
                 response.raise_for_status()
                 try:
                     return response.json()
