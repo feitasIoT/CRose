@@ -368,10 +368,17 @@ class FtsNrInstanceWizard(models.TransientModel):
             return raw_value
 
         text = raw_value
-        record_pattern = re.compile(r"%\s*record\.([a-zA-Z_][\w\.]*)\s*%")
+        record_pattern = re.compile(r"%\s*(record|instance|gateway|node)\.([a-zA-Z_][\w\.]*)\s*%")
 
         def _replace_record(match):
-            resolved = self._resolve_record_path(self.instance_id, match.group(1))
+            prefix = (match.group(1) or "").strip().lower()
+            path = match.group(2)
+            base = self.instance_id
+            if prefix == "gateway":
+                base = base.gateway_id
+            elif prefix == "node":
+                base = base.edge_node_id
+            resolved = self._resolve_record_path(base, path)
             if isinstance(resolved, (dict, list)):
                 return json.dumps(resolved, ensure_ascii=False)
             return "" if resolved is None else str(resolved)

@@ -34,6 +34,13 @@ class FtsNrInstance(models.Model):
         ondelete="restrict",
         required=False,
     )
+    gateway_id = fields.Many2one(
+        "fts.edge.node",
+        string="Gateway",
+        related="edge_node_id.gateway_id",
+        store=True,
+        readonly=True,
+    )
     component_id = fields.Many2one("crose.component", string="Component")
     mqtt_broker_id = fields.Many2one("crose.component", string="MQTT Broker", domain="[('component_type', '=', 'mqtt')]")
     mqtt_account_id = fields.Many2one(
