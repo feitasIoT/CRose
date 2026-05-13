@@ -5,6 +5,7 @@ import tempfile
 import base64
 import hashlib
 import tarfile
+import time
 from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 import requests
 from odoo import models, fields, api, _
@@ -205,6 +206,88 @@ class CroseNrPackage(models.Model):
               name=package_name, version=version, repo=repository_name)
         )
 
+    def _build_nexus_registry_base(self, search_url):
+        parsed, repository_name = self._extract_repository_from_search_url(search_url)
+        return f"{parsed.scheme}://{parsed.netloc}/repository/{repository_name}", repository_name
+
+    def _extract_asset_path_from_url(self, download_url, registry_base):
+        download_parsed = urlparse(download_url or "")
+        if not download_parsed.path:
+            return ""
+        registry_path = urlparse(registry_base).path.rstrip("/")
+        if registry_path and download_parsed.path.startswith(f"{registry_path}/"):
+            return download_parsed.path[len(registry_path):].lstrip("/")
+        return download_parsed.path.lstrip("/")
+
+    def _prefetch_package_to_nexus_proxy(self, stage_search_url, package_name, version, auth):
+        registry_base, repository_name = self._build_nexus_registry_base(stage_search_url)
+        package_endpoint = package_name.replace("/", "%2f")
+        metadata_url = f"{registry_base}/{package_endpoint}"
+        response = requests.get(
+            metadata_url,
+            auth=auth,
+            headers={"Accept": "application/json"},
+            timeout=30,
+        )
+        if response.status_code == 404:
+            raise UserError(
+                _("Cannot find package %(name)s v%(version)s in Nexus repository %(repo)s.",
+                  name=package_name, version=version, repo=repository_name)
+            )
+        response.raise_for_status()
+        payload = response.json() if response.content else {}
+        versions = payload.get("versions") if isinstance(payload, dict) else {}
+        version_data = versions.get(version) if isinstance(versions, dict) else None
+        if not isinstance(version_data, dict):
+            raise UserError(
+                _("Cannot find package %(name)s v%(version)s in Nexus repository %(repo)s.",
+                  name=package_name, version=version, repo=repository_name)
+            )
+        dist = version_data.get("dist") if isinstance(version_data.get("dist"), dict) else {}
+        tarball_url = str(dist.get("tarball") or "").strip()
+        if not tarball_url:
+            raise UserError(
+                _("No tarball found for package %(name)s v%(version)s in Nexus repository %(repo)s.",
+                  name=package_name, version=version, repo=repository_name)
+            )
+        with requests.get(tarball_url, auth=auth, stream=True, timeout=60) as tarball_response:
+            tarball_response.raise_for_status()
+            for chunk in tarball_response.iter_content(chunk_size=1024 * 1024):
+                if chunk:
+                    continue
+        asset_path = self._extract_asset_path_from_url(tarball_url, registry_base)
+        return tarball_url, asset_path
+
+    def _get_stage_package_asset(self, stage_search_url, package_name, version, auth):
+        try:
+            return self._nexus_search_package_asset(
+                stage_search_url=stage_search_url,
+                package_name=package_name,
+                version=version,
+                auth=auth,
+            )
+        except UserError:
+            prefetched_download_url, prefetched_asset_path = self._prefetch_package_to_nexus_proxy(
+                stage_search_url=stage_search_url,
+                package_name=package_name,
+                version=version,
+                auth=auth,
+            )
+            for attempt in range(3):
+                try:
+                    return self._nexus_search_package_asset(
+                        stage_search_url=stage_search_url,
+                        package_name=package_name,
+                        version=version,
+                        auth=auth,
+                    )
+                except UserError:
+                    if attempt < 2:
+                        time.sleep(1)
+            if prefetched_download_url and prefetched_asset_path:
+                return prefetched_download_url, prefetched_asset_path
+            raise
+
     def _download_package_to_temp(self, download_url, auth):
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".tgz")
         temp_path = temp_file.name
@@ -306,7 +389,7 @@ class CroseNrPackage(models.Model):
             stage_search_url = component._resolve_metadata_endpoint("node-red-stage")
             prod_search_url = component._resolve_metadata_endpoint("node-red-prod")
             auth = self._get_nexus_auth(component)
-            download_url, asset_path = self._nexus_search_package_asset(
+            download_url, asset_path = self._get_stage_package_asset(
                 stage_search_url=stage_search_url,
                 package_name=pkg.name,
                 version=pkg.version,
