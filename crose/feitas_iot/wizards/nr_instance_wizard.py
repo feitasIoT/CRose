@@ -813,6 +813,7 @@ class FtsNrInstanceWizard(models.TransientModel):
                     "message": f"Created {len(created)} flow(s): {', '.join(created)}",
                     "type": "success",
                     "sticky": False,
+                    "next": {"type": "ir.actions.act_window_close"},
                 },
             }
 
@@ -834,6 +835,7 @@ class FtsNrInstanceWizard(models.TransientModel):
                     "message": f"{len(self.target_flow_ids)} flow(s) disabled.",
                     "type": "success",
                     "sticky": False,
+                    "next": {"type": "ir.actions.act_window_close"},
                 },
             }
 
@@ -857,5 +859,6 @@ class FtsNrInstanceWizard(models.TransientModel):
                     "message": f"Deleted {len(deleted)} flow(s).",
                     "type": "success",
                     "sticky": False,
+                    "next": {"type": "ir.actions.act_window_close"},
                 },
             }
