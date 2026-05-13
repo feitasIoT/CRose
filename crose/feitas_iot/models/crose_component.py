@@ -943,14 +943,23 @@ class CroseComponentAccount(models.Model):
         token = self._get_cipher().encrypt(text.encode("utf-8")).decode("utf-8")
         return f"enc${token}"
 
+    def _generate_password(self, length=16):
+        alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
+        return "".join(secrets.choice(alphabet) for _ in range(length))
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
-            if "password_encrypted" in vals:
-                vals["password_encrypted"] = self._encrypt_password(vals.get("password_encrypted"))
+            password_value = vals.get("password_encrypted")
+            if not password_value:
+                vals["password_encrypted"] = self._generate_password(16)
+            vals["password_encrypted"] = self._encrypt_password(vals.get("password_encrypted"))
         return super().create(vals_list)
 
     def write(self, vals):
         if "password_encrypted" in vals:
-            vals["password_encrypted"] = self._encrypt_password(vals.get("password_encrypted"))
+            password_value = vals.get("password_encrypted")
+            if not password_value:
+                password_value = self._generate_password(16)
+            vals["password_encrypted"] = self._encrypt_password(password_value)
         return super().write(vals)

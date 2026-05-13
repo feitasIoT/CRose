@@ -69,6 +69,11 @@
                                         <field name="is_primary"/>
                                         <field name="role"/>
                                         <field name="iotdb_privileges"/>
+                                        <button name="action_show_password"
+                                            type="object"
+                                            string="View Password"
+                                            class="btn-link"
+                                            groups="base.group_system"/>
                                         <field name="modified_by" readonly="1" optional="hide"/>
                                         <field name="modified_at" readonly="1" optional="hide"/>
                                     </list>
