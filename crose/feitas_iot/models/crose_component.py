@@ -253,6 +253,66 @@ class CroseComponent(models.Model):
         self._upsert_component_account(username, password, role="viewer")
         return True
 
+    def api_create_redis_user(self, username, password):
+        self.ensure_one()
+        if self.component_type != "redis":
+            raise UserError(_("Only Redis components support account API synchronization."))
+        username = (username or "").strip()
+        if not username:
+            raise UserError(_("Username is required."))
+        password = password or self._generate_password(16)
+
+        try:
+            import redis
+        except Exception as e:
+            raise UserError(_("Missing dependency redis: %(error)s", error=str(e)))
+
+        metadata_dict = self._metadata_dict()
+        admin_username = (metadata_dict.get("username") or "").strip() or None
+        admin_password = metadata_dict.get("password")
+        try:
+            port = int(self.port or 6379)
+        except Exception:
+            port = 6379
+
+        client = redis.Redis(
+            host=(self.host or "localhost"),
+            port=port,
+            username=admin_username,
+            password=admin_password,
+            socket_connect_timeout=5,
+            decode_responses=True,
+        )
+        try:
+            client.execute_command(
+                "ACL",
+                "SETUSER",
+                username,
+                "on",
+                "resetpass",
+                f">{password}",
+                "+@all",
+                "~*",
+            )
+        except Exception as e:
+            raise UserError(_("Redis ACL user upsert failed: %(error)s", error=str(e)))
+
+        try:
+            client.execute_command("ACL", "SAVE")
+        except Exception as e:
+            error_text = str(e)
+            if "not configured to use an acl file" in error_text.lower():
+                try:
+                    client.execute_command("CONFIG", "SET", "aclfile", "/data/users.acl")
+                    client.execute_command("ACL", "SAVE")
+                except Exception as e2:
+                    raise UserError(_("Redis ACL save failed: %(error)s", error=str(e2)))
+            else:
+                raise UserError(_("Redis ACL save failed: %(error)s", error=error_text))
+
+        self._upsert_component_account(username, password, role="viewer")
+        return True
+
     def create_gmqtt_user(self, username, partner_id=False):
         self.ensure_one()
         username = (username or "").strip()

@@ -60,6 +60,7 @@ class FtsEdgeNode(models.Model):
     frpc_webserver_password = fields.Char(string="FRPC Webserver Password", default="admin")
 
     use_frp = fields.Boolean(string="Use FRP")
+    use_redis = fields.Boolean(string="Use Redis", help="checked will assign redis database and account.")
 
     port = fields.Integer(string="Port", default=6080)
     agent_port = fields.Integer(string="Agent Port", default=18080)
@@ -71,6 +72,11 @@ class FtsEdgeNode(models.Model):
         "crose.component.account",
         string="MQTT Account",
         domain="[('component_id', '=', mqtt_broker_id)]",
+    )
+    redis_account_id = fields.Many2one(
+        "crose.component.account",
+        string="Redis Account",
+        domain="[('component_id.component_type', '=', 'redis')]",
     )
 
     # Instance Config
@@ -346,6 +352,39 @@ class FtsEdgeNode(models.Model):
                 else:
                     GatewayMqttUser.create(vals)
                     note_lines.append(_("Gateway MQTT user created: %(username)s", username=username))
+
+                if node.use_redis:
+                    redis_comp = self.env["crose.component"].search(
+                        [("component_type", "=", "redis"), ("status", "=", "online")], limit=1
+                    )
+                    if not redis_comp:
+                        redis_comp = self.env["crose.component"].search([("component_type", "=", "redis")], limit=1)
+                    if not redis_comp:
+                        raise UserError(_("No Redis component found in System Components."))
+
+                    redis_username = ""
+                    redis_password = ""
+                    if (
+                        node.redis_account_id
+                        and node.redis_account_id.component_id
+                        and node.redis_account_id.component_id.component_type == "redis"
+                        and (node.redis_account_id.username or "").strip()
+                    ):
+                        redis_username = (node.redis_account_id.username or "").strip()
+                        redis_password = node.redis_account_id._get_plain_password() or ""
+
+                    if not redis_username:
+                        redis_username = f"nr{node.id}_redis"
+                    if not redis_password:
+                        redis_password = redis_comp._generate_password(16)
+
+                    redis_comp.api_create_redis_user(redis_username, redis_password)
+                    redis_account = self.env["crose.component.account"].sudo().search(
+                        [("component_id", "=", redis_comp.id), ("username", "=", redis_username)],
+                        limit=1,
+                    )
+                    node.write({"redis_account_id": redis_account.id if redis_account else False})
+                    note_lines.append(_("Redis account synchronized: %(username)s", username=redis_username))
             except Exception as e:
                 note_lines.append(_("Initialization failed: %(error)s", error=str(e)))
 

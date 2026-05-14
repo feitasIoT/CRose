@@ -129,12 +129,10 @@
                                 <field name="app_store_id" invisible="1" />
                                 <field name="data_model_id" invisible="is_template"/>
                             </group>
-                            <group>
-                                <field name="image" widget="image"/>
-                            </group>
                         </group>
                         <notebook>
                             <page string="Description">
+                                <field name="image" widget="image"/>
                                 <field name="description" widget="html" nolabel="1"/>
                             </page>
                             <page string="Prompt">

@@ -109,6 +109,7 @@
                                 <!-- <field name="nr_node"/> -->
                                 <field name="port"/>
                                 <field name="agent_port"/>
+                                <field name="use_redis" />
                             </group>
                             <group>
                                 <field name="is_gateway" />
@@ -119,28 +120,21 @@
                                 <field name="has_nodered" />
                                 <field name="has_docker" />
                                 <field name="has_mqtt_broker" />
+                                <field name="use_frp"/>
                             </group>
                         </group>
                         <notebook>
-                            <page string="Basic Configuration">
+                            <page string="Basic">
                                 <group>
                                     <group>
                                         <field name="ssh_username"/>
                                         <field name="ssh_password" password="True"/>
                                         <field name="ssh_port"/>
                                     </group>
-                                    <group>
-                                        <field name="frpc_webserver_port" invisible="not is_gateway"/>
-                                        <field name="frpc_webserver_username" invisible="not is_gateway"/>
-                                        <field name="frpc_webserver_password" password="True" invisible="not is_gateway"/>
-                                    </group>
-                                    <group>
-                                        <field name="use_frp"/>
-                                    </group>
+                                    
                                     <group string="Applications">
                                         <field name="instance_id"/>
-                                        <field name="nodered_username" invisible="not has_nodered"/>
-                                        <field name="nodered_password" password="True" invisible="not has_nodered"/>
+                                        
 
                                         <field name="flow_ids" nolabel="1" colspan="2">
                                             <list editable="bottom">
@@ -152,9 +146,12 @@
                                         <field name="mqtt_broker_id"/>
                                         <field name="mqtt_account_id"/>
                                     </group>
+                                    <group string="Redis Configuration">
+                                        <field name="redis_account_id" readonly="1" invisible="not use_redis"/>
+                                    </group>
                                 </group>
                             </page>
-                            <page string="Deployment Information">
+                            <page string="Deployment">
                                 <group>
                                     <group string="Deployment Command">
                                         <field name="agent_cmd" nolabel="1" colspan="2"/>
@@ -166,9 +163,19 @@
                                 </group>
                                 
                             </page>
-                            <!-- <page string="Configuration">
-                                
-                            </page> -->
+                            <page string="Components">
+                                <group>
+                                    <group>
+                                        <field name="frpc_webserver_port" invisible="not is_gateway"/>
+                                        <field name="frpc_webserver_username" invisible="not is_gateway"/>
+                                        <field name="frpc_webserver_password" password="True" invisible="not is_gateway"/>
+                                    </group>
+                                    <group>
+                                        <field name="nodered_username" invisible="not has_nodered"/>
+                                        <field name="nodered_password" password="True" invisible="not has_nodered"/>
+                                    </group>
+                                </group>
+                            </page>
                         </notebook>
                     </sheet>
                     <chatter/>

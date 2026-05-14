@@ -149,16 +149,12 @@ services:
     image: redis:7-alpine
     container_name: redis
     restart: always
-    ports:
-      - "6379:6379"
     command:
       - sh
       - -c
-      - |
-        if [ ! -f /data/users.acl ]; then
-          printf '%s\n' "user default on nopass ~* &* +@all" > /data/users.acl
-        fi
-        exec redis-server /usr/local/etc/redis/redis.conf
+      - test -f /data/users.acl || touch /data/users.acl; exec redis-server /usr/local/etc/redis/redis.conf
+    ports:
+      - "6379:6379"
     volumes:
       - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf
       - crose_redis:/data
