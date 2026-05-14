@@ -1418,6 +1418,7 @@ class DataModel(models.Model):
         lang = self.env["res.lang"]._lang_get(self.env.user.lang)
         locale = lang._odoo_lang_to_spreadsheet_locale()
         headers = [str(col) for col in list(dataframe.columns)]
+        max_lengths = [len(h) for h in headers]
         cells = {}
         for col_idx, header in enumerate(headers):
             xc = f"{self._column_to_name(col_idx)}1"
@@ -1426,7 +1427,16 @@ class DataModel(models.Model):
         for row_idx, row in enumerate(dataframe.itertuples(index=False), start=2):
             for col_idx, value in enumerate(row):
                 xc = f"{self._column_to_name(col_idx)}{row_idx}"
-                cells[xc] = self._to_spreadsheet_text(value)
+                text_value = self._to_spreadsheet_text(value)
+                cells[xc] = text_value
+                if col_idx < len(max_lengths) and len(text_value) > max_lengths[col_idx]:
+                    max_lengths[col_idx] = len(text_value)
+
+        cols = {}
+        for col_idx, max_len in enumerate(max_lengths):
+            width = 24 + (max_len * 7)
+            width = max(80, min(width, 420))
+            cols[str(col_idx)] = {"size": int(width)}
 
         sheet = {
             "id": SPREADSHEET_SHEET_ID,
@@ -1437,7 +1447,7 @@ class DataModel(models.Model):
             "styles": {},
             "formats": {},
             "borders": {},
-            "cols": {},
+            "cols": cols,
             "rows": {},
             "merges": [],
             "conditionalFormats": [],
