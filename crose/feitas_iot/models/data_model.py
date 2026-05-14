@@ -404,15 +404,8 @@ class DataModel(models.Model):
                 result_df = self._execute_iotdb_query(result_sql)
                 count = int(len(result_df)) if result_df is not None else 0
             else:
-                redis_value = self._execute_redis_query()
-                if redis_value is None:
-                    count = 0
-                elif isinstance(redis_value, dict):
-                    count = len(redis_value)
-                elif isinstance(redis_value, (list, tuple, set)):
-                    count = len(redis_value)
-                else:
-                    count = 1
+                result_df = self._execute_redis_query_dataframe()
+                count = int(len(result_df)) if result_df is not None else 0
 
             return {
                 "type": "ir.actions.client",
@@ -435,8 +428,7 @@ class DataModel(models.Model):
                 result_df = self._execute_iotdb_query(result_sql)
                 result_df = self._prepare_iotdb_dataframe(result_df)
             else:
-                redis_value = self._execute_redis_query()
-                result_df = self._build_redis_dataframe(redis_value)
+                result_df = self._execute_redis_query_dataframe()
             self.spreadsheet_binary_data = self._build_spreadsheet_binary_data(result_df)
         except Exception as e:
             raise ValidationError(_("Failed to generate spreadsheet: %(error)s", error=str(e)))
@@ -1183,6 +1175,136 @@ class DataModel(models.Model):
             db = int(db)
         return host, port, username, password, db
 
+    def _execute_redis_query_dataframe(self):
+        import pandas as pd
+
+        self.ensure_one()
+
+        def _reserve_column(df, column_name):
+            if column_name not in df.columns:
+                return df
+            idx = 2
+            while f"{column_name}_data_{idx}" in df.columns:
+                idx += 1
+            return df.rename(columns={column_name: f"{column_name}_data_{idx}"})
+
+        def _resolve_path(record, path):
+            current = record
+            for part in str(path).split("."):
+                if not part:
+                    return ""
+                if isinstance(current, models.BaseModel):
+                    if not current:
+                        return ""
+                    current = getattr(current, part, None)
+                else:
+                    current = getattr(current, part, None) if hasattr(current, part) else None
+                if current is None:
+                    return ""
+            if isinstance(current, models.BaseModel):
+                if not current:
+                    return ""
+                if len(current) > 1:
+                    names = current.mapped("display_name")
+                    return ", ".join([n for n in names if n])
+                if "name" in current._fields:
+                    return current.name or ""
+                return current.id
+            return current
+
+        def _render_redis_key(raw_value, asset, assets):
+            if not isinstance(raw_value, str):
+                return raw_value
+            pattern = re.compile(r"\{\{\s*([a-zA-Z_][\w\.]*)\s*\}\}")
+
+            def _replace(match):
+                expr = match.group(1)
+                if expr == "data_asset_ids":
+                    if asset:
+                        return str(asset.id)
+                    return ",".join([str(i) for i in assets.ids]) if assets else ""
+                if expr.startswith("data_asset_ids."):
+                    rel = expr.split(".", 1)[1]
+                    if asset:
+                        return str(_resolve_path(asset, rel) or "")
+                    values = [str(_resolve_path(one, rel) or "") for one in assets] if assets else []
+                    return ",".join([v for v in values if v])
+                resolved = _resolve_path(self, expr)
+                if isinstance(resolved, (dict, list)):
+                    return json.dumps(resolved, ensure_ascii=False)
+                return "" if resolved is None else str(resolved)
+
+            return pattern.sub(_replace, raw_value)
+
+        def _read_key(client, key_name, db):
+            key_type = client.type(key_name)
+            if isinstance(key_type, bytes):
+                key_type = key_type.decode(errors="ignore")
+            if key_type in (None, "none"):
+                return None
+            if key_type == "string":
+                return client.get(key_name)
+            if key_type == "set":
+                return list(client.smembers(key_name))
+            if key_type == "hash":
+                return client.hgetall(key_name)
+            if key_type == "list":
+                return client.lrange(key_name, 0, -1)
+            if key_type == "zset":
+                return client.zrange(key_name, 0, -1, withscores=True)
+            if key_type == "stream":
+                return client.xrange(key_name, count=100)
+            raise ValidationError(
+                _(
+                    "Redis key %(key)s in db %(db)s has unsupported type %(type)s.",
+                    key=key_name,
+                    db=db,
+                    type=key_type,
+                )
+            )
+
+        host, port, username, password, db = self._get_redis_connection_params()
+        redis_key_param = self.app_param_ids.filtered(lambda p: (p.name or "").strip() == "redisKey")[:1]
+        if not redis_key_param:
+            raise ValidationError(_("Please configure app_param_ids with name 'redisKey'."))
+
+        assets = self.query_data_asset_ids or self.data_asset_ids or self.data_asset_id
+        asset_list = list(assets) if assets else [None]
+
+        if password:
+            client = redis.Redis(host=host, port=port, username=username, password=password, db=db, decode_responses=True)
+        else:
+            client = redis.Redis(host=host, port=port, username=username, db=db, decode_responses=True)
+
+        frames = []
+        for asset in asset_list:
+            key_name = str(_render_redis_key(redis_key_param.value or "", asset, assets)).strip()
+            if not key_name:
+                if asset:
+                    raise ValidationError(
+                        _("The computed redisKey is empty for asset %(asset)s. Please check app_param_ids value.", asset=asset.display_name)
+                    )
+                raise ValidationError(_("The computed redisKey is empty. Please check app_param_ids value."))
+
+            redis_value = _read_key(client, key_name, db)
+            df = self._build_redis_dataframe(redis_value)
+
+            df = _reserve_column(df, "query_asset_id")
+            df = _reserve_column(df, "query_asset")
+            df = _reserve_column(df, "query_redis_key")
+
+            df.insert(0, "query_asset_id", asset.id if asset else "")
+            df.insert(1, "query_asset", asset.display_name if asset else "")
+            df.insert(2, "query_redis_key", key_name)
+
+            frames.append(df)
+
+        if not frames:
+            return pd.DataFrame()
+        if len(frames) == 1:
+            return frames[0]
+        return pd.concat(frames, ignore_index=True, sort=False)
+
     def _execute_redis_query(self):
         self.ensure_one()
 
@@ -1214,14 +1336,15 @@ class DataModel(models.Model):
             if not isinstance(raw_value, str):
                 return raw_value
             pattern = re.compile(r"\{\{\s*([a-zA-Z_][\w\.]*)\s*\}\}")
+            assets = self.query_data_asset_ids or self.data_asset_ids or self.data_asset_id
 
             def _replace(match):
                 expr = match.group(1)
                 if expr == "data_asset_ids":
-                    return ",".join([str(i) for i in self.data_asset_ids.ids])
+                    return ",".join([str(i) for i in assets.ids]) if assets else ""
                 if expr.startswith("data_asset_ids."):
                     rel = expr.split(".", 1)[1]
-                    values = [str(_resolve_path(asset, rel) or "") for asset in self.data_asset_ids]
+                    values = [str(_resolve_path(asset, rel) or "") for asset in assets] if assets else []
                     return ",".join([v for v in values if v])
                 resolved = _resolve_path(self, expr)
                 if isinstance(resolved, (dict, list)):
@@ -1282,7 +1405,7 @@ class DataModel(models.Model):
             return {"value": item}
 
         if redis_value is None:
-            return pd.DataFrame([{}])
+            return pd.DataFrame()
         if isinstance(redis_value, dict):
             return pd.DataFrame([redis_value])
         if isinstance(redis_value, (list, tuple, set)):
