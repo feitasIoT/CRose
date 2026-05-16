@@ -1435,7 +1435,7 @@ class DataModel(models.Model):
         cols = {}
         for col_idx, max_len in enumerate(max_lengths):
             width = 24 + (max_len * 7)
-            width = max(80, min(width, 420))
+            width = max(80, width)
             cols[str(col_idx)] = {"size": int(width)}
 
         sheet = {
