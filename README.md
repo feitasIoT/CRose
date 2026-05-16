@@ -52,6 +52,9 @@ docker compose -f docker-compose-ai.yml up -d
 ```
 
 You will find many containers started:
+- nginx
+- frps
+- nexus
 - crose-web
 - crose-ai
 - crose-db
@@ -60,8 +63,6 @@ You will find many containers started:
 - redis
 - nodered-prod
 - nodered-staging
-- verdaccio-prod
-- verdaccio-staging
 - crose-ai-train
 - crose-vllm
 
@@ -70,7 +71,6 @@ You will find many containers started:
 ### Getting Started
 
 - Access via browser (Chrome, Edge, etc.): http://ip:8069    Username: admin, Password: crose
-- NAS(filebrowser)：访问http://ip:8081    用户名：admin，密码：FeitasCrose2026
 
 > Initial password, please change it immediately!
 

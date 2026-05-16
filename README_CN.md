@@ -53,6 +53,9 @@ docker compose -f docker-compose-ai.yml up -d
 ```
 
 你会发现启动了很多容器：
+- nginx
+- frps
+- nexus
 - crose-web
 - crose-ai
 - crose-db
@@ -61,8 +64,6 @@ docker compose -f docker-compose-ai.yml up -d
 - redis
 - nodered-prod
 - nodered-staging
-- verdaccio-prod
-- verdaccio-staging
 - crose-nas
 - crose-ai-train
 - crose-vllm
@@ -72,7 +73,6 @@ docker compose -f docker-compose-ai.yml up -d
 ### 体验
 
 - 用谷歌、Edge等浏览器访问：http://ip:8069   用户名：admin， 密码：crose
-- NAS(filebrowser)：访问http://ip:8081    用户名：admin，密码：FeitasCrose2026
 
 > 初始密码，请及时修改！！
 
