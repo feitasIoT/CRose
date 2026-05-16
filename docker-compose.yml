@@ -247,6 +247,17 @@ services:
       - nexus_data:/nexus-data
     networks:
       - crose-net
+    
+  # gogs:
+  #   image: gogs/gogs:next-latest
+  #   restart: unless-stopped
+  #   ports:
+  #     - "10022:2222"
+  #     - "10880:3000"
+  #   volumes:
+  #     - gogs_data:/data
+  #   networks:
+  #     - crose-net
 
 volumes:
   crose_pgvector:
@@ -264,6 +275,7 @@ volumes:
   crose-loras:
     name: crose-loras
   nexus_data:
+  gogs_data:
   
 networks:
   crose-net:
