@@ -1,8 +1,14 @@
 FROM golang:1.26-alpine3.23 AS build
 
 ARG VERSION="untracked"
+ARG GOPROXY=https://goproxy.cn,direct
+ARG GOSUMDB=sum.golang.org
 
 WORKDIR /webdav/
+
+ENV GO111MODULE=on
+ENV GOPROXY=${GOPROXY}
+ENV GOSUMDB=${GOSUMDB}
 
 COPY ./go.mod ./
 COPY ./go.sum ./
