@@ -86,19 +86,18 @@ done
 docker compose up -d
 ```
 
-你会发现启动了很多容器：
+你会发现启动了很多容器。其中基础栈来自 `docker-compose.yml`，AI 栈来自 `docker-compose-ai.yml`：
 - nginx
 - frps
 - nexus
 - crose-web
-- crose-ai
 - crose-db
 - gmqtt
 - iotdb
 - redis
 - nodered-prod
 - nodered-staging
-- crose-nas
+- crose-ai
 - crose-ai-train
 - crose-vllm
 

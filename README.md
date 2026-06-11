@@ -85,18 +85,18 @@ After the import completes, run:
 docker compose up -d
 ```
 
-You will find many containers started:
+You will find many containers started. The core stack comes from `docker-compose.yml`, and the AI stack comes from `docker-compose-ai.yml`:
 - nginx
 - frps
 - nexus
 - crose-web
-- crose-ai
 - crose-db
 - gmqtt
 - iotdb
 - redis
 - nodered-prod
 - nodered-staging
+- crose-ai
 - crose-ai-train
 - crose-vllm
 
