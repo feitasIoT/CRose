@@ -1,9 +1,10 @@
 FROM node:22 AS web-builder
 
-COPY web/package.json /web/package.json
-COPY web/shared/ /web/shared/
-COPY web/frps/ /web/frps/
+ARG NPM_REGISTRY=https://registry.npmmirror.com
+
+COPY web/ /web/
 WORKDIR /web
+RUN npm config set registry ${NPM_REGISTRY}
 RUN npm install
 WORKDIR /web/frps
 RUN npm run build

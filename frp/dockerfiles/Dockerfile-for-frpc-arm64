@@ -1,8 +1,9 @@
 
 FROM --platform=$BUILDPLATFORM node:22 AS web-builder
+ARG NPM_REGISTRY=https://registry.npmmirror.com
 COPY web/ /web/
 WORKDIR /web
-RUN npm install && cd frpc && npm run build
+RUN npm config set registry ${NPM_REGISTRY} && npm install && cd frpc && npm run build
 
 
 FROM --platform=$BUILDPLATFORM golang:1.25 AS building

@@ -54,8 +54,8 @@ setup/win32/static/postgresql*.exe
 node_modules
 jsconfig.json
 tsconfig.json
-package-lock.json
-package.json
+/package-lock.json
+/package.json
 .husky
 
 # various virtualenv
