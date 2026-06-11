@@ -52,6 +52,40 @@ docker compose up -d --build
 docker compose -f docker-compose-ai.yml up -d
 ```
 
+可选：通过 `REGISTRY` 统一指定 `docker-compose.yml` 中镜像的前缀地址。
+
+```bash
+# 示例：从内网仓库或镜像代理拉取
+export REGISTRY=registry.example.com/
+docker compose up -d --build
+```
+
+如果 `REGISTRY` 为空，则仍然使用原始镜像地址。
+
+### 离线导入镜像
+
+如果部署环境无法直接拉取镜像，可以先在可联网环境下载你提供的镜像包（`*.tar`），再导入到目标机器的 Docker 中。
+
+单个镜像包导入：
+
+```bash
+docker load -i your-image.tar
+```
+
+当前目录下批量导入所有镜像包：
+
+```bash
+for f in ./*.tar; do
+  docker load -i "$f"
+done
+```
+
+导入完成后，再执行：
+
+```bash
+docker compose up -d
+```
+
 你会发现启动了很多容器：
 - nginx
 - frps

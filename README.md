@@ -51,6 +51,40 @@ docker-compose up -d --build
 docker compose -f docker-compose-ai.yml up -d
 ```
 
+Optional: configure a registry prefix for images in `docker-compose.yml`.
+
+```bash
+# Example: pull from an internal registry or mirror
+export REGISTRY=registry.example.com/
+docker compose up -d --build
+```
+
+If `REGISTRY` is empty, Compose uses the original image addresses.
+
+### Offline Image Import
+
+If the deployment environment cannot pull images directly, you can first download the image packages (`*.tar`) from a networked machine and then import them into the target Docker host.
+
+Single image package:
+
+```bash
+docker load -i your-image.tar
+```
+
+Import all image packages in the current directory:
+
+```bash
+for f in ./*.tar; do
+  docker load -i "$f"
+done
+```
+
+After the import completes, run:
+
+```bash
+docker compose up -d
+```
+
 You will find many containers started:
 - nginx
 - frps

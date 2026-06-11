@@ -2,7 +2,7 @@ services:
 
   # 2. Nginx 容器：作为流量分发入口
   nginx:
-    image: nginx:alpine
+    image: ${REGISTRY:-}nginx:alpine
     restart: unless-stopped
     ports:
       - "80:80"
@@ -12,7 +12,7 @@ services:
       - crose-net
 
   crose-db:
-    image: pgvector/pgvector:0.8.2-pg14-trixie
+    image: ${REGISTRY:-}pgvector/pgvector:0.8.2-pg14-trixie
     restart: always
     environment:
       - POSTGRES_DB=postgres
@@ -25,7 +25,7 @@ services:
       - crose-net
 
   crose-volume-init:
-    image: alpine:3.20
+    image: ${REGISTRY:-}alpine:3.20
     command:
       - sh
       - -lc
@@ -146,7 +146,7 @@ services:
       - crose-net
 
   redis:
-    image: redis:7-alpine
+    image: ${REGISTRY:-}redis:7-alpine
     container_name: redis
     restart: always
     command:
@@ -167,7 +167,7 @@ services:
       - crose-net
 
   iotdb:
-    image: apache/iotdb:2.0.7-standalone
+    image: ${REGISTRY:-}apache/iotdb:2.0.7-standalone
     hostname: iotdb
     container_name: iotdb
     restart: always
@@ -220,7 +220,7 @@ services:
       - crose-net
   
   frps:
-    image: frp/frps:local
+    image: ${REGISTRY:-}frp/frps:local
     build:
       context: ./frp
       dockerfile: dockerfiles/Dockerfile-for-frps
@@ -236,7 +236,7 @@ services:
       - crose-net
 
   nexus:
-    image: sonatype/nexus3
+    image: ${REGISTRY:-}sonatype/nexus3
     restart: unless-stopped
     ports:
       - "8081:8081"
@@ -249,7 +249,7 @@ services:
       - crose-net
     
   # gogs:
-  #   image: gogs/gogs:next-latest
+  #   image: ${REGISTRY:-}gogs/gogs:next-latest
   #   restart: unless-stopped
   #   ports:
   #     - "10022:2222"
