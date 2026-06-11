@@ -16,7 +16,7 @@ WORKDIR /building
 
 RUN env CGO_ENABLED=0 go build -trimpath -ldflags "-s -w" -tags frpc -o bin/frpc ./cmd/frpc
 
-FROM alpine:3
+FROM alpine:3.23
 
 RUN apk add --no-cache tzdata
 

@@ -67,3 +67,4 @@ package.json
 /man/
 /share/
 /src/
+export-compose-images.ps1

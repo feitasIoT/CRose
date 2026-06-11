@@ -13,7 +13,7 @@ EXPOSE 1883 8883 8082 8083 8084
 
 RUN make binary
 
-FROM alpine:3.12
+FROM alpine:3.23
 
 WORKDIR /gmqttd
 COPY --from=builder /go/src/github.com/DrmagicE/gmqtt/build/gmqttd .
