@@ -14,29 +14,15 @@ services:
 
   db:
     image: ${REGISTRY:-}pgvector/pgvector:0.8.2-pg14-trixie
-    container_name: db
+    container_name: crose_db
     restart: always
     environment:
-      - POSTGRES_DB=postgres
+      - POSTGRES_DB=crose
       - POSTGRES_PASSWORD=odoo
       - POSTGRES_USER=odoo
     volumes:
       - ./config/pgvector/init.sql:/docker-entrypoint-initdb.d/init.sql
       - crose_pgvector:/var/lib/postgresql/data
-    networks:
-      - crose-net
-
-  volume-init:
-    image: ${REGISTRY:-}alpine:3.23
-    container_name: crose_volume_init
-    command:
-      - sh
-      - -lc
-      - mkdir -p /mnt/ai-datasets /mnt/ai-loras && chown -R 100:101 /mnt/ai-datasets /mnt/ai-loras && chmod -R ug+rwX /mnt/ai-datasets /mnt/ai-loras
-    volumes:
-      - crose-datasets:/mnt/ai-datasets
-      - crose-loras:/mnt/ai-loras
-    restart: "no"
     networks:
       - crose-net
 
@@ -48,8 +34,6 @@ services:
     depends_on:
       db:
         condition: service_started
-      volume-init:
-        condition: service_completed_successfully
     ports:
       - "18069:8069"
     restart: always

@@ -1,4 +1,18 @@
 services:
+  volume-init:
+    image: ${REGISTRY:-}alpine:3.23
+    container_name: crose_volume_init
+    command:
+      - sh
+      - -lc
+      - mkdir -p /mnt/ai-datasets /mnt/ai-loras && chown -R 100:101 /mnt/ai-datasets /mnt/ai-loras && chmod -R ug+rwX /mnt/ai-datasets /mnt/ai-loras
+    volumes:
+      - crose-datasets:/mnt/ai-datasets
+      - crose-loras:/mnt/ai-loras
+    restart: "no"
+    networks:
+      - crose-net
+
   ai:
     container_name: crose_ai
     build:
@@ -59,6 +73,9 @@ services:
     image: hiyouga/llamafactory:latest
     container_name: crose_ai_train
     runtime: nvidia
+    depends_on:
+      volume-init:
+        condition: service_completed_successfully
     environment:
       - CUDA_VISIBLE_DEVICES=0
       - HF_TOKEN=${HF_TOKEN}
