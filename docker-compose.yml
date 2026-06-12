@@ -20,8 +20,17 @@ services:
       - POSTGRES_DB=crose
       - POSTGRES_PASSWORD=odoo
       - POSTGRES_USER=odoo
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "psql -U odoo -d crose -tAc \"SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='res_users'\" | grep -q 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 60
     volumes:
-      - ./config/pgvector/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./config/pgvector:/docker-entrypoint-initdb.d
       - crose_pgvector:/var/lib/postgresql/data
     networks:
       - crose-net
@@ -33,7 +42,7 @@ services:
       dockerfile: ./crose/Dockerfile
     depends_on:
       db:
-        condition: service_started
+        condition: service_healthy
     ports:
       - "18069:8069"
     restart: always
