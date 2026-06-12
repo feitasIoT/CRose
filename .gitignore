@@ -53,7 +53,7 @@ setup/win32/static/postgresql*.exe
 # js tooling
 node_modules
 jsconfig.json
-tsconfig.json
+/tsconfig.json
 /package-lock.json
 /package.json
 .husky
