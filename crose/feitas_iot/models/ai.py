@@ -363,7 +363,7 @@ class FtsAiTraining(models.Model):
                 _(
                     "Dataset path is not writable: %(path)s. "
                     "Please fix volume permission for the Odoo container user, then retry. "
-                    "Recommended command: docker compose run --rm --user root crose-web sh -lc "
+                    "Recommended command: docker compose run --rm --user root web sh -lc "
                     "\"mkdir -p %(path)s && chown -R odoo:odoo %(path)s && chmod -R u+rwX,g+rwX %(path)s\". "
                     "Original error: %(error)s",
                     path=dataset_root,

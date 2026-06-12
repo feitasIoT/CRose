@@ -90,16 +90,16 @@ docker compose up -d
 - nginx
 - frps
 - nexus
-- crose-web
-- crose-db
+- web
+- db
 - gmqtt
 - iotdb
 - redis
 - nodered-prod
 - nodered-staging
-- crose-ai
-- crose-ai-train
-- crose-vllm
+- ai
+- ai-train
+- vllm
 
 > 虽然启动了不少容器，但你可以在Crose Web中完成所有操作，无需多虑。
 

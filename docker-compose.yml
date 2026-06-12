@@ -60,7 +60,7 @@ services:
       - crose-datasets:/mnt/ai-datasets
       - crose-loras:/mnt/ai-loras
     environment:
-      - HOST=crose-db
+      - HOST=db
       - USER=odoo
       - PASSWORD=odoo
       - DB_NAME=crose

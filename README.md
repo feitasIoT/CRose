@@ -89,16 +89,16 @@ You will find many containers started. The core stack comes from `docker-compose
 - nginx
 - frps
 - nexus
-- crose-web
-- crose-db
+- web
+- db
 - gmqtt
 - iotdb
 - redis
 - nodered-prod
 - nodered-staging
-- crose-ai
-- crose-ai-train
-- crose-vllm
+- ai
+- ai-train
+- vllm
 
 > Although many containers are started, you can complete all operations in the Crose Web interface without any concerns.
 

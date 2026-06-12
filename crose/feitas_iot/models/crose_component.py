@@ -128,11 +128,11 @@ class CroseComponent(models.Model):
         host_defaults = {
             'mqtt': 'gmqtt',
             'iotdb': 'iotdb',
-            'ai': 'crose-ai',
-            'llama_factory': 'crose-ai-train',
-            'vllm': 'crose-vllm',
+            'ai': 'ai',
+            'llama_factory': 'ai-train',
+            'vllm': 'vllm',
             'npm': 'verdaccio-staging',
-            'webdav': 'crose-webdav',
+            'webdav': 'webdav',
             'nodered': 'nodered'
         }
 
