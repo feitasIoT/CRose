@@ -30,8 +30,7 @@ services:
       timeout: 5s
       retries: 60
     volumes:
-      - ./config/pgvector/00-sanitize-dump.sh:/docker-entrypoint-initdb.d/00-sanitize-dump.sh:ro
-      - ./config/pgvector/init.sql:/docker-entrypoint-initdb-src/init.sql:ro
+      - ./config/pgvector/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
       - crose_pgvector:/var/lib/postgresql/data
     networks:
       - crose-net
