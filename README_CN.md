@@ -105,7 +105,7 @@ docker compose up -d
 
 ### 体验
 
-- 用谷歌、Edge等浏览器访问：http://ip:8069   用户名：admin， 密码：crose
+- 用谷歌、Edge等浏览器访问：http://ip:18069   用户名：admin， 密码：crose
 
 > 初始密码，请及时修改！！
 

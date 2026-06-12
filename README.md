@@ -104,7 +104,7 @@ You will find many containers started. The core stack comes from `docker-compose
 
 ### Getting Started
 
-- Access via browser (Chrome, Edge, etc.): http://ip:8069    Username: admin, Password: crose
+- Access via browser (Chrome, Edge, etc.): http://ip:18069    Username: admin, Password: crose
 
 > Initial password, please change it immediately!
 

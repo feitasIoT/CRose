@@ -512,7 +512,7 @@ class FtsAiTraining(models.Model):
                 _(
                     "Base model '%(model)s' is invalid. "
                     "Please use a valid Hugging Face model id (for example: Qwen/Qwen2-1.5B-Instruct) "
-                    "or a local path that exists inside crose-ai-train container.",
+                    "or a local path that exists inside crose_ai_train container.",
                     model=model_ref,
                 )
             )

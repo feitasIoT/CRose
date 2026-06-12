@@ -3,9 +3,10 @@ services:
   # 2. Nginx 容器：作为流量分发入口
   nginx:
     image: ${REGISTRY:-}nginx:alpine
+    container_name: crose_nginx
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "10080:80"
     volumes:
       - ./config/nginx:/etc/nginx/conf.d
     networks:
@@ -13,6 +14,7 @@ services:
 
   crose-db:
     image: ${REGISTRY:-}pgvector/pgvector:0.8.2-pg14-trixie
+    container_name: crose_db
     restart: always
     environment:
       - POSTGRES_DB=postgres
@@ -26,6 +28,7 @@ services:
 
   crose-volume-init:
     image: ${REGISTRY:-}alpine:3.23
+    container_name: crose_volume_init
     command:
       - sh
       - -lc
@@ -38,6 +41,7 @@ services:
       - crose-net
 
   crose-web:
+    container_name: crose_web
     build: 
       context: .
       dockerfile: ./crose/Dockerfile
@@ -47,7 +51,7 @@ services:
       crose-volume-init:
         condition: service_completed_successfully
     ports:
-      - "8069:8069"
+      - "18069:8069"
     restart: always
     volumes:
       - ./config/crose/odoo.conf:/etc/odoo/odoo.conf
@@ -65,17 +69,18 @@ services:
       - crose-net
 
   gmqtt:
+    container_name: crose_gmqtt
     build:
       context: ./gmqtt
       dockerfile: Dockerfile
     working_dir: /gmqtt_data
     restart: always
     ports:
-      - "1883:1883"
-      - "8883:8883"
-      - "8082:8082"
-      - "8083:8083"
-      - "8084:8084"
+      - "11883:1883"
+      - "18883:8883"
+      - "18082:8082"
+      - "18083:8083"
+      - "18084:8084"
     volumes:
       - ./config/gmqtt:/etc/gmqtt
       - crose_gmqtt:/gmqtt_data
@@ -84,12 +89,13 @@ services:
       - crose-net
 
   nodered-prod:
+    container_name: crose_nodered_prod
     build:
       context: ./node-red
       dockerfile: Dockerfile
     restart: always
     ports:
-      - "8880:1880"
+      - "11880:1880"
     volumes:
       - ./config/nodered-prod/settings.js:/data/settings.js
       - crose_nodered_prod:/data
@@ -103,13 +109,14 @@ services:
       - crose-net
 
   nodered-staging:
+    container_name: crose_nodered_staging
     build:
       context: ./node-red
       dockerfile: Dockerfile
     user: "0:0"
     restart: always
     ports:
-      - "8881:1880"
+      - "11881:1880"
     volumes:
       - ./config/nodered-staging/settings.js:/data/settings.js
       - crose_nodered_staging:/data
@@ -122,14 +129,14 @@ services:
 
   redis:
     image: ${REGISTRY:-}redis:7-alpine
-    container_name: redis
+    container_name: crose_redis
     restart: always
     command:
       - sh
       - -c
       - test -f /data/users.acl || touch /data/users.acl; exec redis-server /usr/local/etc/redis/redis.conf
     ports:
-      - "6379:6379"
+      - "16379:6379"
     volumes:
       - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf
       - crose_redis:/data
@@ -144,12 +151,12 @@ services:
   iotdb:
     image: ${REGISTRY:-}apache/iotdb:2.0.7-standalone
     hostname: iotdb
-    container_name: iotdb
+    container_name: crose_iotdb
     restart: always
     privileged: true
     ports:
-      - "6667:6667"
-      - "18883:1883"
+      - "16667:6667"
+      - "11886:1883"
     environment:
       - cn_internal_address=127.0.0.1
       - cn_internal_port=10710
@@ -174,13 +181,13 @@ services:
     build:
       context: ./webdav
       dockerfile: Dockerfile
-    container_name: crose-webdav
+    container_name: crose_webdav
     user: "0:0"
     depends_on:
       redis:
         condition: service_healthy
     ports:
-      - "6065:6065"
+      - "16065:6065"
     volumes:
       - crose_webdav:/data          # 映射到容器内的 /data
       - ./config/webdav/config.yaml:/config.yaml # 需要提供一个基础配置文件
@@ -196,15 +203,16 @@ services:
   
   frps:
     image: ${REGISTRY:-}frp/frps:local
+    container_name: crose_frps
     build:
       context: ./frp
       dockerfile: dockerfiles/Dockerfile-for-frps
     restart: unless-stopped
     command: ["-c", "/etc/frp/frps.toml"]
     ports:
-      - "7000:7000"
-      - "7000:7000/udp"
-      - "7500:7500"
+      - "17000:7000"
+      - "17000:7000/udp"
+      - "17500:7500"
     volumes:
       - "./config/frps/frps.toml:/etc/frp/frps.toml:ro"
     networks:
@@ -212,10 +220,11 @@ services:
 
   nexus:
     image: ${REGISTRY:-}sonatype/nexus3
+    container_name: crose_nexus
     restart: unless-stopped
     ports:
-      - "8081:8081"
-      - "8080:8080"
+      - "18081:8081"
+      - "18080:8080"
     environment:
       NEXUS_SECURITY_RANDOMPASSWORD: "false"
     volumes:
@@ -225,10 +234,11 @@ services:
     
   # gogs:
   #   image: ${REGISTRY:-}gogs/gogs:next-latest
+  #   container_name: crose_gogs
   #   restart: unless-stopped
   #   ports:
-  #     - "10022:2222"
-  #     - "10880:3000"
+  #     - "12222:2222"
+  #     - "13000:3000"
   #   volumes:
   #     - gogs_data:/data
   #   networks:

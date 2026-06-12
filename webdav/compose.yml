@@ -2,10 +2,10 @@ name: webdav
 
 services:
   app:
-    container_name: webdav
+    container_name: crose_webdav
     image: 'webdav:test'
     ports:
-     - '6065:6065'
+     - '16065:6065'
     security_opt:
       - label=type:container_runtime_t
     restart: always

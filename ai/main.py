@@ -10,7 +10,7 @@ from sentence_transformers import SentenceTransformer
 
 app = FastAPI()
 model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
-TRAIN_CONTAINER_NAME = os.getenv("CROSE_TRAIN_CONTAINER_NAME", "crose-ai-train")
+TRAIN_CONTAINER_NAME = os.getenv("CROSE_TRAIN_CONTAINER_NAME", "crose_ai_train")
 TRAIN_YAML_DIR = os.getenv("CROSE_TRAIN_YAML_DIR", "/app/ai_config/generated")
 TRAIN_LOG_DIR = os.getenv("CROSE_TRAIN_LOG_DIR", "/app/output")
 VLLM_BASE_URL = os.getenv("CROSE_VLLM_BASE_URL", "http://crose-vllm:8000").rstrip("/")
