@@ -14,7 +14,7 @@ services:
 
   db:
     image: ${REGISTRY:-}pgvector/pgvector:0.8.2-pg14-trixie
-    container_name: crose_db
+    container_name: db
     restart: always
     environment:
       - POSTGRES_DB=postgres
@@ -46,9 +46,9 @@ services:
       context: .
       dockerfile: ./crose/Dockerfile
     depends_on:
-      crose-db:
+      db:
         condition: service_started
-      crose-volume-init:
+      volume-init:
         condition: service_completed_successfully
     ports:
       - "18069:8069"
