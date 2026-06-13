@@ -9,9 +9,9 @@
     -------
     - Build IoT applications with a visual flow editor
     - Support multiple protocols, including MQTT, HTTP, and CoAP
-    Smarter
-    -------
-    - Support AI models such as TensorFlow and PyTorch
+    Extensible
+    ----------
+    - Extend with add-on modules such as AI capabilities
     - Support NPM package management without manual dependency installation
     """,
     "category": "Tools",
@@ -19,18 +19,13 @@
     "license": "LGPL-3",
     "depends": ["base", "web", "mail", "spreadsheet"],
     "data": [
-        "data/crons.xml",
         "data/data.xml",
-        "data/ai_partner_data.xml",
+        "data/crons.xml",
 
         "security/groups.xml",
         "security/ir.model.access.csv",
 
         "wizards/nr_instance_wizard_views.xml",
-        "wizards/data_model_ai_flow_wizard_views.xml",
-        "wizards/ai_knowledge_rag_wizard_views.xml",
-        "wizards/ai_chat_wizard_views.xml",
-
         "views/nr_instance_views.xml",
         "views/editor_views.xml",
         "views/crose_component_views.xml",
@@ -46,8 +41,6 @@
         "views/alert_views.xml",
         "views/data_model_views.xml",
         "views/mqtt_topic_views.xml",
-        "views/ai_views.xml",
-        "views/ai_knowledge_views.xml",
         "views/nr_tag_views.xml",
         "views/nr_flow_param_views.xml",
         "views/data_log_views.xml",

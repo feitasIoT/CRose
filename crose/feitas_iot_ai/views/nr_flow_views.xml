@@ -1,0 +1,25 @@
+<odoo>
+    <data>
+        <record id="view_fts_nr_flow_tree_ai_inherit" model="ir.ui.view">
+            <field name="name">fts.nr.flow.tree.ai.inherit</field>
+            <field name="model">fts.nr.flow</field>
+            <field name="inherit_id" ref="feitas_iot.view_fts_nr_flow_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="//list/button[@name='action_view_nodes']" position="after">
+                    <button name="action_convert_to_atomic_messages" type="object" icon="fa-database" title="Convert to Atomic Messages"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="view_fts_nr_flow_form_ai_inherit" model="ir.ui.view">
+            <field name="name">fts.nr.flow.form.ai.inherit</field>
+            <field name="model">fts.nr.flow</field>
+            <field name="inherit_id" ref="feitas_iot.view_fts_nr_flow_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//form/header/button[@name='action_publish_app']" position="before">
+                    <button name="action_convert_to_atomic_messages" string="Convert to Atomic Messages" type="object" class="btn-primary" invisible="is_template"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

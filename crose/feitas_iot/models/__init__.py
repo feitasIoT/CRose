@@ -11,15 +11,11 @@ from . import data_model
 from . import data_log
 from . import data_address
 from . import mqtt_topic
-from . import ai
 from . import instance_flow_line
 from . import agent_flow_line
 from . import node_item
 from . import alert
-from . import mail_thread
 from . import mcp_tool
-from . import knowledge
-from . import ai_knowledge
 from . import nr_tag
 from . import nr_flow_param
 from . import gateway_mqtt_user

@@ -1,0 +1,14 @@
+<odoo>
+    <data>
+        <record id="view_fts_data_model_form_ai_inherit" model="ir.ui.view">
+            <field name="name">fts.data.model.form.ai.inherit</field>
+            <field name="model">fts.data.model</field>
+            <field name="inherit_id" ref="feitas_iot.view_fts_data_model_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//header/button[@name='action_open_flow']" position="before">
+                    <button name="action_generate_flow_ai" type="object" string="AI Flow" class="btn-secondary"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

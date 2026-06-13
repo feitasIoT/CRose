@@ -9,12 +9,6 @@ access_fts_data_asset,fts.data.asset,model_fts_data_asset,base.group_user,1,1,1,
 access_fts_data_model,fts.data.model,model_fts_data_model,base.group_user,1,1,1,1
 access_fts_data_app,fts.data.app,model_fts_data_app,base.group_user,1,1,1,1
 access_fts_mqtt_topic,fts.mqtt.topic,model_fts_mqtt_topic,base.group_user,1,1,1,1
-access_fts_ai_model,fts.ai.model,model_fts_ai_model,base.group_user,1,1,1,1
-access_fts_ai_dataset,fts.ai.dataset,model_fts_ai_dataset,base.group_user,1,1,1,1
-access_fts_ai_dataset_message,fts.ai.dataset.message,model_fts_ai_dataset_message,base.group_user,1,1,1,1
-access_fts_ai_prompt,fts.ai.prompt,model_fts_ai_prompt,base.group_user,1,1,1,1
-access_fts_ai_category,fts.ai.category,model_fts_ai_category,base.group_user,1,1,1,1
-access_fts_ai_training,fts.ai.training,model_fts_ai_training,base.group_user,1,1,1,1
 access_instance_flow_line,instance.flow.line,model_instance_flow_line,base.group_user,1,1,1,1
 access_agent_flow_line,agent.flow.line,model_agent_flow_line,base.group_user,1,1,1,1
 access_fts_node_item,fts.node.item,model_fts_node_item,base.group_user,1,1,1,1
@@ -22,13 +16,7 @@ access_fts_nr_tag,fts.nr.tag,model_fts_nr_tag,base.group_user,1,1,1,1
 access_fts_nr_flow_param,fts.nr.flow.param,model_fts_nr_flow_param,base.group_user,1,1,1,1
 access_fts_data_log,fts.data.log,model_fts_data_log,base.group_user,1,1,1,1
 access_fts_data_address,fts.data.address,model_fts_data_address,base.group_user,1,1,1,1
-access_fts_ai_knowledge_document,fts.ai.knowledge.document,model_fts_ai_knowledge_document,base.group_user,1,1,1,1
-access_fts_ai_knowledge_chunk,fts.ai.knowledge.chunk,model_fts_ai_knowledge_chunk,base.group_user,1,1,1,1
-access_fts_ai_knowledge_rag_wizard,fts.ai.knowledge.rag.wizard,model_fts_ai_knowledge_rag_wizard,base.group_user,1,1,1,1
-access_fts_data_model_ai_flow_wizard,fts.data.model.ai.flow.wizard,model_fts_data_model_ai_flow_wizard,base.group_user,1,1,1,1
 access_fts_alert,fts.alert,model_fts_alert,base.group_user,1,1,1,1
-access_fts_ai_chat_wizard,fts.ai.chat.wizard,model_fts_ai_chat_wizard,base.group_user,1,1,1,1
-access_fts_knowledge,fts.knowledge,model_fts_knowledge,base.group_user,1,1,1,1
 access_crose_nr_package,crose.nr.package,model_crose_nr_package,base.group_user,1,1,1,1
 access_crose_component_account_internal,crose.component.account,model_crose_component_account,feitas_iot.group_feitas_iot_internal,1,0,0,0
 access_crose_component_account_admin,crose.component.account,model_crose_component_account,feitas_iot.group_feitas_iot_admin,1,1,1,1

@@ -1,16 +1,12 @@
-import threading
-import time
 import re
 import secrets
 import string
 import requests
-import json
 import logging
 from urllib.parse import quote
 
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
-from odoo.tools import html2plaintext
 from odoo.tools.misc import file_open
 
 _logger = logging.getLogger(__name__)
@@ -485,148 +481,6 @@ class FtsEdgeNode(models.Model):
             "context": {"default_gateway_id": self.id},
             "target": "current",
         }
-
-    def message_post(self, **kwargs):
-        message = super().message_post(**kwargs)
-
-        # Check if we should trigger AI response
-        # 1. Message is a comment
-        # 2. Skip if explicitly asked to skip
-        if kwargs.get('message_type') == 'comment' and not self.env.context.get('skip_ai_reply'):
-            # Try to find AI partner via XML ID first, then name
-            ai_partner = self.env.ref('feitas_iot.partner_ai_assistant', raise_if_not_found=False)
-            if not ai_partner:
-                ai_partner = self.env['res.partner'].sudo().search([('name', '=', 'AI Assistant')], limit=1)
-
-            # Check if AI is mentioned (partner_ids OR text body)
-            is_mentioned = False
-            if ai_partner and ai_partner.id in message.partner_ids.ids:
-                is_mentioned = True
-            elif '@AI Assistant' in (message.body or ''):
-                is_mentioned = True
-
-            if is_mentioned:
-                _logger.info(f"AI Assistant triggered for message {message.id}")
-
-                # Check API Key immediately to give feedback
-                api_key = self.env['ir.config_parameter'].sudo().get_param('feitas_iot.deepseek_api_key')
-                if not api_key:
-                    _logger.warning("DeepSeek API Key missing")
-                    # Post warning to user
-                    self.with_context(skip_ai_reply=True).message_post(
-                        body=_("⚠️ System notice: the AI API key is not configured. Please set `feitas_iot.deepseek_api_key` in system parameters."),
-                        message_type='comment',
-                        subtype_xmlid='mail.mt_note'
-                    )
-                    return message
-
-                if ai_partner:
-                    # Use threading to avoid blocking the UI
-                    # Register callback to run after commit to ensure message exists in DB for the new thread
-                    def trigger_ai():
-                        thread = threading.Thread(target=self._chat_with_ai_threaded, args=(message.id, ai_partner.id))
-                        thread.start()
-                    self.env.cr.postcommit.add(trigger_ai)
-
-        return message
-
-    def _chat_with_ai_threaded(self, message_id, ai_partner_id):
-        """
-        Threaded wrapper for AI chat
-        """
-        with self.pool.cursor() as new_cr:
-            self = self.with_env(self.env(cr=new_cr))
-            message = self.env['mail.message'].browse(message_id)
-            ai_partner = self.env['res.partner'].browse(ai_partner_id)
-            self._chat_with_ai(message, ai_partner)
-
-    def _chat_with_ai(self, message, ai_partner):
-        """
-        Send message to LLM and post response (Streaming simulation)
-        """
-        _logger.info(f"Starting AI chat for message {message.id}")
-        api_key = self.env['ir.config_parameter'].sudo().get_param('feitas_iot.deepseek_api_key')
-        if not api_key:
-            return
-
-        base_url = self.env['ir.config_parameter'].sudo().get_param('feitas_iot.deepseek_base_url', 'https://api.deepseek.com')
-        model = self.env['ir.config_parameter'].sudo().get_param('feitas_iot.deepseek_model', 'deepseek-chat')
-
-        # Avoid replying to itself (double check)
-        if message.author_id == ai_partner:
-            return
-
-        # 1. Post a placeholder "Thinking..." message immediately
-        placeholder_content = "AI is thinking... <i class='fa fa-spinner fa-spin'></i>"
-        reply_message = self.with_context(skip_ai_reply=True).message_post(
-            body=placeholder_content,
-            message_type='comment',
-            subtype_xmlid='mail.mt_comment',
-            author_id=ai_partner.id,
-            partner_ids=[] # Don't notify anyone for placeholder? Or maybe yes.
-        )
-        self.env.cr.commit() # Commit immediately to ensure "Thinking..." is visible via Bus
-
-        try:
-            headers = {
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {api_key}"
-            }
-
-            # Prepare conversation history
-            # Ideally we should fetch previous messages in the thread
-            payload = {
-                "model": model,
-                "messages": [
-                    {"role": "system", "content": "You are a helpful assistant for IoT Edge Agent management."},
-                    {"role": "user", "content": html2plaintext(message.body or "")}
-                ],
-                "stream": True # Enable streaming
-            }
-
-            response = requests.post(f"{base_url}/chat/completions", headers=headers, json=payload, stream=True, timeout=60)
-
-            if response.status_code != 200:
-                 reply_message.write({'body': f"AI API Error: {response.status_code} - {response.text}"})
-                 return
-
-            full_content = ""
-            last_update_time = time.time()
-
-            # 2. Process stream
-            for line in response.iter_lines():
-                if not line:
-                    continue
-
-                line_text = line.decode('utf-8')
-                if line_text.startswith("data: "):
-                    data_str = line_text[6:]
-                    if data_str == "[DONE]":
-                        break
-
-                    try:
-                        data = json.loads(data_str)
-                        delta = data.get('choices', [{}])[0].get('delta', {}).get('content', '')
-                        if delta:
-                            full_content += delta
-
-                            # Update DB every 0.5 seconds to simulate streaming without killing DB
-                            if time.time() - last_update_time > 0.5:
-                                reply_message.write({'body': full_content + " <i class='fa fa-spinner fa-spin'></i>"})
-                                self.env.cr.commit() # Commit to make visible to other transactions/UI
-                                last_update_time = time.time()
-
-                    except json.JSONDecodeError:
-                        continue
-
-            # 3. Final update
-            reply_message.write({'body': full_content})
-            self.env.cr.commit()
-
-        except Exception as e:
-            _logger.error(f"Failed to call AI API: {str(e)}")
-            reply_message.write({'body': f"AI Error: {str(e)}"})
-            self.env.cr.commit()
 
     def action_view_logs(self):
         self.ensure_one()

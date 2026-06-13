@@ -1,0 +1,13 @@
+<odoo>
+    <data noupdate="0">
+        <record id="ir_cron_ai_training_status_update" model="ir.cron">
+            <field name="name">AI Training Status Update</field>
+            <field name="model_id" ref="model_fts_ai_training"/>
+            <field name="state">code</field>
+            <field name="code">model.search([('external_job_id', '!=', False), ('state', 'in', ['queued', 'preparing', 'running'])]).action_refresh_training_status()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">minutes</field>
+            <field name="active">True</field>
+        </record>
+    </data>
+</odoo>

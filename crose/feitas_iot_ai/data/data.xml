@@ -1,0 +1,35 @@
+<odoo>
+<data noupdate="1">
+    <record id="seq_fts_ai_dataset_message" model="ir.sequence">
+        <field name="name">AI Dataset Message Sequence</field>
+        <field name="code">fts.ai.dataset.message</field>
+        <field name="prefix">AIM</field>
+        <field name="padding">6</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="component_crose_ai" model="crose.component">
+        <field name="name">Crose AI</field>
+        <field name="component_type">ai</field>
+        <field name="host">ai</field>
+        <field name="port">8000</field>
+        <field name="metadata">{"health_endpoint": "/health", "embed_endpoint": "/embed", "train_api_path": "/v1/train", "train_status_api_path": "/v1/train/{job_id}", "load_adapter_api_path": "/v1/vllm/adapters/load", "unload_adapter_api_path": "/v1/vllm/adapters/unload", "infer_api_path": "/v1/vllm/chat"}</field>
+    </record>
+
+    <record id="component_llama_factory" model="crose.component">
+        <field name="name">LLama Factory</field>
+        <field name="component_type">llama_factory</field>
+        <field name="host">ai-train</field>
+        <field name="port">8000</field>
+        <field name="metadata">{"health_endpoint": "/health", "train_api_path": "/v1/train", "train_status_api_path": "/v1/train/{job_id}"}</field>
+    </record>
+
+    <record id="component_vllm" model="crose.component">
+        <field name="name">vLLM</field>
+        <field name="component_type">vllm</field>
+        <field name="host">vllm</field>
+        <field name="port">8000</field>
+        <field name="metadata">{"health_endpoint": "/v1/models", "chat_completions_path": "/v1/chat/completions", "temperature": 0.1}</field>
+    </record>
+</data>
+</odoo>

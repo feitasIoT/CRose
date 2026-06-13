@@ -23,7 +23,7 @@
                         <button name="action_split_and_vectorize" string="Split &amp; Vectorize" type="object" class="btn-primary"/>
                         <button name="action_split" string="Split" type="object"/>
                         <button name="action_vectorize_chunks" string="Vectorize Missing Chunks" type="object"/>
-                        <button name="%(feitas_iot.action_fts_ai_knowledge_rag_wizard)d" string="Test RAG" type="action" context="{'default_document_ids': [id]}"/>
+                        <button name="%(feitas_iot_ai.action_fts_ai_knowledge_rag_wizard)d" string="Test RAG" type="action" context="{'default_document_ids': [id]}"/>
                     </header>
                     <sheet>
                         <div class="oe_title">
