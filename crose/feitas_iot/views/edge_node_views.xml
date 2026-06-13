@@ -93,8 +93,6 @@
                     <header>
                         <button name="action_generate_config" type="object" string="Generate config" class="btn-primary" invisible="status != 'draft'"/>
                         <button name="action_confirm" type="object" string="Confirm" class="oe_highlight" invisible="status != 'draft'"/>
-                        <button name="action_sync_gateway_mqtt_users" type="object" string="Sync Broker Accounts" class="btn-secondary" invisible="not is_gateway or not has_mqtt_broker"/>
-                        <button name="action_reset_gateway_mqtt_user_passwords" type="object" string="Reset MQTT Passwords" class="btn-secondary" invisible="not is_gateway or not has_mqtt_broker"/>
                         <button name="action_view_logs" type="object" string="Logs" class="btn-secondary" invisible="status != 'online'"/>
                         <field name="status" widget="statusbar" options="{'clickable': '1'}"/>
                     </header>
@@ -201,24 +199,5 @@
             <field name="state">code</field>
             <field name="code">action = records.action_initialize()</field>
         </record>
-
-        <record id="action_fts_edge_node_sync_gateway_mqtt_users" model="ir.actions.server">
-            <field name="name">Sync Broker Accounts</field>
-            <field name="model_id" ref="model_fts_edge_node"/>
-            <field name="binding_model_id" ref="model_fts_edge_node"/>
-            <field name="binding_type">action</field>
-            <field name="state">code</field>
-            <field name="code">action = records.action_sync_gateway_mqtt_users()</field>
-        </record>
-
-        <record id="action_fts_edge_node_reset_gateway_mqtt_user_passwords" model="ir.actions.server">
-            <field name="name">Reset MQTT Passwords</field>
-            <field name="model_id" ref="model_fts_edge_node"/>
-            <field name="binding_model_id" ref="model_fts_edge_node"/>
-            <field name="binding_type">action</field>
-            <field name="state">code</field>
-            <field name="code">action = records.action_reset_gateway_mqtt_user_passwords()</field>
-        </record>
-
     </data>
 </odoo>

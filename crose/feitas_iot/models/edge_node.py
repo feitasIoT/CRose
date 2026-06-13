@@ -173,64 +173,6 @@ class FtsEdgeNode(models.Model):
             raise UserError(_("Please configure Gateway IP Address first."))
         return f"http://{self.ip_address}:{self._get_gateway_gmqtt_api_port()}"
 
-    def _list_gateway_mqtt_accounts(self):
-        self.ensure_one()
-        base_url = self._build_gateway_gmqtt_api_base_url()
-        page = 1
-        page_size = 200
-        accounts = []
-        while True:
-            try:
-                response = requests.get(
-                    f"{base_url}/v1/accounts",
-                    params={"page": page, "page_size": page_size},
-                    timeout=15,
-                )
-                response.raise_for_status()
-            except Exception as error:
-                raise UserError(_("Failed to list gateway MQTT accounts: %(error)s", error=str(error)))
-
-            try:
-                payload = response.json() if response.content else {}
-            except Exception as error:
-                raise UserError(_("Failed to list gateway MQTT accounts: %(error)s", error=str(error)))
-            if not isinstance(payload, dict):
-                payload = {}
-            rows = payload.get("accounts") or []
-            if not isinstance(rows, list):
-                rows = []
-            accounts.extend([row for row in rows if isinstance(row, dict)])
-
-            total_count = payload.get("total_count") or 0
-            try:
-                total_count = int(total_count)
-            except Exception:
-                total_count = 0
-            if len(rows) < page_size:
-                break
-            if total_count and len(accounts) >= total_count:
-                break
-            page += 1
-        return accounts
-
-    def _infer_gateway_mqtt_user_relations(self, username):
-        self.ensure_one()
-        edge_node = False
-        instance = False
-        match = re.fullmatch(r"nr(\d+)_mqtt", (username or "").strip())
-        if not match:
-            return edge_node, instance
-
-        edge_node = self.env["fts.edge.node"].sudo().browse(int(match.group(1))).exists()
-        if not edge_node or edge_node.is_gateway:
-            return False, False
-
-        instance = self.env["fts.nr.instance"].sudo().search(
-            [("edge_node_id", "=", edge_node.id), ("instance_type", "=", "remote")],
-            limit=1,
-        )
-        return edge_node, instance
-
     def _generate_gateway_mqtt_password(self, length=12):
         self.ensure_one()
         if self.mqtt_broker_id and self.mqtt_broker_id.component_type == "mqtt":
@@ -460,21 +402,6 @@ class FtsEdgeNode(models.Model):
                     alphabet = string.ascii_letters + string.digits
                     plain_password = "".join(secrets.choice(alphabet) for _ in range(12))
 
-                mqtt_api_port = gateway._get_gateway_gmqtt_api_port()
-                mqtt_response = requests.post(
-                    f"http://{gateway.ip_address}:{mqtt_api_port}/v1/accounts/{quote(username)}",
-                    json={"password": plain_password},
-                    timeout=15,
-                )
-                if mqtt_response.status_code >= 400:
-                    raise UserError(
-                        _(
-                            "Gateway GMQTT account upsert failed (HTTP %(status)s): %(detail)s",
-                            status=mqtt_response.status_code,
-                            detail=mqtt_response.text,
-                        )
-                    )
-
                 vals = {
                     "gateway_id": gateway.id,
                     "edge_node_id": node.id,
@@ -483,6 +410,20 @@ class FtsEdgeNode(models.Model):
                     "password_encrypted": plain_password,
                 }
                 if mqtt_user:
+                    mqtt_api_port = gateway._get_gateway_gmqtt_api_port()
+                    mqtt_response = requests.post(
+                        f"http://{gateway.ip_address}:{mqtt_api_port}/v1/accounts/{quote(username)}",
+                        json={"password": plain_password},
+                        timeout=15,
+                    )
+                    if mqtt_response.status_code >= 400:
+                        raise UserError(
+                            _(
+                                "Gateway GMQTT account upsert failed (HTTP %(status)s): %(detail)s",
+                                status=mqtt_response.status_code,
+                                detail=mqtt_response.text,
+                            )
+                        )
                     mqtt_user.write(vals)
                     note_lines.append(_("Gateway MQTT user synchronized: %(username)s", username=username))
                 else:
@@ -530,198 +471,6 @@ class FtsEdgeNode(models.Model):
                 subtype_xmlid="mail.mt_note",
             )
         return False
-
-    def action_sync_gateway_mqtt_users(self):
-        gateway_user_model = self.env["fts.gateway.mqtt.user"].sudo()
-        total_created = 0
-        total_updated = 0
-        total_snapshot = 0
-        for node in self:
-            remote_accounts = node._list_gateway_mqtt_accounts()
-            existing_users = {
-                (user.username or "").strip(): user
-                for user in gateway_user_model.search([("gateway_id", "=", node.id)])
-                if (user.username or "").strip()
-            }
-            created = 0
-            updated = 0
-            snapshot_count = 0
-            for row in remote_accounts:
-                username = (row.get("username") or "").strip()
-                if not username:
-                    continue
-
-                password_hash = (row.get("password") or "").strip()
-                edge_node, instance = node._infer_gateway_mqtt_user_relations(username)
-                vals = {"gateway_id": node.id}
-                if edge_node:
-                    vals["edge_node_id"] = edge_node.id
-                if instance:
-                    vals["instance_id"] = instance.id
-                gateway_user = existing_users.get(username)
-                existing_plain_password = gateway_user._get_plain_password() if gateway_user else ""
-                if password_hash:
-                    snapshot_count += 1
-                    if not existing_plain_password:
-                        vals["password_encrypted"] = f"hash${password_hash}"
-
-                if gateway_user:
-                    if vals:
-                        gateway_user.write(vals)
-                    updated += 1
-                    continue
-
-                create_vals = dict(vals)
-                create_vals.update(
-                    {
-                        "username": username,
-                        "password_encrypted": vals.get("password_encrypted") or "hash$",
-                    }
-                )
-                gateway_user_model.create(create_vals)
-                created += 1
-
-            total_created += created
-            total_updated += updated
-            total_snapshot += snapshot_count
-            node.message_post(
-                body=_(
-                    "Broker accounts synchronized. Created: %(created)s, Updated: %(updated)s, Password snapshots: %(snapshot)s. "
-                    "GMQTT API only returns hashed passwords, so plain passwords cannot be recovered from this action.",
-                    created=created,
-                    updated=updated,
-                    snapshot=snapshot_count,
-                ),
-                message_type="comment",
-                subtype_xmlid="mail.mt_note",
-            )
-
-        return {
-            "type": "ir.actions.client",
-            "tag": "display_notification",
-            "params": {
-                "title": _("Synchronization Complete"),
-                "message": _(
-                    "Gateway MQTT users synchronized. Created: %(created)s, Updated: %(updated)s, Password snapshots: %(snapshot)s. "
-                    "Plain passwords are not recoverable from GMQTT API.",
-                    created=total_created,
-                    updated=total_updated,
-                    snapshot=total_snapshot,
-                ),
-                "type": "success",
-                "sticky": False,
-            },
-        }
-
-    def action_reset_gateway_mqtt_user_passwords(self):
-        gateway_user_model = self.env["fts.gateway.mqtt.user"].sudo()
-        instance_model = self.env["fts.nr.instance"].sudo()
-        total_reset = 0
-        total_reset_failed = 0
-        total_redeploy_ok = 0
-        total_redeploy_failed = 0
-
-        for node in self:
-            users = gateway_user_model.search([("gateway_id", "=", node.id)])
-            if not users:
-                raise UserError(_("No gateway MQTT users found for this gateway."))
-
-            api_base_url = node._build_gateway_gmqtt_api_base_url()
-            redeploy_instances = instance_model.browse()
-            note_lines = []
-            reset_count = 0
-            reset_failed = 0
-            redeploy_ok = 0
-            redeploy_failed = 0
-
-            for user in users:
-                username = (user.username or "").strip()
-                if not username:
-                    continue
-
-                instance = user.instance_id
-                if not instance and user.edge_node_id:
-                    instance = instance_model.search(
-                        [("edge_node_id", "=", user.edge_node_id.id), ("instance_type", "=", "remote")],
-                        limit=1,
-                    )
-
-                plain_password = node._generate_gateway_mqtt_password(12)
-                try:
-                    response = requests.post(
-                        f"{api_base_url}/v1/accounts/{quote(username)}",
-                        json={"password": plain_password},
-                        timeout=15,
-                    )
-                    if response.status_code >= 400:
-                        raise UserError(
-                            _(
-                                "Gateway GMQTT password reset failed for %(username)s (HTTP %(status)s): %(detail)s",
-                                username=username,
-                                status=response.status_code,
-                                detail=response.text,
-                            )
-                        )
-
-                    vals = {"password_encrypted": plain_password}
-                    if instance:
-                        vals["instance_id"] = instance.id
-                    user.write(vals)
-                    reset_count += 1
-                    note_lines.append(_("Gateway MQTT user password reset: %(username)s", username=username))
-
-                    if instance and instance.instance_type == "remote":
-                        redeploy_instances |= instance
-                except Exception as error:
-                    reset_failed += 1
-                    note_lines.append(
-                        _("Gateway MQTT user password reset failed for %(username)s: %(error)s", username=username, error=str(error))
-                    )
-
-            for instance in redeploy_instances:
-                ok_count, fail_count, error_messages = instance._apply_flows_internal()
-                if fail_count:
-                    redeploy_failed += 1
-                    detail = "; ".join(error_messages[:3]) if error_messages else _("Unknown error")
-                    note_lines.append(
-                        _(
-                            "Remote instance MQTT credential redeploy failed for %(instance)s: success %(ok)s, failed %(fail)s, detail: %(detail)s",
-                            instance=instance.display_name,
-                            ok=ok_count,
-                            fail=fail_count,
-                            detail=detail,
-                        )
-                    )
-                else:
-                    redeploy_ok += 1
-                    note_lines.append(_("Remote instance MQTT credentials redeployed: %(instance)s", instance=instance.display_name))
-
-            total_reset += reset_count
-            total_reset_failed += reset_failed
-            total_redeploy_ok += redeploy_ok
-            total_redeploy_failed += redeploy_failed
-            node.message_post(
-                body="<br/>".join(note_lines),
-                message_type="comment",
-                subtype_xmlid="mail.mt_note",
-            )
-
-        return {
-            "type": "ir.actions.client",
-            "tag": "display_notification",
-            "params": {
-                "title": _("Reset Complete"),
-                "message": _(
-                    "Gateway MQTT user passwords reset. Success: %(reset)s, Failed: %(reset_failed)s, Redeployed: %(redeploy_ok)s, Redeploy failed: %(redeploy_failed)s",
-                    reset=total_reset,
-                    reset_failed=total_reset_failed,
-                    redeploy_ok=total_redeploy_ok,
-                    redeploy_failed=total_redeploy_failed,
-                ),
-                "type": "success" if total_reset_failed == 0 and total_redeploy_failed == 0 else "warning",
-                "sticky": False,
-            },
-        }
 
     def action_view_gateway_mqtt_users(self):
         self.ensure_one()

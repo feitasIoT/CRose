@@ -35,7 +35,7 @@
                             </group>
                             <group>
                                 <field name="username"/>
-                                <field name="password_encrypted" password="True"/>
+                                <field name="password_encrypted" password="True" readonly="True"/>
                                 <field name="modified_by" readonly="1"/>
                                 <field name="modified_at" readonly="1"/>
                             </group>

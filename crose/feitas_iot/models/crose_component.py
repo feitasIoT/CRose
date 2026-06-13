@@ -10,6 +10,9 @@ import requests
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, AccessError
 
+ENCRYPTION_SECRET_PARAM = "feitas_iot.encryption_secret"
+LEGACY_ENCRYPTION_SECRET_PARAM = "database.secret"
+
 
 class CroseComponent(models.Model):
     _name = "crose.component"
@@ -1023,9 +1026,17 @@ class CroseComponentAccount(models.Model):
             from cryptography.fernet import Fernet
         except Exception as e:
             raise UserError(_("Missing dependency cryptography: %(error)s", error=str(e)))
-        secret = (self.env["ir.config_parameter"].sudo().get_param("database.secret") or "").strip()
+        config = self.env["ir.config_parameter"].sudo()
+        secret = (config.get_param(ENCRYPTION_SECRET_PARAM) or "").strip()
         if not secret:
-            raise UserError(_("Missing encryption secret in system parameter database.secret."))
+            secret = (config.get_param(LEGACY_ENCRYPTION_SECRET_PARAM) or "").strip()
+        if not secret:
+            raise UserError(
+                _(
+                    "Missing encryption secret in system parameter %(param)s.",
+                    param=ENCRYPTION_SECRET_PARAM,
+                )
+            )
         key = base64.urlsafe_b64encode(hashlib.sha256(secret.encode("utf-8")).digest())
         return Fernet(key)
 
@@ -1061,7 +1072,7 @@ class CroseComponentAccount(models.Model):
                 "title": _("Password"),
                 "message": _("%(username)s: %(password)s", username=self.username, password=plain_password),
                 "type": "warning",
-                "sticky": True,
+                "sticky": False,
             },
         }
 

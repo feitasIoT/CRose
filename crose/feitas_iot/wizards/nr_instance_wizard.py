@@ -754,6 +754,7 @@ class FtsNrInstanceWizard(models.TransientModel):
         self._nr_post_json("/flows", {"flows": merged})
         return subflow_mapping
 
+    # FIXME: 尽量使用可全局识别的有意义的名字
     def action_confirm(self):
         self.ensure_one()
         if self.operation == "add":
