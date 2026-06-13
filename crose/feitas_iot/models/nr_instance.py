@@ -383,21 +383,7 @@ class FtsNrInstance(models.Model):
                 },
             }
 
-        ok_count = 0
-        fail_count = 0
-        error_messages = []
-
-        for line in self.flow_ids:
-            flow = line.flow_id
-            if not flow:
-                continue
-            try:
-                payload = self._nr_build_flow_payload(flow)
-                self._nr_post_json("/flow", payload, timeout=30)
-                ok_count += 1
-            except Exception as e:
-                fail_count += 1
-                error_messages.append(f"{flow.display_name}: {str(e)}")
+        ok_count, fail_count, error_messages = self._apply_flows_internal()
 
         message = _("Success: %(ok)s, Failed: %(fail)s", ok=ok_count, fail=fail_count)
         if error_messages:
@@ -413,6 +399,25 @@ class FtsNrInstance(models.Model):
                 "sticky": False,
             },
         }
+
+    def _apply_flows_internal(self):
+        self.ensure_one()
+        ok_count = 0
+        fail_count = 0
+        error_messages = []
+
+        for flow in self.flow_ids:
+            if not flow:
+                continue
+            try:
+                payload = self._nr_build_flow_payload(flow)
+                self._nr_post_json("/flow", payload, timeout=30)
+                ok_count += 1
+            except Exception as e:
+                fail_count += 1
+                error_messages.append(f"{flow.display_name}: {str(e)}")
+
+        return ok_count, fail_count, error_messages
 
     def api_sync_flows(self):
         """
@@ -806,6 +811,27 @@ class FtsNrInstance(models.Model):
                 last_error = e
         raise UserError(_("Failed to call Node-RED API: %(error)s", error=str(last_error)))
 
+    def _nr_put_json(self, path, body, timeout=15):
+        self.ensure_one()
+        last_error = None
+        for base_url in self._nr_candidate_base_urls():
+            url = f"{base_url}{path}"
+            try:
+                headers = self._nr_headers_for(base_url)
+                response = requests.put(url, headers=headers, json=body, timeout=timeout)
+                if response.status_code == 401 and "Authorization" in headers:
+                    self._nr_invalidate_token(base_url)
+                    headers = self._nr_headers_for(base_url)
+                    response = requests.put(url, headers=headers, json=body, timeout=timeout)
+                response.raise_for_status()
+                try:
+                    return response.json()
+                except Exception:
+                    return {}
+            except Exception as e:
+                last_error = e
+        raise UserError(_("Failed to call Node-RED API: %(error)s", error=str(last_error)))
+
     def _nr_generate_id(self):
         return f"{uuid.uuid4().hex[:7]}.{uuid.uuid4().hex[:7]}"
 
@@ -946,6 +972,59 @@ class FtsNrInstance(models.Model):
             current = current.get(part)
         return current
 
+    def _get_remote_gateway_mqtt_user(self):
+        self.ensure_one()
+        if self.instance_type != "remote":
+            return False
+
+        edge_node = self.edge_node_id
+        gateway = edge_node if edge_node and edge_node.is_gateway else (edge_node.gateway_id if edge_node else False)
+        if not gateway:
+            return False
+
+        user_model = self.env["fts.gateway.mqtt.user"].sudo()
+        mqtt_user = user_model.search(
+            [("gateway_id", "=", gateway.id), ("instance_id", "=", self.id)],
+            limit=1,
+        )
+        if not mqtt_user and edge_node:
+            mqtt_user = user_model.search(
+                [("gateway_id", "=", gateway.id), ("edge_node_id", "=", edge_node.id)],
+                limit=1,
+            )
+        return mqtt_user
+
+    def _apply_remote_instance_mqtt_credentials(self, payload, credentials_by_nr_id=None):
+        self.ensure_one()
+        if not isinstance(payload, dict) or self.instance_type != "remote":
+            return payload, credentials_by_nr_id or {}
+
+        mqtt_user = self._get_remote_gateway_mqtt_user()
+        username = (mqtt_user.username or "").strip() if mqtt_user else ""
+        password = mqtt_user._get_plain_password() if mqtt_user else ""
+        if not username or not password:
+            return payload, credentials_by_nr_id or {}
+
+        credentials_by_nr_id = credentials_by_nr_id or {}
+        for item in (payload.get("nodes") or []) + (payload.get("configs") or []):
+            if not isinstance(item, dict) or item.get("type") != "mqtt-broker":
+                continue
+            if str(item.get("name") or "").strip().lower() == "iotdb":
+                continue
+            item["credentials"] = {
+                "user": username,
+                "password": password,
+            }
+            item["user"] = username
+            item["password"] = password
+            node_id = item.get("id")
+            if node_id:
+                credentials_by_nr_id[node_id] = {
+                    "user": username,
+                    "password": password,
+                }
+        return payload, credentials_by_nr_id
+
     def _nr_build_flow_payload(self, flow):
         """
             Build the Node-RED flow payload.
@@ -1069,6 +1148,11 @@ class FtsNrInstance(models.Model):
                         else:
                             rendered = json.dumps(parsed_json, ensure_ascii=False)
                     self._nr_set_dict_path(node_dict, item.key, rendered)
+
+            payload, credentials_by_nr_id = self._apply_remote_instance_mqtt_credentials(
+                payload,
+                credentials_by_nr_id=credentials_by_nr_id,
+            )
 
         mapping = {}
         used_new = set()

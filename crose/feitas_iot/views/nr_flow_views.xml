@@ -26,6 +26,8 @@
                     <field name="tag_ids"/>
                     <field name="image" />
                     <field name="heat"/>
+                    <field name="is_listed"/>
+                    <field name="is_valid"/>
                     <templates>
                         <t t-name="card" class="flex-row">
                             <!-- <aside class="w-25 p-1">
@@ -37,6 +39,12 @@
                                         <i class="fa fa-fire me-1" title="Heat"/><field name="heat"/>
                                     </div>
                                     <field class="fw-bold" name="name"/>
+                                </div>
+                                <div class="mb-1">
+                                    <span class="badge text-bg-success me-1" invisible="not is_listed">Listed</span>
+                                    <span class="badge text-bg-secondary me-1" invisible="is_listed">Unlisted</span>
+                                    <span class="badge text-bg-primary" invisible="not is_valid">Valid</span>
+                                    <span class="badge text-bg-danger" invisible="is_valid">Invalid</span>
                                 </div>
                                 
                                 <div>
@@ -112,15 +120,21 @@
                         <button name="action_convert_to_atomic_messages" string="Convert to Atomic Messages" type="object" class="btn-primary"
                             invisible="is_template"/>
                         <button name="action_publish_app" string="Publish App" type="object" class="btn-primary" invisible="is_template or app_store_id"/>
-                        <button name="action_view_nodes" string="View Nodes" type="object" class="btn-secondary"/>
                     </header>
                     <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_view_nodes" type="object" class="oe_stat_button" icon="fa-sitemap">
+                                <field name="node_count" widget="statinfo" string="Nodes"/>
+                            </button>
+                        </div>
                         <group>
                             <group>
                                 <field name="name"/>
                                 <field name="instance_id" invisible="is_template"/>
                                 <field name="nr_id" invisible="is_template"/>
                                 <field name="heat" invisible="is_template == False"/>
+                                <field name="is_listed" invisible="is_template == False"/>
+                                <field name="is_valid" invisible="is_template == False"/>
                                 <field name="tag_ids" widget="many2many_tags"/>
                                 <field name="type" invisible="is_template"/>
                                 <field name="is_template" invisible="1"/>

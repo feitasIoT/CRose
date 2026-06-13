@@ -4,6 +4,8 @@ import hashlib
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, AccessError
 
+HASH_SNAPSHOT_PREFIXES = ("hash$", "sha256$", "md5$", "bcrypt$")
+
 
 class FtsGatewayMqttUser(models.Model):
     _name = "fts.gateway.mqtt.user"
@@ -57,13 +59,15 @@ class FtsGatewayMqttUser(models.Model):
                 return self._get_cipher().decrypt(token.encode("utf-8")).decode("utf-8")
             except Exception:
                 return ""
+        if text.startswith(HASH_SNAPSHOT_PREFIXES):
+            return ""
         return text
 
     def _encrypt_password(self, value):
         if not value:
             return value
         text = str(value)
-        if text.startswith("enc$"):
+        if text.startswith("enc$") or text.startswith(HASH_SNAPSHOT_PREFIXES):
             return text
         token = self._get_cipher().encrypt(text.encode("utf-8")).decode("utf-8")
         return f"enc${token}"

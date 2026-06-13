@@ -26,15 +26,23 @@ class FtsNrFlow(models.Model):
     heat = fields.Integer("Heat")
     description = fields.Html("Description")
     prompt = fields.Text("Prompt")
+    is_listed = fields.Boolean(string="Listed", default=True)
+    is_valid = fields.Boolean(string="Valid", default=True)
 
     image = fields.Binary("Image", attachment=True)
 
     node_ids = fields.One2many("fts.nr.node", "flow_id", string="Nodes")
+    node_count = fields.Integer(string="Node Count", compute="_compute_node_count")
 
     state = fields.Selection([
         ("active", "Active"),
         ("disabled", "Disabled")
     ], string="State", default="active")
+
+    @api.depends("node_ids")
+    def _compute_node_count(self):
+        for record in self:
+            record.node_count = len(record.node_ids)
 
     def _nr_generate_id(self):
         return f"{uuid.uuid4().hex[:7]}.{uuid.uuid4().hex[:7]}"
@@ -226,7 +234,9 @@ class FtsNrFlow(models.Model):
             app = rec.copy({
                 "is_template": True,
                 "instance_id": False,
-                "nr_id": False
+                "nr_id": False,
+                "is_listed": True,
+                "is_valid": True,
             })
             raw = app.content or "{}"
             try:

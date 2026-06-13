@@ -1867,6 +1867,16 @@ msgid "Invalid"
 msgstr "失效"
 
 #. module: feitas_iot
+#: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_nr_flow_app_kanban
+msgid "Listed"
+msgstr "上架"
+
+#. module: feitas_iot
+#: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_nr_flow_app_kanban
+msgid "Unlisted"
+msgstr "未上架"
+
+#. module: feitas_iot
 #. odoo-python
 #: code:addons/feitas_iot/controllers/download.py:0
 msgid "Invalid parameter: agent_id"
@@ -2767,6 +2777,11 @@ msgid "Nodes"
 msgstr "节点"
 
 #. module: feitas_iot
+#: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_flow__node_count
+msgid "Node Count"
+msgstr "节点数"
+
+#. module: feitas_iot
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_data_asset__health_status__normal
 #: model:ir.model.fields.selection,name:feitas_iot.selection__fts_data_model__data_status__normal
 msgid "Normal"
@@ -3108,6 +3123,11 @@ msgstr "进度（%）"
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_nr_flow_form
 msgid "Prompt"
 msgstr "提示词"
+
+#. module: feitas_iot
+#: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_flow__is_valid
+msgid "Valid"
+msgstr "有效"
 
 #. module: feitas_iot
 #: model:ir.actions.act_window,name:feitas_iot.action_fts_ai_category
@@ -3672,8 +3692,8 @@ msgstr "模板"
 
 #. module: feitas_iot
 #: model:ir.actions.act_window,name:feitas_iot.action_fts_nr_flow_template
-msgid "Template Applications"
-msgstr "应用模板"
+msgid "Apps"
+msgstr "应用"
 
 #. module: feitas_iot
 #: model:ir.model.fields,field_description:feitas_iot.field_fts_nr_instance_wizard__template_flow_ids
@@ -4195,3 +4215,114 @@ msgstr ""
 #: model_terms:ir.ui.view,arch_db:feitas_iot.view_crose_component_form
 msgid "重置凭据"
 msgstr ""
+
+#. module: feitas_iot
+#: model:ir.actions.server,name:feitas_iot.action_fts_edge_node_sync_gateway_mqtt_users
+#: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_edge_node_form
+msgid "Sync Broker Accounts"
+msgstr "同步 Broker 账户"
+
+#. module: feitas_iot
+#. odoo-python
+#: code:addons/feitas_iot/models/edge_node.py:0
+msgid "Only gateway nodes support broker account synchronization."
+msgstr "只有网关节点支持同步 Broker 账户。"
+
+#. module: feitas_iot
+#. odoo-python
+#: code:addons/feitas_iot/models/edge_node.py:0
+msgid "Please configure Gateway IP Address first."
+msgstr "请先配置网关 IP 地址。"
+
+#. module: feitas_iot
+#. odoo-python
+#: code:addons/feitas_iot/models/edge_node.py:0
+msgid "The selected gateway has no MQTT broker enabled."
+msgstr "所选网关未启用 MQTT Broker。"
+
+#. module: feitas_iot
+#. odoo-python
+#: code:addons/feitas_iot/models/edge_node.py:0
+msgid "Failed to list gateway MQTT accounts: %(error)s"
+msgstr "获取网关 MQTT 账户失败：%(error)s"
+
+#. module: feitas_iot
+#. odoo-python
+#: code:addons/feitas_iot/models/edge_node.py:0
+msgid ""
+"Broker accounts synchronized. Created: %(created)s, Updated: %(updated)s, "
+"Password snapshots: %(snapshot)s. GMQTT API only returns hashed passwords, "
+"so plain passwords cannot be recovered from this action."
+msgstr ""
+"Broker 账户已同步。新增：%(created)s，更新：%(updated)s，密码快照：%(snapshot)s。"
+"GMQTT API 只返回哈希后的密码，因此无法通过此动作恢复明文密码。"
+
+#. module: feitos_iot
+#. odoo-python
+#: code:addons/feitas_iot/models/edge_node.py:0
+msgid ""
+"Gateway MQTT users synchronized. Created: %(created)s, Updated: %(updated)s, "
+"Password snapshots: %(snapshot)s. Plain passwords are not recoverable from "
+"GMQTT API."
+msgstr ""
+"Gateway MQTT 用户已同步。新增：%(created)s，更新：%(updated)s，密码快照：%(snapshot)s。"
+"无法通过 GMQTT API 恢复明文密码。"
+
+#. module: feitas_iot
+#: model:ir.actions.server,name:feitas_iot.action_fts_edge_node_reset_gateway_mqtt_user_passwords
+#: model_terms:ir.ui.view,arch_db:feitas_iot.view_fts_edge_node_form
+msgid "Reset MQTT Passwords"
+msgstr "重置 MQTT 密码"
+
+#. module: feitas_iot
+#. odoo-python
+#: code:addons/feitas_iot/models/edge_node.py:0
+msgid "No gateway MQTT users found for this gateway."
+msgstr "当前网关下没有可重置的 Gateway MQTT 用户。"
+
+#. module: feitas_iot
+#. odoo-python
+#: code:addons/feitas_iot/models/edge_node.py:0
+msgid "Gateway MQTT user password reset: %(username)s"
+msgstr "Gateway MQTT 用户密码已重置：%(username)s"
+
+#. module: feitas_iot
+#. odoo-python
+#: code:addons/feitas_iot/models/edge_node.py:0
+msgid "Gateway MQTT user password reset failed for %(username)s: %(error)s"
+msgstr "Gateway MQTT 用户密码重置失败：%(username)s，错误：%(error)s"
+
+#. module: feitas_iot
+#. odoo-python
+#: code:addons/feitas_iot/models/edge_node.py:0
+msgid ""
+"Gateway GMQTT password reset failed for %(username)s (HTTP %(status)s): "
+"%(detail)s"
+msgstr ""
+"Gateway GMQTT 密码重置失败：%(username)s，HTTP %(status)s，详情：%(detail)s"
+
+#. module: feitos_iot
+#. odoo-python
+#: code:addons/feitas_iot/models/edge_node.py:0
+msgid "Remote instance MQTT credentials redeployed: %(instance)s"
+msgstr "远程实例 MQTT 凭据已重新下发：%(instance)s"
+
+#. module: feitos_iot
+#. odoo-python
+#: code:addons/feitas_iot/models/edge_node.py:0
+msgid ""
+"Remote instance MQTT credential redeploy failed for %(instance)s: success "
+"%(ok)s, failed %(fail)s, detail: %(detail)s"
+msgstr ""
+"远程实例 MQTT 凭据重新下发失败：%(instance)s，成功 %(ok)s，失败 %(fail)s，详情：%(detail)s"
+
+#. module: feitos_iot
+#. odoo-python
+#: code:addons/feitas_iot/models/edge_node.py:0
+msgid ""
+"Gateway MQTT user passwords reset. Success: %(reset)s, Failed: "
+"%(reset_failed)s, Redeployed: %(redeploy_ok)s, Redeploy failed: "
+"%(redeploy_failed)s"
+msgstr ""
+"Gateway MQTT 用户密码已重置。成功：%(reset)s，失败：%(reset_failed)s，"
+"已重新下发：%(redeploy_ok)s，下发失败：%(redeploy_failed)s"

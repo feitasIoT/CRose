@@ -265,10 +265,7 @@ class FtsNrInstanceWizard(models.TransientModel):
     def _inject_iotdb_mqtt_broker_credentials(self, payload):
         if not isinstance(payload, dict):
             return payload
-        username, password = self._get_component_account_credentials("iotdb", "mqtt_client")
-        credentials_map = payload.get("credentials")
-        if not isinstance(credentials_map, dict):
-            credentials_map = {}
+        target_items = []
         for section in ("configs", "nodes"):
             for item in payload.get(section) or []:
                 if not isinstance(item, dict):
@@ -277,16 +274,25 @@ class FtsNrInstanceWizard(models.TransientModel):
                     continue
                 if str(item.get("name") or "").strip().lower() != "iotdb":
                     continue
-                item_credentials = item.get("credentials") if isinstance(item.get("credentials"), dict) else {}
-                item_credentials["user"] = username
-                item_credentials["password"] = password
-                item["credentials"] = item_credentials
-                node_id = item.get("id")
-                if node_id:
-                    credentials_map[node_id] = {
-                        "user": username,
-                        "password": password,
-                    }
+                target_items.append(item)
+        if not target_items:
+            return payload
+
+        username, password = self._get_component_account_credentials("iotdb", "mqtt_client")
+        credentials_map = payload.get("credentials")
+        if not isinstance(credentials_map, dict):
+            credentials_map = {}
+        for item in target_items:
+            item_credentials = item.get("credentials") if isinstance(item.get("credentials"), dict) else {}
+            item_credentials["user"] = username
+            item_credentials["password"] = password
+            item["credentials"] = item_credentials
+            node_id = item.get("id")
+            if node_id:
+                credentials_map[node_id] = {
+                    "user": username,
+                    "password": password,
+                }
         if credentials_map:
             payload["credentials"] = credentials_map
         return payload

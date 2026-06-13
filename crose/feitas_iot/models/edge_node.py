@@ -9,7 +9,7 @@ import logging
 from urllib.parse import quote
 
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 from odoo.tools import html2plaintext
 from odoo.tools.misc import file_open
 
@@ -60,8 +60,11 @@ class FtsEdgeNode(models.Model):
     frpc_webserver_password = fields.Char(string="FRPC Webserver Password", default="admin")
 
     use_frp = fields.Boolean(string="Use FRP")
+    use_vnc = fields.Boolean(string="Use VNC")
     use_redis = fields.Boolean(string="Use Redis", help="checked will assign redis database and account.")
 
+    domain = fields.Char(string="Domain")
+    vnc_port = fields.Integer(string="VNC Port", default=6080)
     port = fields.Integer(string="Port", default=6080)
     agent_port = fields.Integer(string="Agent Port", default=18080)
     os_version = fields.Selection([('rasp', 'Raspberry'), ('ubuntu', 'Ubuntu')], string="OS Distribution")
@@ -143,6 +146,167 @@ class FtsEdgeNode(models.Model):
         for node in self:
             if node.mqtt_account_id and node.mqtt_account_id.component_id != node.mqtt_broker_id:
                 node.mqtt_account_id = False
+
+    @api.constrains("use_vnc", "vnc_port")
+    def _check_vnc_port_required(self):
+        for node in self:
+            if node.use_vnc and not node.vnc_port:
+                raise ValidationError(_("VNC Port is required when Use VNC is enabled."))
+
+    def _get_gateway_gmqtt_api_port(self):
+        self.ensure_one()
+        mqtt_api_port_raw = (
+            self.env["ir.config_parameter"].sudo().get_param("feitas_iot.gateway_gmqtt_api_port") or "8083"
+        )
+        try:
+            return int(str(mqtt_api_port_raw).strip())
+        except Exception:
+            return 8083
+
+    def _build_gateway_gmqtt_api_base_url(self):
+        self.ensure_one()
+        if not self.is_gateway:
+            raise UserError(_("Only gateway nodes support broker account synchronization."))
+        if not self.has_mqtt_broker:
+            raise UserError(_("The selected gateway has no MQTT broker enabled."))
+        if not self.ip_address:
+            raise UserError(_("Please configure Gateway IP Address first."))
+        return f"http://{self.ip_address}:{self._get_gateway_gmqtt_api_port()}"
+
+    def _list_gateway_mqtt_accounts(self):
+        self.ensure_one()
+        base_url = self._build_gateway_gmqtt_api_base_url()
+        page = 1
+        page_size = 200
+        accounts = []
+        while True:
+            try:
+                response = requests.get(
+                    f"{base_url}/v1/accounts",
+                    params={"page": page, "page_size": page_size},
+                    timeout=15,
+                )
+                response.raise_for_status()
+            except Exception as error:
+                raise UserError(_("Failed to list gateway MQTT accounts: %(error)s", error=str(error)))
+
+            try:
+                payload = response.json() if response.content else {}
+            except Exception as error:
+                raise UserError(_("Failed to list gateway MQTT accounts: %(error)s", error=str(error)))
+            if not isinstance(payload, dict):
+                payload = {}
+            rows = payload.get("accounts") or []
+            if not isinstance(rows, list):
+                rows = []
+            accounts.extend([row for row in rows if isinstance(row, dict)])
+
+            total_count = payload.get("total_count") or 0
+            try:
+                total_count = int(total_count)
+            except Exception:
+                total_count = 0
+            if len(rows) < page_size:
+                break
+            if total_count and len(accounts) >= total_count:
+                break
+            page += 1
+        return accounts
+
+    def _infer_gateway_mqtt_user_relations(self, username):
+        self.ensure_one()
+        edge_node = False
+        instance = False
+        match = re.fullmatch(r"nr(\d+)_mqtt", (username or "").strip())
+        if not match:
+            return edge_node, instance
+
+        edge_node = self.env["fts.edge.node"].sudo().browse(int(match.group(1))).exists()
+        if not edge_node or edge_node.is_gateway:
+            return False, False
+
+        instance = self.env["fts.nr.instance"].sudo().search(
+            [("edge_node_id", "=", edge_node.id), ("instance_type", "=", "remote")],
+            limit=1,
+        )
+        return edge_node, instance
+
+    def _generate_gateway_mqtt_password(self, length=12):
+        self.ensure_one()
+        if self.mqtt_broker_id and self.mqtt_broker_id.component_type == "mqtt":
+            return self.mqtt_broker_id._generate_password(length)
+        alphabet = string.ascii_letters + string.digits
+        return "".join(secrets.choice(alphabet) for _ in range(length))
+
+    def _default_instance_domain(self):
+        self.ensure_one()
+        return f"ni{self.id}.edge.local"
+
+    def _default_vnc_domain(self):
+        self.ensure_one()
+        return f"nr{self.id}.edge.local"
+
+    def _build_gateway_frpc_proxy_api_base(self, gateway):
+        gateway.ensure_one()
+        if not gateway.is_frpc:
+            raise UserError(_("FRPC is not enabled on the selected Gateway."))
+        if not gateway.frpc_webserver_port:
+            raise UserError(_("Please configure FRPC Webserver Port on the selected Gateway."))
+        proxy_api_base = f"http://{gateway.ip_address}:{gateway.frpc_webserver_port}/api/store/proxies"
+        auth = (gateway.frpc_webserver_username or "", gateway.frpc_webserver_password or "")
+        return proxy_api_base, auth
+
+    def _upsert_gateway_frpc_http_proxy(self, gateway, proxy_name, local_ip, local_port, custom_domain):
+        gateway.ensure_one()
+        proxy_api_base, auth = self._build_gateway_frpc_proxy_api_base(gateway)
+        payload = {
+            "name": proxy_name,
+            "type": "http",
+            "http": {
+                "localIP": local_ip,
+                "localPort": int(local_port),
+                "customDomains": [custom_domain],
+            },
+        }
+        check_response = requests.get(
+            f"{proxy_api_base}/{proxy_name}",
+            auth=auth,
+            timeout=15,
+        )
+        if check_response.status_code == 200:
+            response = requests.put(
+                f"{proxy_api_base}/{proxy_name}",
+                auth=auth,
+                headers={"Content-Type": "application/json"},
+                json=payload,
+                timeout=15,
+            )
+        elif check_response.status_code == 404:
+            response = requests.post(
+                proxy_api_base,
+                auth=auth,
+                headers={"Content-Type": "application/json"},
+                json=payload,
+                timeout=15,
+            )
+        else:
+            raise UserError(
+                _(
+                    "Failed to check FRPC store proxy (HTTP %(status)s): %(detail)s",
+                    status=check_response.status_code,
+                    detail=check_response.text,
+                )
+            )
+
+        if response.status_code >= 400:
+            raise UserError(
+                _(
+                    "FRPC store proxy upsert failed (HTTP %(status)s): %(detail)s",
+                    status=response.status_code,
+                    detail=response.text,
+                )
+            )
+        return True
 
 
 #-------------actions--------------
@@ -226,9 +390,9 @@ class FtsEdgeNode(models.Model):
                 if not gateway.has_mqtt_broker:
                     raise UserError(_("The selected Gateway has no MQTT broker enabled."))
 
-                domain = f"nr{node.id}.edge.local"
-                proxy_name = domain.split(".", 1)[0]
-                instance_host = domain if node.use_frp else node.ip_address
+                instance_domain = node._default_instance_domain()
+                instance_proxy_name = instance_domain.split(".", 1)[0]
+                instance_host = instance_domain if node.use_frp else node.ip_address
                 instance_name = f"{node.name}-NR"
 
                 instance = Instance.search(
@@ -260,53 +424,31 @@ class FtsEdgeNode(models.Model):
                 if node.is_gateway or not node.use_frp:
                     note_lines.append(_("Gateway node: FRPC proxy step skipped."))
                 else:
-                    if not gateway.is_frpc:
-                        raise UserError(_("FRPC is not enabled on the selected Gateway."))
-                    if not gateway.frpc_webserver_port:
-                        raise UserError(_("Please configure FRPC Webserver Port on the selected Gateway."))
-
-                    proxy_api_base = f"http://{gateway.ip_address}:{gateway.frpc_webserver_port}/api/store/proxies"
-                    auth = (gateway.frpc_webserver_username or "", gateway.frpc_webserver_password or "")
-                    payload = {
-                        "name": proxy_name,
-                        "type": "http",
-                        "http": {
-                            "localIP": node.ip_address,
-                            "localPort": int(instance.port or 1880),
-                            "customDomains": [domain],
-                        },
-                    }
-                    check_response = requests.get(
-                        f"{proxy_api_base}/{proxy_name}",
-                        auth=auth,
-                        timeout=15,
+                    node._upsert_gateway_frpc_http_proxy(
+                        gateway,
+                        instance_proxy_name,
+                        node.ip_address,
+                        int(instance.port or 1880),
+                        instance_domain,
                     )
-                    if check_response.status_code == 200:
-                        response = requests.put(
-                            f"{proxy_api_base}/{proxy_name}",
-                            auth=auth,
-                            headers={"Content-Type": "application/json"},
-                            json=payload,
-                            timeout=15,
-                        )
-                    elif check_response.status_code == 404:
-                        response = requests.post(
-                            proxy_api_base,
-                            auth=auth,
-                            headers={"Content-Type": "application/json"},
-                            json=payload,
-                            timeout=15,
-                        )
-                    else:
-                        raise UserError(
-                            _("Failed to check FRPC store proxy (HTTP %(status)s): %(detail)s", status=check_response.status_code, detail=check_response.text)
-                        )
+                    note_lines.append(
+                        _("FRPC proxy synchronized: %(proxy)s -> %(domain)s", proxy=instance_proxy_name, domain=instance_domain)
+                    )
 
-                    if response.status_code >= 400:
-                        raise UserError(
-                            _("FRPC store proxy upsert failed (HTTP %(status)s): %(detail)s", status=response.status_code, detail=response.text)
+                    if node.use_vnc:
+                        vnc_domain = (node.domain or "").strip() or node._default_vnc_domain()
+                        if node.domain != vnc_domain:
+                            node.domain = vnc_domain
+                        node._upsert_gateway_frpc_http_proxy(
+                            gateway,
+                            vnc_domain.split(".", 1)[0],
+                            node.ip_address,
+                            int(node.vnc_port or node.port or 680),
+                            vnc_domain,
                         )
-                    note_lines.append(_("FRPC proxy synchronized: %(proxy)s -> %(domain)s", proxy=proxy_name, domain=domain))
+                        note_lines.append(
+                            _("FRPC proxy synchronized: %(proxy)s -> %(domain)s", proxy=vnc_domain.split(".", 1)[0], domain=vnc_domain)
+                        )
 
                 username = f"nr{node.id}_mqtt"
                 mqtt_user = GatewayMqttUser.search(
@@ -318,13 +460,7 @@ class FtsEdgeNode(models.Model):
                     alphabet = string.ascii_letters + string.digits
                     plain_password = "".join(secrets.choice(alphabet) for _ in range(12))
 
-                mqtt_api_port_raw = (
-                    self.env["ir.config_parameter"].sudo().get_param("feitas_iot.gateway_gmqtt_api_port") or "8083"
-                )
-                try:
-                    mqtt_api_port = int(str(mqtt_api_port_raw).strip())
-                except Exception:
-                    mqtt_api_port = 8083
+                mqtt_api_port = gateway._get_gateway_gmqtt_api_port()
                 mqtt_response = requests.post(
                     f"http://{gateway.ip_address}:{mqtt_api_port}/v1/accounts/{quote(username)}",
                     json={"password": plain_password},
@@ -394,6 +530,198 @@ class FtsEdgeNode(models.Model):
                 subtype_xmlid="mail.mt_note",
             )
         return False
+
+    def action_sync_gateway_mqtt_users(self):
+        gateway_user_model = self.env["fts.gateway.mqtt.user"].sudo()
+        total_created = 0
+        total_updated = 0
+        total_snapshot = 0
+        for node in self:
+            remote_accounts = node._list_gateway_mqtt_accounts()
+            existing_users = {
+                (user.username or "").strip(): user
+                for user in gateway_user_model.search([("gateway_id", "=", node.id)])
+                if (user.username or "").strip()
+            }
+            created = 0
+            updated = 0
+            snapshot_count = 0
+            for row in remote_accounts:
+                username = (row.get("username") or "").strip()
+                if not username:
+                    continue
+
+                password_hash = (row.get("password") or "").strip()
+                edge_node, instance = node._infer_gateway_mqtt_user_relations(username)
+                vals = {"gateway_id": node.id}
+                if edge_node:
+                    vals["edge_node_id"] = edge_node.id
+                if instance:
+                    vals["instance_id"] = instance.id
+                gateway_user = existing_users.get(username)
+                existing_plain_password = gateway_user._get_plain_password() if gateway_user else ""
+                if password_hash:
+                    snapshot_count += 1
+                    if not existing_plain_password:
+                        vals["password_encrypted"] = f"hash${password_hash}"
+
+                if gateway_user:
+                    if vals:
+                        gateway_user.write(vals)
+                    updated += 1
+                    continue
+
+                create_vals = dict(vals)
+                create_vals.update(
+                    {
+                        "username": username,
+                        "password_encrypted": vals.get("password_encrypted") or "hash$",
+                    }
+                )
+                gateway_user_model.create(create_vals)
+                created += 1
+
+            total_created += created
+            total_updated += updated
+            total_snapshot += snapshot_count
+            node.message_post(
+                body=_(
+                    "Broker accounts synchronized. Created: %(created)s, Updated: %(updated)s, Password snapshots: %(snapshot)s. "
+                    "GMQTT API only returns hashed passwords, so plain passwords cannot be recovered from this action.",
+                    created=created,
+                    updated=updated,
+                    snapshot=snapshot_count,
+                ),
+                message_type="comment",
+                subtype_xmlid="mail.mt_note",
+            )
+
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": _("Synchronization Complete"),
+                "message": _(
+                    "Gateway MQTT users synchronized. Created: %(created)s, Updated: %(updated)s, Password snapshots: %(snapshot)s. "
+                    "Plain passwords are not recoverable from GMQTT API.",
+                    created=total_created,
+                    updated=total_updated,
+                    snapshot=total_snapshot,
+                ),
+                "type": "success",
+                "sticky": False,
+            },
+        }
+
+    def action_reset_gateway_mqtt_user_passwords(self):
+        gateway_user_model = self.env["fts.gateway.mqtt.user"].sudo()
+        instance_model = self.env["fts.nr.instance"].sudo()
+        total_reset = 0
+        total_reset_failed = 0
+        total_redeploy_ok = 0
+        total_redeploy_failed = 0
+
+        for node in self:
+            users = gateway_user_model.search([("gateway_id", "=", node.id)])
+            if not users:
+                raise UserError(_("No gateway MQTT users found for this gateway."))
+
+            api_base_url = node._build_gateway_gmqtt_api_base_url()
+            redeploy_instances = instance_model.browse()
+            note_lines = []
+            reset_count = 0
+            reset_failed = 0
+            redeploy_ok = 0
+            redeploy_failed = 0
+
+            for user in users:
+                username = (user.username or "").strip()
+                if not username:
+                    continue
+
+                instance = user.instance_id
+                if not instance and user.edge_node_id:
+                    instance = instance_model.search(
+                        [("edge_node_id", "=", user.edge_node_id.id), ("instance_type", "=", "remote")],
+                        limit=1,
+                    )
+
+                plain_password = node._generate_gateway_mqtt_password(12)
+                try:
+                    response = requests.post(
+                        f"{api_base_url}/v1/accounts/{quote(username)}",
+                        json={"password": plain_password},
+                        timeout=15,
+                    )
+                    if response.status_code >= 400:
+                        raise UserError(
+                            _(
+                                "Gateway GMQTT password reset failed for %(username)s (HTTP %(status)s): %(detail)s",
+                                username=username,
+                                status=response.status_code,
+                                detail=response.text,
+                            )
+                        )
+
+                    vals = {"password_encrypted": plain_password}
+                    if instance:
+                        vals["instance_id"] = instance.id
+                    user.write(vals)
+                    reset_count += 1
+                    note_lines.append(_("Gateway MQTT user password reset: %(username)s", username=username))
+
+                    if instance and instance.instance_type == "remote":
+                        redeploy_instances |= instance
+                except Exception as error:
+                    reset_failed += 1
+                    note_lines.append(
+                        _("Gateway MQTT user password reset failed for %(username)s: %(error)s", username=username, error=str(error))
+                    )
+
+            for instance in redeploy_instances:
+                ok_count, fail_count, error_messages = instance._apply_flows_internal()
+                if fail_count:
+                    redeploy_failed += 1
+                    detail = "; ".join(error_messages[:3]) if error_messages else _("Unknown error")
+                    note_lines.append(
+                        _(
+                            "Remote instance MQTT credential redeploy failed for %(instance)s: success %(ok)s, failed %(fail)s, detail: %(detail)s",
+                            instance=instance.display_name,
+                            ok=ok_count,
+                            fail=fail_count,
+                            detail=detail,
+                        )
+                    )
+                else:
+                    redeploy_ok += 1
+                    note_lines.append(_("Remote instance MQTT credentials redeployed: %(instance)s", instance=instance.display_name))
+
+            total_reset += reset_count
+            total_reset_failed += reset_failed
+            total_redeploy_ok += redeploy_ok
+            total_redeploy_failed += redeploy_failed
+            node.message_post(
+                body="<br/>".join(note_lines),
+                message_type="comment",
+                subtype_xmlid="mail.mt_note",
+            )
+
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": _("Reset Complete"),
+                "message": _(
+                    "Gateway MQTT user passwords reset. Success: %(reset)s, Failed: %(reset_failed)s, Redeployed: %(redeploy_ok)s, Redeploy failed: %(redeploy_failed)s",
+                    reset=total_reset,
+                    reset_failed=total_reset_failed,
+                    redeploy_ok=total_redeploy_ok,
+                    redeploy_failed=total_redeploy_failed,
+                ),
+                "type": "success" if total_reset_failed == 0 and total_redeploy_failed == 0 else "warning",
+                "sticky": False,
+            },
+        }
 
     def action_view_gateway_mqtt_users(self):
         self.ensure_one()
@@ -603,17 +931,22 @@ class FtsEdgeNode(models.Model):
 
     def action_open_vnc(self):
         self.ensure_one()
+        if not self.use_vnc:
+            raise UserError(_("VNC is not enabled for this edge node."))
         action = self.env.ref("feitas_iot.action_node_red_editor_client", raise_if_not_found=False)
         if action:
             res = action.read()[0]
             res["display_name"] = _("Remote Desktop")
             res["name"] = _("Remote Desktop")
-            use_edge_proxy = not self.is_gateway
+            use_edge_proxy = bool(self.use_frp)
             edge_proxy_port = 0
+            target_host = (self.domain or "").strip() if use_edge_proxy else (self.ip_address or "").strip()
+            if use_edge_proxy and not target_host:
+                raise UserError(_("Please set Domain or initialize the edge node first."))
             if use_edge_proxy:
                 edge_proxy_port = self.env["crose.component"]._get_mapped_port_by_type("nginx")
             res["params"] = {
-                "node_red_url": f"http://{self.ip_address}:{self.port}/vnc.html",
+                "node_red_url": f"http://{target_host}:{int(self.vnc_port or self.port or 680)}/vnc.html",
                 "use_edge_proxy": use_edge_proxy,
                 "edge_proxy_port": edge_proxy_port,
                 "rewrite_browser_host": False,
