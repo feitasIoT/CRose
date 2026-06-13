@@ -28,11 +28,12 @@ class DataModel(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin', 'spreadsheet.mixin']
 
     name = fields.Char(string='Code', required=True, copy=False)
-    partner_id = fields.Many2one('res.partner', string='Requester', required=True)
-    data_asset_id = fields.Many2one('fts.data.asset', string='Data Asset', required=False) # 废弃？
-    data_asset_ids = fields.Many2many("fts.data.asset", string="Assets", relation="rel_data_asset_modeling")
-    query_data_asset_ids = fields.Many2many("fts.data.asset", relation="rel_query_data_asset", string="Query Assets")
-    provider_id = fields.Many2one('res.partner', string='Provider', related='data_asset_id.partner_id', store=True, readonly=True)
+    data_direction = fields.Selection([('pub', 'Publish'), ('con', 'Consumption')], string="Data Direction")
+    partner_id = fields.Many2one('res.partner', string='Requester', required=False)  # 废弃
+    data_asset_id = fields.Many2one('fts.data.asset', string='Data Asset', required=False) 
+    partner_id = fields.Many2one('res.partner', string='Partner', related='data_asset_id.partner_id', store=True, readonly=True)
+    data_asset_ids = fields.Many2many("fts.data.asset", string="Assets", relation="rel_data_asset_modeling")  # 废弃
+    query_data_asset_ids = fields.Many2many("fts.data.asset", relation="rel_query_data_asset", string="Query Assets")  # 废弃
     protocol = fields.Selection([
         ('modbus-tcp', 'Modbus-TCP'),
         ('modbus-rtu', 'Modbus-RTU'),
@@ -55,6 +56,8 @@ class DataModel(models.Model):
     username = fields.Char(string='Username')
     password = fields.Char(string='Password')
 
+    log_database = fields.Many2one("crose.component")
+    time_series_database = fields.Many2one("crose.component")
     query_type = fields.Selection([
         ('data', 'Time-Series Data'),
         ('log', 'Logs'),
@@ -63,16 +66,11 @@ class DataModel(models.Model):
     query_end_time = fields.Datetime(string='End Time')
     query_interval = fields.Integer(string='Interval (Seconds)', default=60)
 
-    @api.onchange('query_start_time')
-    def _onchange_query_start_time(self):
-        if self.query_start_time and not self.query_end_time:
-            self.query_end_time = fields.Datetime.now()
-        if self.query_start_time and not self.query_interval:
-            self.query_interval = 60
-
     description = fields.Text(string='Description')
     mqtt_topic_id = fields.Many2one('fts.mqtt.topic', string='MQTT Topic')
-    nr_instance_id = fields.Many2one('fts.nr.instance', string='Runtime Instance', help='Local instance responsible for data processing')
+    nr_instance_id = fields.Many2one('fts.nr.instance', string='Stage Instance', help='Local instance responsible for data processing')
+    prod_instance_id = fields.Many2one('fts.nr.instance', string='Prod Instance', help='Local instance responsible for data processing')
+    gateway_id = fields.Many2one('fts.nr.instance', string='Gateway Instance')
     nr_flow_ids = fields.Many2many('fts.nr.flow', 'data_model_nr_flow_rel', string='Flows')
     app_ids = fields.One2many("fts.data.app", "model_id", string='Applications')
     app_param_ids = fields.One2many("fts.nr.flow.param", "model_id", string='Application Parameters')
@@ -98,33 +96,109 @@ class DataModel(models.Model):
     iotdb_topic = fields.Char(string='IoTDB Topic', compute='_compute_topic', store=True)
     is_demo = fields.Boolean(string='Demo', default=False)
 
+    @api.model
+    def _get_default_local_instance(self, xmlid_name):
+        instance = self.env.ref(xmlid_name, raise_if_not_found=False)
+        if instance and instance.exists():
+            return instance
+        return self.env['fts.nr.instance'].search([('instance_type', '=', 'local')], limit=1)
 
-    @api.constrains('name', 'provider_id')
+    @api.model
+    def _get_default_component_by_type(self, component_type):
+        component = self.env['crose.component'].search(
+            [('component_type', '=', component_type), ('status', '=', 'online')],
+            limit=1,
+        )
+        if not component:
+            component = self.env['crose.component'].search([('component_type', '=', component_type)], limit=1)
+        return component
+
+    @api.model
+    def _generate_default_code(self):
+        today = fields.Date.context_today(self)
+        date_part = today.strftime('%y%m%d')
+        prefix = f"DM{date_part}"
+        latest = self.search([('name', '=like', f'{prefix}%')], order='name desc', limit=1)
+        seq = 1
+        if latest and latest.name and re.fullmatch(rf"{prefix}\d{{3}}", latest.name):
+            seq = int(latest.name[-3:]) + 1
+        return f"{prefix}{seq:03d}"
+
+    @api.model
+    def default_get(self, fields_list):
+        values = super().default_get(fields_list)
+        if 'name' in fields_list and not values.get('name'):
+            values['name'] = self._generate_default_code()
+        if 'nr_instance_id' in fields_list and not values.get('nr_instance_id'):
+            stage_instance = self._get_default_local_instance('feitas_iot.fts_nr_instance_staging')
+            if stage_instance:
+                values['nr_instance_id'] = stage_instance.id
+        if 'prod_instance_id' in fields_list and not values.get('prod_instance_id'):
+            prod_instance = self.env.ref('feitas_iot.fts_nr_instance_prod', raise_if_not_found=False)
+            if not prod_instance or not prod_instance.exists():
+                prod_instance = self._get_default_local_instance('feitas_iot.fts_nr_instance_prod')
+            if prod_instance:
+                values['prod_instance_id'] = prod_instance.id
+        if 'log_database' in fields_list and not values.get('log_database'):
+            log_db = self._get_default_component_by_type('redis')
+            if log_db:
+                values['log_database'] = log_db.id
+        if 'time_series_database' in fields_list and not values.get('time_series_database'):
+            ts_db = self._get_default_component_by_type('iotdb')
+            if ts_db:
+                values['time_series_database'] = ts_db.id
+        return values
+
+    @api.constrains('name', 'partner_id', 'data_direction')
     def _check_name_provider_unique(self):
         for record in self:
             existing = self.search_count([
                 ('name', '=', record.name),
-                ('provider_id', '=', record.provider_id.id),
+                ('partner_id', '=', record.partner_id.id),
+                ('data_direction', '=', record.data_direction),
                 ('id', '!=', record.id),
             ])
             if existing:
-                raise ValidationError(_('The combination of Code and Provider must be unique.'))
+                raise ValidationError(_('The combination of Code, Partner and Direction must be unique.'))
+
+    @api.constrains('log_database', 'time_series_database')
+    def _check_storage_component_types(self):
+        for record in self:
+            if record.log_database and record.log_database.component_type != 'redis':
+                raise ValidationError(_('Log Storage must be a Redis system component.'))
+            if record.time_series_database and record.time_series_database.component_type != 'iotdb':
+                raise ValidationError(_('Time-Series Storage must be an IoTDB system component.'))
     
+    @api.onchange('query_start_time')
+    def _onchange_query_start_time(self):
+        if self.query_start_time and not self.query_end_time:
+            self.query_end_time = fields.Datetime.now()
+        if self.query_start_time and not self.query_interval:
+            self.query_interval = 60
+
     @api.onchange("data_asset_ids")
     def _onchange_data_asset_ids(self):
         self.query_data_asset_ids = [(6, 0, self.data_asset_ids.ids)]
 
-    @api.depends('provider_id.name', 'name')
+    @api.depends('partner_id.name', 'name')
     def _compute_data_asset(self):
         for record in self:
-            record.data_asset = f'{record.provider_id.name}.{record.name}' if record.provider_id and record.name else False
+            record.data_asset = f'{record.partner_id.name}.{record.name}' if record.partner_id and record.name else False
 
-    @api.depends('provider_id.name', 'name')
+    @api.depends('partner_id.name', 'data_direction', 'name')
     def _compute_topic(self):
         for record in self:
-            provider_name = record.provider_id.name or ''
-            record.topic = f'upload/{provider_name}/{record.name}' if record.name else False
-            record.iotdb_topic = f'root.{provider_name}.{record.name}' if record.name else False
+            partner_name = (record.partner_id.name or '').strip()
+            direction = 'provider' if record.data_direction == 'pub' else 'requester'
+            if record.name and partner_name:
+                record.topic = f'upload/{partner_name}/{direction}/{record.name}'
+                record.iotdb_topic = f'root.{partner_name}.{direction}.{record.name}'
+            elif record.name:
+                record.topic = f'upload/{direction}/{record.name}'
+                record.iotdb_topic = f'root.{direction}.{record.name}'
+            else:
+                record.topic = False
+                record.iotdb_topic = False
 
     def _format_json_text(self, value):
         if value is None:
@@ -142,8 +216,26 @@ class DataModel(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
+            if not (vals.get('name') or '').strip():
+                vals['name'] = self._generate_default_code()
             if 'data_structure' in vals:
                 vals['data_structure'] = self._format_json_text(vals.get('data_structure'))
+            if not vals.get('nr_instance_id'):
+                stage_instance = self.env.ref('feitas_iot.fts_nr_instance_staging', raise_if_not_found=False)
+                if stage_instance and stage_instance.exists():
+                    vals['nr_instance_id'] = stage_instance.id
+            if not vals.get('prod_instance_id'):
+                prod_instance = self.env.ref('feitas_iot.fts_nr_instance_prod', raise_if_not_found=False)
+                if prod_instance and prod_instance.exists():
+                    vals['prod_instance_id'] = prod_instance.id
+            if not vals.get('log_database'):
+                log_db = self._get_default_component_by_type('redis')
+                if log_db:
+                    vals['log_database'] = log_db.id
+            if not vals.get('time_series_database'):
+                ts_db = self._get_default_component_by_type('iotdb')
+                if ts_db:
+                    vals['time_series_database'] = ts_db.id
         records = super(DataModel, self).create(vals_list)
         for record in records.filtered(lambda s: s.protocol == "mqtt"):
             record._ensure_mqtt_setup()
@@ -155,7 +247,7 @@ class DataModel(models.Model):
         if 'data_structure' in vals:
             vals['data_structure'] = self._format_json_text(vals.get('data_structure'))
         res = super(DataModel, self).write(vals)
-        if any(f in vals for f in ['partner_id', 'provider_id', 'name']):
+        if any(f in vals for f in ['data_asset_id', 'data_direction', 'name']):
             for record in self.filtered(lambda s: s.protocol == "mqtt"):
                 record._ensure_mqtt_setup()
         if any(f in vals for f in ['state', 'protocol', 'data_asset_id', 'data_asset_ids']):
@@ -169,11 +261,16 @@ class DataModel(models.Model):
         if not default.get("name"):
             original_name = (self.name or "").strip() or "copy"
             base_name = re.sub(r"\(\d+\)$", "", original_name).strip() or "copy"
-            provider_id = self.provider_id.id or self.data_asset_id.partner_id.id or False
+            partner_id = self.partner_id.id or self.data_asset_id.partner_id.id or False
+            data_direction = self.data_direction
             i = 1
             while True:
                 candidate = f"{base_name}({i})"
-                exists = self.search_count([("name", "=", candidate), ("provider_id", "=", provider_id)]) > 0
+                exists = self.search_count([
+                    ("name", "=", candidate),
+                    ("partner_id", "=", partner_id),
+                    ("data_direction", "=", data_direction),
+                ]) > 0
                 if not exists:
                     default["name"] = candidate
                     break
@@ -219,14 +316,15 @@ class DataModel(models.Model):
                 self.message_post(body=_("Failed to create MQTT user for %(partner)s: %(error)s", partner=partner.name, error=str(e)))
 
         ensure_user(self.partner_id)
-        ensure_user(self.provider_id)
 
         # 3. Create or update the topic
-        topic_name = f"/{self.partner_id.name}/{self.provider_id.name}/{self.name}"
+        direction = 'provider' if self.data_direction == 'pub' else 'requester'
+        partner_name = self.partner_id.name or ''
+        topic_name = f"/{partner_name}/{direction}/{self.name}"
         topic_vals = {
             'name': topic_name,
             'broker_id': broker.id,
-            'partner_ids': [(6, 0, [self.partner_id.id, self.provider_id.id])]
+            'partner_ids': [(6, 0, [self.partner_id.id])] if self.partner_id else [(6, 0, [])]
         }
         if self.mqtt_topic_id:
             self.mqtt_topic_id.sudo().write(topic_vals)
@@ -1035,7 +1133,12 @@ class DataModel(models.Model):
         return start_ts, end_ts, count_sql, result_sql
 
     def _get_iotdb_connection_params(self):
-        iotdb = self.env["crose.component"].search([("component_type", "=", "iotdb"), ("status", "=", "online")], limit=1)
+        self.ensure_one()
+        iotdb = self.time_series_database
+        if iotdb and iotdb.component_type != "iotdb":
+            raise ValidationError(_("Time-Series Storage must be an IoTDB system component."))
+        if not iotdb:
+            iotdb = self.env["crose.component"].search([("component_type", "=", "iotdb"), ("status", "=", "online")], limit=1)
         if not iotdb:
             iotdb = self.env["crose.component"].search([("component_type", "=", "iotdb")], limit=1)
         if not iotdb:
@@ -1153,9 +1256,14 @@ class DataModel(models.Model):
         return dataframe
 
     def _get_redis_connection_params(self):
-        redis_comp = self.env["crose.component"].search(
-            [("component_type", "=", "redis"), ("status", "=", "online")], limit=1
-        )
+        self.ensure_one()
+        redis_comp = self.log_database
+        if redis_comp and redis_comp.component_type != "redis":
+            raise ValidationError(_("Log Storage must be a Redis system component."))
+        if not redis_comp:
+            redis_comp = self.env["crose.component"].search(
+                [("component_type", "=", "redis"), ("status", "=", "online")], limit=1
+            )
         if not redis_comp:
             redis_comp = self.env["crose.component"].search(
                 [("component_type", "=", "redis")], limit=1

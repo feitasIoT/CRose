@@ -8,18 +8,22 @@
                 <search string="Data Model">
                     <field name="name"/>
                     <field name="data_asset_id"/>
-                    <field name="provider_id"/>
+                    <field name="data_direction"/>
                     <field name="topic"/>
                     <field name="partner_id"/>
                     <field name="mqtt_topic_id"/>
                     <field name="nr_instance_id"/>
+                    <field name="prod_instance_id"/>
+                    <field name="log_database"/>
+                    <field name="time_series_database"/>
                     <field name="state"/>
                     <filter string="Draft" name="state_draft" domain="[('state', '=', 'draft')]"/>
                     <filter string="Effective" name="state_effective" domain="[('state', '=', 'effective')]"/>
                     <group>
                         <filter string="Status" name="group_by_state" context="{'group_by': 'state'}"/>
-                        <filter string="Requester" name="group_by_partner" context="{'group_by': 'partner_id'}"/>
-                        <filter string="Instance" name="group_by_instance" context="{'group_by': 'nr_instance_id'}"/>
+                        <filter string="Partner" name="group_by_partner" context="{'group_by': 'partner_id'}"/>
+                        <filter string="Direction" name="group_by_direction" context="{'group_by': 'data_direction'}"/>
+                        <filter string="Stage" name="group_by_instance" context="{'group_by': 'nr_instance_id'}"/>
                     </group>
                 </search>
             </field>
@@ -50,15 +54,17 @@
                         <group>
                             <group>
                                 <field name="name"/>
-                                <field name="data_asset_ids" widget="many2many_tags" />
+                                <field name="data_asset_id" />
                                 <field name="partner_id"/>
-                                <field name="provider_id" readonly="1"/>
+                                <field name="data_direction"/>
                                 <field name="mqtt_topic_id" invisible="protocol != 'mqtt'"/>
-                                <field name="nr_instance_id"/>
-                                <field name="nr_flow_ids" widget="many2many_tags" 
-                                    domain="[('instance_id', '=', nr_instance_id), ('type', '=', 'tab')]"/>
+                                <field name="nr_instance_id" domain="[('instance_type', '=', 'local')]"/>
+                                <field name="prod_instance_id" domain="[('instance_type', '=', 'local')]"/>
+                                <field name="gateway_id" domain="[('edge_node_id.is_gateway', '=', True)]"/>
                             </group>
                             <group>
+                                <field name="nr_flow_ids" widget="many2many_tags" 
+                                    domain="[('instance_id', '=', nr_instance_id), ('type', '=', 'tab')]"/>
                                 <field name="protocol" />
                                 <field name="host" />
                                 <field name="tcp_port" />
@@ -68,14 +74,18 @@
                                 <field name="smb_share" invisible="protocol != 'smb'" />
                                 <field name="username" invisible="protocol not in ['smb', 'webdav']" />
                                 <field name="password" invisible="protocol not in ['smb', 'webdav']" />
+                                <field name="log_database" domain="[('component_type', '=', 'redis')]"/>
+                                <field name="time_series_database" domain="[('component_type', '=', 'iotdb')]"/>
                             </group>
                         </group>
                         <notebook>
+                            <page name="datas" string="Data Structure">
+                                <field name="data_structure" widget="code" options="{'mode': 'javascript'}" nolabel="1" colspan="2"/>
+                            </page>
                             <page name="datas_search" string="Data Query">
                                 <group>
                                     <group>
                                         <field name="query_type"/>
-                                        <field name="query_data_asset_ids" widget="many2many_tags" />
                                         <field name="query_interval" invisible="query_type != 'data'"/>
                                     </group>
                                     <group>
@@ -86,9 +96,7 @@
                                     </group>
                                 </group>
                             </page>
-                            <page name="datas" string="Data Structure">
-                                <field name="data_structure" widget="code" options="{'mode': 'javascript'}" nolabel="1" colspan="2"/>
-                            </page>
+                            
                             <page name="application" string="Parameters">
                                 <group style="margin-bottom: 10px !important">
                                     
@@ -130,12 +138,13 @@
                 <list string="Data Model">
                     <field name="name"/>
                     <field name="data_asset_id"/>
-                    <field name="provider_id"/>
+                    <field name="data_direction"/>
                     <field name="data_asset"/>
                     <field name="topic"/>
                     <field name="partner_id"/>
                     <field name="mqtt_topic_id"/>
                     <field name="nr_instance_id"/>
+                    <field name="prod_instance_id"/>
                     <field name="state" widget="badge" decoration-success="state == 'effective'" decoration-info="state == 'draft'" decoration-warning="state == 'approval'" decoration-muted="state == 'invalid'"/>
                 </list>
             </field>
@@ -152,7 +161,9 @@
                     <field name="state"/>
                     <field name="protocol"/>
                     <field name="nr_instance_id"/>
+                    <field name="prod_instance_id"/>
                     <field name="partner_id"/>
+                    <field name="data_direction"/>
                     <templates>
                         <t t-name="card">
                             <div class="oe_kanban_global_click o_kanban_record feitas_iot_instance_kanban_card">
@@ -180,7 +191,7 @@
                                     </div>
                                     <div class="row g-1">
                                         <div class="col-6 text-start">
-                                            <div class="small text-muted">Requester</div>
+                                            <div class="small text-muted">Partner</div>
                                             <div class="small text-truncate"><field name="partner_id"/></div>
                                         </div>
                                         <div class="col-6 text-end">
@@ -189,7 +200,11 @@
                                         </div>
                                     </div>
                                     <div class="d-flex align-items-center justify-content-between">
-                                        <span class="small text-muted">Instance</span>
+                                        <span class="small text-muted">Direction</span>
+                                        <span class="small text-truncate"><field name="data_direction"/></span>
+                                    </div>
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <span class="small text-muted">Stage</span>
                                         <span class="small text-truncate"><field name="nr_instance_id"/></span>
                                     </div>
                                 </div>
