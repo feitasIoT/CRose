@@ -6,7 +6,7 @@ services:
     container_name: crose_nginx
     restart: unless-stopped
     ports:
-      - "10080:80"
+      - "18888:80"
     volumes:
       - ./config/nginx:/etc/nginx/conf.d
     networks:

@@ -121,18 +121,18 @@
                                 <field name="instance_id" invisible="is_template"/>
                                 <field name="nr_id" invisible="is_template"/>
                                 <field name="heat" invisible="is_template == False"/>
-                            </group>
-                            <group>
                                 <field name="tag_ids" widget="many2many_tags"/>
                                 <field name="type" invisible="is_template"/>
                                 <field name="is_template" invisible="1"/>
                                 <field name="app_store_id" invisible="1" />
                                 <field name="data_model_id" invisible="is_template"/>
                             </group>
+                            <group>
+                                <field name="image" widget="image"/>
+                            </group>
                         </group>
                         <notebook>
                             <page string="Description">
-                                <field name="image" widget="image"/>
                                 <field name="description" widget="html" nolabel="1"/>
                             </page>
                             <page string="Prompt">

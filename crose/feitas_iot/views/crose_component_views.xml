@@ -10,6 +10,7 @@
                     <field name="component_type"/>
                     <field name="host"/>
                     <field name="port"/>
+                    <field name="mapped_port" optional="hide"/>
                     <field name="status" widget="badge" decoration-success="status == 'online'" decoration-danger="status == 'error'" decoration-muted="status == 'offline'"/>
                     <field name="error_reason" optional="hide" />
                     <field name="last_check_time"/>
@@ -33,7 +34,7 @@
                     </header>
                     <sheet>
                         <div class="oe_button_box" name="button_box">
-                            <button name="action_view_component_accounts" type="object" class="oe_stat_button" icon="fa-users" invisible="component_type != 'mqtt'">
+                            <button name="action_view_component_accounts" type="object" class="oe_stat_button" icon="fa-users">
                                 <field name="mqtt_user_count" widget="statinfo" string="Users"/>
                             </button>
                             <button name="action_view_mqtt_topics" type="object" class="oe_stat_button" icon="fa-tags" invisible="component_type != 'mqtt'">
@@ -53,6 +54,7 @@
                                 <field name="component_type"/>
                                 <field name="host"/>
                                 <field name="port"/>
+                                <field name="mapped_port"/>
                             </group>
                             <group>
                                 <field name="last_check_time"/>

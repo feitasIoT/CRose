@@ -279,10 +279,14 @@ class FtsNrInstance(models.Model):
             res["name"] = _("Node-RED Editor")
             editor_port = self.editor_port or self.port
             use_edge_proxy = self.instance_type == "remote" and bool(self.edge_node_id.use_frp)
+            edge_proxy_port = 0
+            if use_edge_proxy:
+                edge_proxy_port = self.env["crose.component"]._get_mapped_port_by_type("nginx")
             res['params'] = {
                 'instance_id': self.id,
                 'node_red_url': f"http://{self.ip_address}:{editor_port}",
                 'use_edge_proxy': use_edge_proxy,
+                'edge_proxy_port': edge_proxy_port,
                 'rewrite_browser_host': self.instance_type == "local",
             }
             return res

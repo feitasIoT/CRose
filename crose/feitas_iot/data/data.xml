@@ -17,11 +17,21 @@
    
 
     <!-- System components -->
+    <record id="component_nginx" model="crose.component">
+        <field name="name">Nginx</field>
+        <field name="component_type">nginx</field>
+        <field name="host">nginx</field>
+        <field name="port">80</field>
+        <field name="mapped_port">18888</field>
+        <field name="metadata">{"health_endpoint": "/health"}</field>
+    </record>
+
     <record id="component_mqtt_broker" model="crose.component">
         <field name="name">MQTT Broker</field>
         <field name="component_type">mqtt</field>
         <field name="host">gmqtt</field>
         <field name="port">8082</field>
+        <field name="mapped_port">18082</field>
         <field name="metadata">{"metrics_port": 8082,"metrics_endpoint": "/metrics","tcp_port": 1883,"ws_port": 8083}</field>
     </record>
 
@@ -30,6 +40,7 @@
         <field name="component_type">nodered</field>
         <field name="host">nodered-prod</field>
         <field name="port">1880</field>
+        <field name="mapped_port">11880</field>
         <field name="metadata">{"admin_path": "/admin", "health_endpoint": "/"}</field>
     </record>
 
@@ -38,6 +49,7 @@
         <field name="component_type">nodered</field>
         <field name="host">nodered-staging</field>
         <field name="port">1880</field>
+        <field name="mapped_port">11881</field>
         <field name="metadata">{"admin_path": "/admin", "health_endpoint": "/"}</field>
     </record>
 
@@ -46,6 +58,7 @@
         <field name="component_type">iotdb</field>
         <field name="host">iotdb</field>
         <field name="port">6667</field>
+        <field name="mapped_port">16667</field>
         <field name="metadata">{"dn_rpc_port": 6667,"dn_internal_port": 10730}</field>
     </record>
 
@@ -85,6 +98,7 @@
         <field name="component_type">npm</field>
         <field name="host">nexus</field>
         <field name="port">8081</field>
+        <field name="mapped_port">18081</field>
         <field name="metadata">{
             "health_endpoint": "/",
             "node-red-stage": "/",
@@ -105,6 +119,7 @@
         <field name="component_type">redis</field>
         <field name="host">redis</field>
         <field name="port">6379</field>
+        <field name="mapped_port">16379</field>
         <field name="metadata">{"db": 0}</field>
     </record>
 
@@ -113,6 +128,7 @@
         <field name="component_type">webdav</field>
         <field name="host">webdav</field>
         <field name="port">6065</field>
+        <field name="mapped_port">16065</field>
         <field name="metadata">{"health_endpoint": "/api/health"}</field>
     </record>
 

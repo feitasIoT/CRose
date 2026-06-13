@@ -23,6 +23,7 @@ class CroseComponent(models.Model):
         ('llama_factory', 'LLaMA-Factory'),
         ('vllm', 'vLLM'),
         ('llm_provider', 'LLM Provider'),
+        ('nginx', 'Nginx'),
         ('nas', 'NAS'),
         ('webdav', 'WebDAV'),
         ('npm', 'NPM Registry'),
@@ -36,10 +37,14 @@ class CroseComponent(models.Model):
     ], string="Status", default='offline', readonly=True)
     host = fields.Char(string="Host")
     port = fields.Integer(string="Port")
+    mapped_port = fields.Integer(
+        string="Mapped Port",
+        help="Host port mapped from docker-compose or other container runtime.",
+    )
     metadata = fields.Text(string="Metadata")
     account_ids = fields.One2many("crose.component.account", "component_id", string="Accounts")
-    mqtt_user_count = fields.Integer(string="User Count", compute="_compute_mqtt_counts")
-    mqtt_topic_count = fields.Integer(string="Topic Count", compute="_compute_mqtt_counts")
+    mqtt_user_count = fields.Integer(string="User Count", compute="_compute_mqtt_user_count")
+    mqtt_topic_count = fields.Integer(string="Topic Count", compute="_compute_mqtt_topic_count")
     last_check_time = fields.Datetime(string="Last Check Time", readonly=True)
     error_reason = fields.Text(string="Error Reason", readonly=True)
 
@@ -69,15 +74,17 @@ class CroseComponent(models.Model):
                     skip_component_instance_status_sync=True,
                 ).write({"status": target_status})
 
-    def _compute_mqtt_counts(self):
-        topic_model = self.env["fts.mqtt.topic"].sudo()
+    def _compute_mqtt_user_count(self):
         account_model = self.env["crose.component.account"].sudo()
         for component in self:
+            component.mqtt_user_count = account_model.search_count([("component_id", "=", component.id)])
+
+    def _compute_mqtt_topic_count(self):
+        topic_model = self.env["fts.mqtt.topic"].sudo()
+        for component in self:
             if component.component_type != "mqtt":
-                component.mqtt_user_count = 0
                 component.mqtt_topic_count = 0
                 continue
-            component.mqtt_user_count = account_model.search_count([("component_id", "=", component.id)])
             component.mqtt_topic_count = topic_model.search_count([("broker_id", "=", component.id)])
 
     @api.onchange('component_type')
@@ -101,6 +108,7 @@ class CroseComponent(models.Model):
             'llama_factory': {'health_endpoint': '/health', 'train_api_path': '/v1/train', 'train_status_api_path': '/v1/train/{job_id}'},
             'vllm': {'health_endpoint': '/v1/models', 'chat_completions_path': '/v1/chat/completions', 'temperature': 0.1},
             'llm_provider': {'chat_completions_path': '/v1/chat/completions', 'models_endpoint': '/v1/models', 'base_path': '/v1'},
+            'nginx': {'health_endpoint': '/health'},
             'npm': {
                 'health_endpoint': '/',
                 'node-red-stage': '/service/rest/v1/search?repository=npm',
@@ -118,6 +126,7 @@ class CroseComponent(models.Model):
             'llama_factory': 8000,
             'vllm': 8000,
             'llm_provider': 443,
+            'nginx': 80,
             'npm': 4873,
             'redis': 6379,
             'webdav': 6065,
@@ -131,6 +140,7 @@ class CroseComponent(models.Model):
             'ai': 'ai',
             'llama_factory': 'ai-train',
             'vllm': 'vllm',
+            'nginx': 'nginx',
             'npm': 'verdaccio-staging',
             'webdav': 'webdav',
             'nodered': 'nodered'
@@ -168,6 +178,16 @@ class CroseComponent(models.Model):
         if not host or not port:
             raise ValueError(_("Component host and port are required."))
         return f"http://{host}:{port}"
+
+    @api.model
+    def _get_mapped_port_by_type(self, component_type):
+        component = self.sudo().search([("component_type", "=", component_type)], limit=1)
+        if not component:
+            return 0
+        try:
+            return int(component.mapped_port or 0)
+        except Exception:
+            return 0
 
     def _build_mqtt_api_base_url(self):
         self.ensure_one()
@@ -238,7 +258,7 @@ class CroseComponent(models.Model):
             return account
         return account_model.create(vals)
 
-    def api_create_users(self, username, password):
+    def api_create_users(self, username, password, role="viewer"):
         self.ensure_one()
         if self.component_type != "mqtt":
             raise UserError(_("Only MQTT components support account API synchronization."))
@@ -250,10 +270,10 @@ class CroseComponent(models.Model):
         url = f"{base_url}/v1/accounts/{quote(username)}"
         response = requests.post(url, json={"password": password}, timeout=10)
         response.raise_for_status()
-        self._upsert_component_account(username, password, role="viewer")
+        self._upsert_component_account(username, password, role=role or "viewer")
         return True
 
-    def api_create_redis_user(self, username, password):
+    def api_create_redis_user(self, username, password, role="viewer"):
         self.ensure_one()
         if self.component_type != "redis":
             raise UserError(_("Only Redis components support account API synchronization."))
@@ -310,7 +330,7 @@ class CroseComponent(models.Model):
             else:
                 raise UserError(_("Redis ACL save failed: %(error)s", error=error_text))
 
-        self._upsert_component_account(username, password, role="viewer")
+        self._upsert_component_account(username, password, role=role or "viewer")
         return True
 
     def create_gmqtt_user(self, username, partner_id=False):
@@ -688,6 +708,25 @@ class CroseComponent(models.Model):
                 'error_reason': str(e)
             })
 
+    def _check_status_nginx(self):
+        try:
+            endpoint = f"{self._build_component_base_url()}/health"
+            response = requests.get(endpoint, timeout=5)
+            if response.status_code == 200:
+                self.write({'status': 'online', 'last_check_time': fields.Datetime.now(), 'error_reason': False})
+            else:
+                self.write({
+                    'status': 'offline',
+                    'last_check_time': fields.Datetime.now(),
+                    'error_reason': _('Unexpected Nginx response: %(code)s', code=response.status_code)
+                })
+        except Exception as e:
+            self.write({
+                'status': 'error',
+                'last_check_time': fields.Datetime.now(),
+                'error_reason': str(e)
+            })
+
     def _check_status_webdav(self):
         try:
             metadata_dict = self._metadata_dict()
@@ -793,21 +832,53 @@ class CroseComponent(models.Model):
 
         return [(acc.username, acc.role, new_password_map[acc.id]) for acc in accounts_to_reset]
 
+    def _redis_reset_accounts(self, accounts_to_reset):
+        self.ensure_one()
+        generated = []
+        for account in accounts_to_reset:
+            username = (account.username or "").strip()
+            if not username:
+                continue
+            plain_password = self._generate_password(16)
+            self.api_create_redis_user(username, plain_password, role=account.role)
+            generated.append((username, account.role, plain_password))
+        if not generated:
+            raise UserError(_("No account available for credential reset."))
+        return generated
+
+    def _mqtt_reset_accounts(self, accounts_to_reset):
+        self.ensure_one()
+        generated = []
+        for account in accounts_to_reset:
+            username = (account.username or "").strip()
+            if not username:
+                continue
+            plain_password = self._generate_password(16)
+            self.api_create_users(username, plain_password, role=account.role)
+            generated.append((username, account.role, plain_password))
+        if not generated:
+            raise UserError(_("No account available for credential reset."))
+        return generated
+
     def action_reset_credentials(self):
         for component in self:
             if not component.account_ids:
                 raise UserError(_("No account records found for this component."))
-            primary = component.account_ids.filtered(lambda x: x.is_primary)[:1]
-            if not primary:
-                raise UserError(_("Please mark one account as primary before resetting credentials."))
             accounts_to_reset = component.account_ids.filtered(lambda x: (x.username or "").lower() != "root")
-            if primary.id not in accounts_to_reset.ids:
-                accounts_to_reset |= primary
             if not accounts_to_reset:
                 raise UserError(_("No account available for credential reset."))
 
             if component.component_type == "iotdb":
+                primary = component.account_ids.filtered(lambda x: x.is_primary)[:1]
+                if not primary:
+                    raise UserError(_("Please mark one account as primary before resetting credentials."))
+                if primary.id not in accounts_to_reset.ids:
+                    accounts_to_reset |= primary
                 generated = component._iotdb_reset_accounts(primary, accounts_to_reset)
+            elif component.component_type == "redis":
+                generated = component._redis_reset_accounts(accounts_to_reset)
+            elif component.component_type == "mqtt":
+                generated = component._mqtt_reset_accounts(accounts_to_reset)
             else:
                 generated = []
                 for account in accounts_to_reset:

@@ -26,7 +26,11 @@ class NodeREDEmbed extends Component {
             const edgeHost = parsed.hostname;
             const edgePath = parsed.pathname || "/";
             const normalizedPath = edgePath.startsWith("/") ? edgePath.slice(1) : edgePath;
-            const base = `http://${window.location.hostname}/edge-proxy/${edgeHost}/`;
+            const proxyPort = Number(params.edge_proxy_port || 0);
+            const scheme = window.location.protocol || "http:";
+            const defaultPort = scheme === "https:" ? 443 : 80;
+            const portPart = proxyPort && proxyPort !== defaultPort ? `:${proxyPort}` : "";
+            const base = `${scheme}//${window.location.hostname}${portPart}/edge-proxy/${edgeHost}/`;
             return `${base}${normalizedPath}${parsed.search || ""}${parsed.hash || ""}`;
         }
         const instanceId = params.instance_id;

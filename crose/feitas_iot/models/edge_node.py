@@ -609,9 +609,13 @@ class FtsEdgeNode(models.Model):
             res["display_name"] = _("Remote Desktop")
             res["name"] = _("Remote Desktop")
             use_edge_proxy = not self.is_gateway
+            edge_proxy_port = 0
+            if use_edge_proxy:
+                edge_proxy_port = self.env["crose.component"]._get_mapped_port_by_type("nginx")
             res["params"] = {
                 "node_red_url": f"http://{self.ip_address}:{self.port}/vnc.html",
                 "use_edge_proxy": use_edge_proxy,
+                "edge_proxy_port": edge_proxy_port,
                 "rewrite_browser_host": False,
             }
             return res
