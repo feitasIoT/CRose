@@ -672,6 +672,32 @@ class DataModel(models.Model):
             },
         }
 
+    def _check_unresolved_params(self):
+        """Raise UserError if any template param has {{ }} but resolved value is empty."""
+        pattern = re.compile(r"\{\{.*?\}\}")
+        FlowParam = self.env["fts.nr.flow.param"]
+        unresolved = []
+        for param in self.app_param_ids:
+            # Find the original template param from the flow
+            if param.flow_id:
+                template_param = FlowParam.search([
+                    ("flow_id", "=", param.flow_id.id),
+                    ("name", "=", param.name),
+                ], limit=1)
+                template_value = template_param.value if template_param else ""
+            else:
+                template_value = ""
+            # If template has placeholder but resolved value is empty → unresolved
+            if pattern.search(template_value) and not (param.value or "").strip():
+                unresolved.append(f"  {param.name}: template={template_value}, resolved=empty")
+        if unresolved:
+            raise UserError(_(
+                "The following parameters still contain unresolved placeholders.\n"
+                "%(details)s\n\n"
+                "Please click 'Generate Parameters' to resolve them first.",
+                details="\n".join(unresolved)
+            ))
+
     def action_deploy_to_stage(self):
         """Deploy selected flows to the staging instance."""
         self.ensure_one()
@@ -679,6 +705,8 @@ class DataModel(models.Model):
             raise UserError(_("Please select a Stage Instance before deploying."))
         if not self.nr_flow_ids:
             raise UserError(_("Please select at least one flow template in Applications."))
+
+        self._check_unresolved_params()
 
         result = self.nr_instance_id.action_deploy_flows(
             flow_ids=self.nr_flow_ids,
@@ -693,6 +721,8 @@ class DataModel(models.Model):
             raise UserError(_("Please select a Prod Instance before deploying."))
         if not self.nr_flow_ids:
             raise UserError(_("Please select at least one flow template in Applications."))
+
+        self._check_unresolved_params()
 
         result = self.prod_instance_id.action_deploy_flows(
             flow_ids=self.nr_flow_ids,

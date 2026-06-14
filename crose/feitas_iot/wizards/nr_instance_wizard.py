@@ -1,5 +1,10 @@
-from odoo import models, fields
+import re
+
+from odoo import models, fields, api
 from odoo.exceptions import UserError
+
+
+PLACEHOLDER_PATTERN = re.compile(r"\{\{.*?\}\}")
 
 
 class FtsNrInstanceWizard(models.TransientModel):
@@ -41,25 +46,19 @@ class FtsNrInstanceWizard(models.TransientModel):
     )
 
     # -------- Parameter preview fields --------
-    show_params = fields.Boolean(string="Show Parameters", default=False)
     preview_param_ids = fields.One2many(
         "fts.nr.instance.wizard.param",
         "wizard_id",
         string="Parameters Preview",
     )
 
-    def action_preview_params(self):
-        """Preview resolved parameters for selected template flows."""
-        self.ensure_one()
+    @api.onchange("template_flow_ids")
+    def _onchange_template_flow_ids(self):
+        """Auto-refresh parameter preview when templates change."""
         instance = self.instance_id
-        if not instance:
-            raise UserError("Instance is required.")
-        if self.operation != "add" or not self.template_flow_ids:
-            raise UserError("Please select template flows to add.")
-
-        Param = self.env["fts.nr.instance.wizard.param"]
-        # Clear existing preview params
-        self.preview_param_ids.unlink()
+        if not instance or not self.template_flow_ids:
+            self.preview_param_ids.unlink()
+            return
 
         results = []
         for tmpl in self.template_flow_ids:
@@ -74,20 +73,23 @@ class FtsNrInstanceWizard(models.TransientModel):
                     "param_type": item["type"],
                 }))
 
-        self.write({
-            "preview_param_ids": results,
-            "show_params": True,
-        })
+        self.preview_param_ids = False  # clear through the ORM
+        self.preview_param_ids = results
 
-        return {
-            "type": "ir.actions.act_window",
-            "name": "Confirm Parameters",
-            "res_model": "fts.nr.instance.wizard",
-            "view_mode": "form",
-            "res_id": self.id,
-            "target": "new",
-            "context": dict(self.env.context),
-        }
+    def _check_unresolved_placeholders(self):
+        """Raise UserError if any template_value contains {{ }} but resolved_value is empty."""
+        unresolved = []
+        for p in self.preview_param_ids:
+            # If template has placeholder but resolved value is empty → unresolved
+            if PLACEHOLDER_PATTERN.search(p.template_value or "") and not (p.resolved_value or "").strip():
+                unresolved.append(
+                    f"  [{p.flow_name}] {p.param_name}: template={p.template_value}, resolved=empty"
+                )
+        if unresolved:
+            raise UserError(
+                "The following parameters still contain unresolved placeholders:\n"
+                + "\n".join(unresolved)
+            )
 
     def action_confirm(self):
         self.ensure_one()
@@ -96,6 +98,9 @@ class FtsNrInstanceWizard(models.TransientModel):
         if self.operation == "add":
             if not self.template_flow_ids:
                 raise UserError("Please select at least one template flow to add.")
+
+            # Block deployment if any placeholders are unresolved
+            self._check_unresolved_placeholders()
 
             # Delegate to instance deployment
             result = instance.action_deploy_flows(
