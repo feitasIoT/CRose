@@ -25,6 +25,13 @@
 
 ## App Store
 
+### 参数
+- 参数名称使用/分隔：节点类型/节点属性/节点属性，例如：mqtt out/broker/clientid表示type为mqtt out的节点中broker属性中的clientid属性。
+- 参数值支持引用。例如：%record.ip_address% 表示流程下发到的实例的ip_address字段的值。
+
+### mqtt client user
+- 使用边缘节点初始化时为Node-RED实例创建的mqtt user。（local instance使用crose component中的user，但是remote instance要使用所属网关的mqtt user）
+
 ## Deployments
 
 ### local和remote之分
