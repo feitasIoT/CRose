@@ -12,9 +12,6 @@
                             <setting string="Tags">
                                 <button type="action" name="%(feitas_iot.action_fts_nr_tag)d" string="Manage" class="btn-link"/>
                             </setting>
-                            <setting string="Prompt Categories">
-                                <button type="action" name="%(feitas_iot.action_fts_ai_category)d" string="Manage" class="btn-link"/>
-                            </setting>
                         </block>
                     </app>
                 </xpath>

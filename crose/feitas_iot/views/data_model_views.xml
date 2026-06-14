@@ -53,12 +53,11 @@
                         <group>
                             <group>
                                 <field name="name"/>
-                                <field name="data_asset_id" />
+                                <field name="data_asset_ids" widget="many2many_tags" />
                                 <field name="partner_id"/>
                                 <field name="data_direction"/>
                                 <field name="mqtt_topic_id" invisible="protocol != 'mqtt'"/>
-                                <field name="nr_instance_id" domain="[('instance_type', '=', 'local')]"/>
-                                <field name="prod_instance_id" domain="[('instance_type', '=', 'local')]"/>
+                                
                                 <field name="gateway_id" domain="[('edge_node_id.is_gateway', '=', True)]"/>
                             </group>
                             <group>
@@ -73,8 +72,7 @@
                                 <field name="smb_share" invisible="protocol != 'smb'" />
                                 <field name="username" invisible="protocol not in ['smb', 'webdav']" />
                                 <field name="password" invisible="protocol not in ['smb', 'webdav']" />
-                                <field name="log_database" domain="[('component_type', '=', 'redis')]"/>
-                                <field name="time_series_database" domain="[('component_type', '=', 'iotdb')]"/>
+                                
                             </group>
                         </group>
                         <notebook>
@@ -85,6 +83,7 @@
                                 <group>
                                     <group>
                                         <field name="query_type"/>
+                                        <field name="query_data_asset_ids" widget="many2many_tags" />
                                         <field name="query_interval" invisible="query_type != 'data'"/>
                                     </group>
                                     <group>
@@ -113,6 +112,10 @@
                                 <group>
                                     <group>
                                         <field name="is_demo" groups="base.group_no_one" />
+                                        <field name="nr_instance_id" domain="[('instance_type', '=', 'local')]"/>
+                                        <field name="prod_instance_id" domain="[('instance_type', '=', 'local')]"/>
+                                        <field name="log_database" domain="[('component_type', '=', 'redis')]"/>
+                                        <field name="time_series_database" domain="[('component_type', '=', 'iotdb')]"/>
                                     </group>
                                     <group>
                                         <field name="data_asset" readonly="1" groups="base.group_no_one" />

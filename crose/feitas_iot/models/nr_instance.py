@@ -835,25 +835,25 @@ class FtsNrInstance(models.Model):
     def _nr_generate_id(self):
         return f"{uuid.uuid4().hex[:7]}.{uuid.uuid4().hex[:7]}"
 
-    def _nr_replace_ids(self, value, mapping):
+    def _nr_replace_ids(self, value, mapping, preserve_subflow_refs=False):
         if isinstance(value, dict):
             replaced = {}
             for k, v in value.items():
                 new_k = mapping.get(k, k) if isinstance(k, str) else k
-                replaced[new_k] = self._nr_replace_ids(v, mapping)
+                replaced[new_k] = self._nr_replace_ids(v, mapping, preserve_subflow_refs=preserve_subflow_refs)
             return replaced
         if isinstance(value, list):
-            return [self._nr_replace_ids(v, mapping) for v in value]
+            return [self._nr_replace_ids(v, mapping, preserve_subflow_refs=preserve_subflow_refs) for v in value]
         if isinstance(value, str):
             if value in mapping:
                 return mapping[value]
-            if value.startswith("subflow:"):
+            if not preserve_subflow_refs and value.startswith("subflow:"):
                 subflow_id = value.split(":", 1)[1]
                 if subflow_id in mapping:
                     return f"subflow:{mapping[subflow_id]}"
         return value
 
-    def _nr_remap_payload_ids(self, payload):
+    def _nr_remap_payload_ids(self, payload, preserve_subflow_refs=False):
         self.ensure_one()
         if not isinstance(payload, dict):
             return payload
@@ -905,10 +905,10 @@ class FtsNrInstance(models.Model):
             used_new.add(new_id)
 
         payload = dict(payload)
-        payload["nodes"] = self._nr_replace_ids(nodes, mapping)
-        payload["configs"] = self._nr_replace_ids(configs, mapping)
+        payload["nodes"] = self._nr_replace_ids(nodes, mapping, preserve_subflow_refs=preserve_subflow_refs)
+        payload["configs"] = self._nr_replace_ids(configs, mapping, preserve_subflow_refs=preserve_subflow_refs)
         if "credentials" in payload:
-            payload["credentials"] = self._nr_replace_ids(payload.get("credentials"), mapping)
+            payload["credentials"] = self._nr_replace_ids(payload.get("credentials"), mapping, preserve_subflow_refs=preserve_subflow_refs)
         return payload
 
     def _nr_render_item_value(self, value):

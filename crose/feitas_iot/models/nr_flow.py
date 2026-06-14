@@ -1,4 +1,5 @@
 import json
+import re
 import uuid
 
 from odoo import models, fields, api, _
@@ -133,10 +134,41 @@ class FtsNrFlow(models.Model):
             return json.dumps(parsed, ensure_ascii=False, indent=2)
         return value
 
+    def _nr_parse_content_dict(self, value):
+        if value is None:
+            return {}
+        try:
+            parsed = json.loads(value) if isinstance(value, str) else value
+        except Exception:
+            return {}
+        return parsed if isinstance(parsed, dict) else {}
+
+    def _nr_collect_publish_ref_ids(self, value, out):
+        ignored_keys = {"id", "z", "links", "x", "y", "wires"}
+        if isinstance(value, dict):
+            for key, item in value.items():
+                if key in ignored_keys:
+                    continue
+                self._nr_collect_publish_ref_ids(item, out)
+            return
+        if isinstance(value, list):
+            for item in value:
+                self._nr_collect_publish_ref_ids(item, out)
+            return
+        if isinstance(value, str):
+            text = value.strip()
+            if re.fullmatch(r"(?:[0-9a-fA-F]{7}\.[0-9a-fA-F]{7}|[0-9a-fA-F]{16})", text):
+                out.append(text)
+
     def action_publish_app(self):
         """
-            发布到app store。 复制->修改
+            1. 拷贝
+            2. 遍历nodes，排查node中的id、z、links、x、y、wires，其他属性的值如果类似关联id（例如：24f00ec.1ac0752、785c9c801678e4ea）
+            则根据属性值去查询fts.nr.node（匹配nr_id字段，且type不是subflow的），将查询到的节点增加到nodes里。
+            查询到的节点不需要递归检查。
+            3. 对于subflow，看作是普通的flow进行发布。
         """
+        Node = self.env["fts.nr.node"]
         for rec in self:
             app = rec.copy({
                 "is_template": True,
@@ -145,151 +177,56 @@ class FtsNrFlow(models.Model):
                 "is_listed": True,
                 "is_valid": True,
             })
-            raw = app.content or "{}"
-            try:
-                parsed = json.loads(raw) if isinstance(raw, str) else raw
-            except Exception:
-                parsed = {}
-            if not isinstance(parsed, dict):
-                parsed = {}
+            parsed = self._nr_parse_content_dict(app.content)
 
             nodes = parsed.get("nodes")
-            nodes = nodes if isinstance(nodes, list) else []
-            subflow_ids = set()
+            nodes = [node for node in nodes if isinstance(node, dict)] if isinstance(nodes, list) else []
+
+            ref_ids = []
             for node in nodes:
-                if not isinstance(node, dict):
+                self._nr_collect_publish_ref_ids(node, ref_ids)
+
+            related_nodes = []
+            existing_ids = {node.get("id") for node in nodes if isinstance(node.get("id"), str) and node.get("id")}
+            ordered_ref_ids = []
+            seen_ref_ids = set()
+            for ref_id in ref_ids:
+                if ref_id in seen_ref_ids or ref_id in existing_ids:
                     continue
-                node_type = node.get("type")
-                if isinstance(node_type, str) and node_type.startswith("subflow:"):
-                    sid = node_type.split(":", 1)[1]
-                    if sid:
-                        subflow_ids.add(sid)
+                seen_ref_ids.add(ref_id)
+                ordered_ref_ids.append(ref_id)
 
-            if subflow_ids and rec.instance_id:
-                Flow = self.env["fts.nr.flow"]
-                deps = []
-                existing_deps = parsed.get("subflow_deps")
-                if isinstance(existing_deps, list):
-                    deps.extend([d for d in existing_deps if isinstance(d, dict)])
+            if ordered_ref_ids:
+                domain = [
+                    ("nr_id", "in", ordered_ref_ids),
+                    ("node_type", "!=", "subflow"),
+                ]
+                if rec.instance_id:
+                    domain.append(("instance_id", "=", rec.instance_id.id))
+                related_records = Node.search(domain)
+                record_by_nr_id = {}
+                for record in related_records:
+                    if record.nr_id and record.nr_id not in record_by_nr_id:
+                        record_by_nr_id[record.nr_id] = record
 
-                existing_ids = set()
-                for dep in deps:
-                    subflow_def = dep.get("subflow") if isinstance(dep, dict) else None
-                    if isinstance(subflow_def, dict) and isinstance(subflow_def.get("id"), str):
-                        existing_ids.add(subflow_def.get("id"))
-
-                for sid in sorted(subflow_ids):
-                    if sid in existing_ids:
+                for ref_id in ordered_ref_ids:
+                    record = record_by_nr_id.get(ref_id)
+                    if not record:
                         continue
-                    subflow_flow = Flow.search(
-                        [
-                            ("instance_id", "=", rec.instance_id.id),
-                            ("type", "=", "subflow"),
-                            ("nr_id", "=", sid),
-                        ],
-                        limit=1,
-                    )
-                    if not subflow_flow or not subflow_flow.content:
+                    related_node = self._nr_parse_content_dict(record.content)
+                    related_node_id = related_node.get("id")
+                    if not related_node_id or related_node_id in existing_ids:
                         continue
-                    try:
-                        dep_parsed = json.loads(subflow_flow.content)
-                    except Exception:
-                        dep_parsed = None
-                    if isinstance(dep_parsed, dict):
-                        deps.append(dep_parsed)
+                    related_nodes.append(related_node)
+                    existing_ids.add(related_node_id)
 
-                if deps:
-                    global_flow = Flow.search(
-                        [
-                            ("instance_id", "=", rec.instance_id.id),
-                            ("type", "=", "global"),
-                            ("nr_id", "=", "global"),
-                        ],
-                        limit=1,
-                    )
-                    global_by_id = {}
-                    if global_flow and global_flow.content:
-                        try:
-                            global_parsed = json.loads(global_flow.content)
-                        except Exception:
-                            global_parsed = None
-                        if isinstance(global_parsed, dict):
-                            candidates = []
-                            for key in ("configs", "nodes", "subflows"):
-                                part = global_parsed.get(key)
-                                if isinstance(part, list):
-                                    candidates.extend([i for i in part if isinstance(i, dict) and i.get("id")])
-                            global_by_id = {i["id"]: i for i in candidates if isinstance(i.get("id"), str)}
-
-                    def _collect_strings(value, out):
-                        if isinstance(value, dict):
-                            for v in value.values():
-                                _collect_strings(v, out)
-                        elif isinstance(value, list):
-                            for v in value:
-                                _collect_strings(v, out)
-                        elif isinstance(value, str):
-                            out.add(value)
-
-                    def _is_config_node(item):
-                        return (
-                            isinstance(item, dict)
-                            and item.get("id")
-                            and item.get("type") not in ("tab", "subflow")
-                            and "wires" not in item
-                        )
-
-                    if global_by_id:
-                        def _resolve_configs_from_refs(refs, existing_ids):
-                            queue = [rid for rid in refs if rid in global_by_id]
-                            seen = set()
-                            resolved = []
-                            while queue:
-                                rid = queue.pop(0)
-                                if rid in seen or rid in existing_ids:
-                                    continue
-                                item = global_by_id.get(rid)
-                                if not item:
-                                    continue
-                                seen.add(rid)
-                                if _is_config_node(item):
-                                    resolved.append(item)
-                                    existing_ids.add(rid)
-                                    nested = set()
-                                    _collect_strings(item, nested)
-                                    for nid in nested:
-                                        if nid in global_by_id and nid not in seen and nid not in existing_ids:
-                                            queue.append(nid)
-                            return resolved
-
-                        for dep in deps:
-                            configs = dep.get("configs")
-                            if not isinstance(configs, list):
-                                configs = []
-                            configs = [c for c in configs if isinstance(c, dict) and c.get("id")]
-                            config_ids = {c.get("id") for c in configs if isinstance(c.get("id"), str)}
-
-                            refs = set()
-                            _collect_strings(dep, refs)
-                            configs.extend(_resolve_configs_from_refs(refs, config_ids))
-
-                            dep["configs"] = configs
-
-                        main_configs = parsed.get("configs")
-                        if not isinstance(main_configs, list):
-                            main_configs = []
-                        main_configs = [c for c in main_configs if isinstance(c, dict) and c.get("id")]
-                        main_config_ids = {c.get("id") for c in main_configs if isinstance(c.get("id"), str)}
-
-                        refs = set()
-                        _collect_strings(parsed.get("nodes") or [], refs)
-                        main_configs.extend(_resolve_configs_from_refs(refs, main_config_ids))
-                        parsed["configs"] = main_configs
-
-                    parsed["subflow_deps"] = deps
-                    app.write({"content": parsed})
+            parsed["nodes"] = nodes + related_nodes
+            parsed.pop("configs", None)
+            parsed.pop("subflow_deps", None)
+            app.write({"content": parsed})
 
             regenerated = app._nr_regenerate_content_ids()
+
             if regenerated != (app.content or ""):
                 app.write({"content": regenerated})
             rec.write({

@@ -32,8 +32,8 @@ class DataModel(models.Model):
     partner_id = fields.Many2one('res.partner', string='Requester', required=False)  # 废弃
     data_asset_id = fields.Many2one('fts.data.asset', string='Data Asset', required=False) 
     partner_id = fields.Many2one('res.partner', string='Partner', related='data_asset_id.partner_id', store=True, readonly=True)
-    data_asset_ids = fields.Many2many("fts.data.asset", string="Assets", relation="rel_data_asset_modeling")  # 废弃
-    query_data_asset_ids = fields.Many2many("fts.data.asset", relation="rel_query_data_asset", string="Query Assets")  # 废弃
+    data_asset_ids = fields.Many2many("fts.data.asset", string="Assets", relation="rel_data_asset_modeling")  
+    query_data_asset_ids = fields.Many2many("fts.data.asset", relation="rel_query_data_asset", string="Query Assets")  
     protocol = fields.Selection([
         ('modbus-tcp', 'Modbus-TCP'),
         ('modbus-rtu', 'Modbus-RTU'),
@@ -56,8 +56,8 @@ class DataModel(models.Model):
     username = fields.Char(string='Username')
     password = fields.Char(string='Password')
 
-    log_database = fields.Many2one("crose.component")
-    time_series_database = fields.Many2one("crose.component")
+    log_database = fields.Many2one("crose.component", string="Redis")
+    time_series_database = fields.Many2one("crose.component", string="IoTDB")
     query_type = fields.Selection([
         ('data', 'Time-Series Data'),
         ('log', 'Logs'),
