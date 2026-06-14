@@ -127,16 +127,12 @@
                         <group>
                             <group>
                                 <field name="name"/>
-                                <field name="instance_id" invisible="is_template"/>
-                                <field name="nr_id" invisible="is_template"/>
                                 <field name="heat" invisible="is_template == False"/>
                                 <field name="is_listed" invisible="is_template == False"/>
                                 <field name="is_valid" invisible="is_template == False"/>
-                                <field name="tag_ids" widget="many2many_tags"/>
-                                <field name="type" invisible="is_template"/>
+                                <field name="tag_ids" widget="many2many_tags" invisible="is_template == False"/>
                                 <field name="is_template" invisible="1"/>
                                 <field name="app_store_id" invisible="1" />
-                                <field name="data_model_id" invisible="is_template"/>
                             </group>
                             <group>
                                 <field name="image" widget="image"/>
@@ -162,6 +158,12 @@
                                     </list>
                                 </field>
                             </page>
+                            <page string="Others">
+                                <field name="instance_id" invisible="is_template"/>
+                                <field name="nr_id" invisible="is_template"/>
+                                <field name="type" invisible="is_template"/>
+                                <field name="data_model_id" invisible="is_template"/>
+                            </page>
                         </notebook>
                     </sheet>
                     <chatter>
@@ -175,4 +177,3 @@
 
     </data>
 </odoo>
-

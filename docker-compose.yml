@@ -4,7 +4,7 @@ services:
   nginx:
     image: ${REGISTRY:-}nginx:alpine
     container_name: crose_nginx
-    restart: unless-stopped
+    restart: always
     ports:
       - "18888:80"
     volumes:
@@ -190,7 +190,7 @@ services:
       WD_REDIS_KEY_PREFIX: "webdav:"
       WD_REDIS_SEED_FROM_CONFIG: "true"
     command: ["--config", "/config.yaml"]
-    restart: unless-stopped
+    restart: always
     networks:
       - crose-net
   
@@ -200,7 +200,7 @@ services:
     build:
       context: ./frp
       dockerfile: dockerfiles/Dockerfile-for-frps
-    restart: unless-stopped
+    restart: always
     command: ["-c", "/etc/frp/frps.toml"]
     ports:
       - "17000:7000"
@@ -214,7 +214,7 @@ services:
   nexus:
     image: ${REGISTRY:-}sonatype/nexus3
     container_name: crose_nexus
-    restart: unless-stopped
+    restart: always
     ports:
       - "18081:8081"
       - "18080:8080"
