@@ -26,6 +26,7 @@
         "views/data_model_views.xml",
         "views/nr_flow_views.xml",
         "views/menu_actions.xml",
+        "views/crose_settings_views.xml",
     ],
     "installable": True,
     "application": False,

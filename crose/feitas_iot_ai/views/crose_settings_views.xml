@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_crose_res_config_settings_ai" model="ir.ui.view">
+            <field name="name">crose.res.config.settings.ai</field>
+            <field name="model">res.config.settings</field>
+            <field name="inherit_id" ref="feitas_iot.view_crose_res_config_settings"/>
+            <field name="arch" type="xml">
+                <xpath expr="//app[@name='feitas_iot']/block" position="inside">
+                    <setting string="Prompt Categories">
+                        <button type="action" name="%(feitas_iot_ai.action_fts_ai_category)d" string="Manage" class="btn-link"/>
+                    </setting>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>
