@@ -811,6 +811,24 @@ class FtsNrInstance(models.Model):
                 last_error = e
         raise UserError(_("Failed to call Node-RED API: %(error)s", error=str(last_error)))
 
+    def _nr_delete_json(self, path, timeout=15):
+        self.ensure_one()
+        last_error = None
+        for base_url in self._nr_candidate_base_urls():
+            url = f"{base_url}{path}"
+            try:
+                headers = self._nr_headers_for(base_url)
+                response = requests.delete(url, headers=headers, timeout=timeout)
+                if response.status_code == 401 and "Authorization" in headers:
+                    self._nr_invalidate_token(base_url)
+                    headers = self._nr_headers_for(base_url)
+                    response = requests.delete(url, headers=headers, timeout=timeout)
+                response.raise_for_status()
+                return True
+            except Exception as e:
+                last_error = e
+        raise UserError(_("Failed to call Node-RED API: %(error)s", error=str(last_error)))
+
     def _nr_put_json(self, path, body, timeout=15):
         self.ensure_one()
         last_error = None
@@ -1180,3 +1198,1049 @@ class FtsNrInstance(models.Model):
             raise UserError(_("Duplicate node IDs exist in the flow, so it cannot be applied."))
 
         return payload
+
+    # ========================================================================
+    # Unified Parameter Resolution (shared by wizard & data_model)
+    # ========================================================================
+
+    def _nr_resolve_record_path(self, record, path):
+        """Resolve a dotted path on a record or dict.
+        
+        When called from instance wizard, record is the fts.nr.instance record.
+        When called from data_model, record is the fts.data.model record.
+        Supports model fields with dot notation.
+        """
+        current = record
+        for part in str(path).split("."):
+            if not part:
+                return ""
+            if isinstance(current, models.BaseModel):
+                if not current:
+                    return ""
+                current = current[part] if part in current._fields else None
+            elif isinstance(current, dict):
+                current = current.get(part)
+            else:
+                current = getattr(current, part, None) if hasattr(current, part) else None
+            if current is None:
+                return ""
+        if isinstance(current, models.BaseModel):
+            if not current:
+                return ""
+            if len(current) > 1:
+                return ", ".join(current.mapped("display_name"))
+            current = current[:1]
+            if "name" in current._fields:
+                return current.name or ""
+            return current.id
+        return current
+
+    def _nr_resolve_placeholders(self, record, text):
+        """Resolve {{record.field}} style placeholders in text.
+        
+        Supported prefixes:
+          {{record.field}}  - resolves field on the record (instance or data_model)
+          {{instance.field}} - resolves field on the instance (when record is data_model,
+                               uses nr_instance_id/prod_instance_id)
+          {{gateway.field}} - resolves field on the gateway
+          {{node.field}}    - resolves field on the edge node
+          {{data_asset_ids.field}} - resolves field on each data_asset (for data_model)
+          {{field}}         - bare field, resolves on record directly
+        """
+        if not isinstance(text, str):
+            return text
+
+        pattern = re.compile(r"\{\{\s*([a-zA-Z_][\w\.]*)\s*\}\}")
+
+        def _replace(match):
+            expr = match.group(1)
+            lower = expr.lower()
+
+            # data_asset_ids references (data_model context)
+            if expr == "data_asset_ids" or lower == "data_asset_ids":
+                if hasattr(record, "data_asset_ids") and record.data_asset_ids:
+                    return ",".join(str(a.id) for a in record.data_asset_ids)
+                if hasattr(record, "data_asset_id") and record.data_asset_id:
+                    return str(record.data_asset_id.id)
+                return ""
+            if expr.startswith("data_asset_ids."):
+                rel_path = expr.split(".", 1)[1]
+                if hasattr(record, "data_asset_ids") and record.data_asset_ids:
+                    values = [
+                        str(self._nr_resolve_record_path(a, rel_path) or "")
+                        for a in record.data_asset_ids
+                    ]
+                    return ",".join(v for v in values if v)
+                return ""
+
+            # Gateway prefix
+            if lower.startswith("gateway."):
+                path = expr.split(".", 1)[1]
+                gateway = None
+                if hasattr(record, "gateway_id") and record.gateway_id:
+                    gateway = record.gateway_id
+                elif hasattr(record, "edge_node_id") and record.edge_node_id:
+                    edge = record.edge_node_id
+                    gateway = edge if edge.is_gateway else edge.gateway_id
+                if gateway:
+                    return str(self._nr_resolve_record_path(gateway, path) or "")
+                return ""
+
+            # Node prefix
+            if lower.startswith("node."):
+                path = expr.split(".", 1)[1]
+                if hasattr(record, "edge_node_id") and record.edge_node_id:
+                    return str(self._nr_resolve_record_path(record.edge_node_id, path) or "")
+                return ""
+
+            # Instance prefix (when record is data_model)
+            if lower.startswith("instance."):
+                path = expr.split(".", 1)[1]
+                # try nr_instance_id first
+                if hasattr(record, "nr_instance_id") and record.nr_instance_id:
+                    return str(self._nr_resolve_record_path(record.nr_instance_id, path) or "")
+                return ""
+
+            # record prefix or bare field
+            if lower.startswith("record."):
+                path = expr.split(".", 1)[1]
+            else:
+                path = expr
+
+            resolved = self._nr_resolve_record_path(record, path)
+            if isinstance(resolved, (dict, list)):
+                return json.dumps(resolved, ensure_ascii=False)
+            return "" if resolved is None else str(resolved)
+
+        return pattern.sub(_replace, text)
+
+    def _nr_resolve_param_value(self, record, param):
+        """Resolve a single flow param value against a record.
+        
+        Returns the rendered value cast to the param's type.
+        """
+        raw_value = param.value or ""
+        value_type = (param.type or "str").lower()
+
+        if not isinstance(raw_value, str):
+            return raw_value
+
+        rendered = self._nr_resolve_placeholders(record, raw_value)
+
+        if value_type == "num":
+            try:
+                value_text = str(rendered).strip()
+                return int(value_text) if re.fullmatch(r"-?\d+", value_text) else float(value_text)
+            except Exception:
+                return rendered
+        if value_type == "bool":
+            value_text = str(rendered).strip().lower()
+            if value_text in ("1", "true", "yes", "on"):
+                return True
+            if value_text in ("0", "false", "no", "off", ""):
+                return False
+            return rendered
+        if value_type == "json":
+            try:
+                return json.loads(rendered) if isinstance(rendered, str) else rendered
+            except Exception:
+                return rendered
+        return rendered
+
+    def _nr_preview_flow_params(self, flow, record):
+        """Extract params from a template flow and resolve them against record.
+        
+        Returns list of dicts:
+          {param_id, name, value (template), resolved_value, type}
+        """
+        results = []
+        for param in flow.param_ids:
+            resolved = self._nr_resolve_param_value(record, param)
+            results.append({
+                "param_id": param.id,
+                "name": param.name or "",
+                "value": param.value or "",
+                "resolved_value": resolved,
+                "type": param.type or "str",
+            })
+        return results
+
+    # ========================================================================
+    # Credential injection (moved from wizard)
+    # ========================================================================
+
+    def _nr_get_component_account_credentials(self, component_type, username):
+        """Get credentials from a component account by type and username."""
+        component = self.env["crose.component"].search(
+            [("component_type", "=", component_type), ("status", "=", "online")],
+            limit=1,
+        )
+        if not component:
+            component = self.env["crose.component"].search(
+                [("component_type", "=", component_type)], limit=1
+            )
+        if not component:
+            raise UserError(_("Component '%(type)s' not found.", type=component_type))
+        account = component.account_ids.filtered(
+            lambda x: (x.username or "").strip() == username
+        )[:1]
+        if not account:
+            raise UserError(
+                _("Account '%(user)s' not found on component '%(comp)s'.",
+                  user=username, comp=component.name)
+            )
+        password = account._get_plain_password()
+        if not password:
+            raise UserError(
+                _("Account '%(user)s' has no decryptable password.", user=username)
+            )
+        return account.username, password
+
+    def _nr_inject_iotdb_mqtt_broker_credentials(self, payload):
+        """Inject IoTDB mqtt-broker credentials into payload."""
+        if not isinstance(payload, dict):
+            return payload
+        target_items = []
+        for section in ("configs", "nodes"):
+            for item in payload.get(section) or []:
+                if not isinstance(item, dict):
+                    continue
+                if item.get("type") != "mqtt-broker":
+                    continue
+                if str(item.get("name") or "").strip().lower() != "iotdb":
+                    continue
+                target_items.append(item)
+        if not target_items:
+            return payload
+
+        username, password = self._nr_get_component_account_credentials("iotdb", "mqtt_client")
+        credentials_map = payload.get("credentials")
+        if not isinstance(credentials_map, dict):
+            credentials_map = {}
+        for item in target_items:
+            item_credentials = item.get("credentials") if isinstance(item.get("credentials"), dict) else {}
+            item_credentials["user"] = username
+            item_credentials["password"] = password
+            item["credentials"] = item_credentials
+            node_id = item.get("id")
+            if node_id:
+                credentials_map[node_id] = {
+                    "user": username,
+                    "password": password,
+                }
+        if credentials_map:
+            payload["credentials"] = credentials_map
+        return payload
+
+    # ========================================================================
+    # Payload construction (shared by wizard & data_model)
+    # ========================================================================
+
+    def _nr_collect_subflow_refs(self, nodes):
+        """Collect subflow IDs referenced in nodes."""
+        subflow_ids = []
+        seen = set()
+        for node in nodes or []:
+            if not isinstance(node, dict):
+                continue
+            node_type = node.get("type")
+            if not isinstance(node_type, str) or not node_type.startswith("subflow:"):
+                continue
+            subflow_id = node_type.split(":", 1)[1]
+            if not subflow_id or subflow_id in seen:
+                continue
+            seen.add(subflow_id)
+            subflow_ids.append(subflow_id)
+        return subflow_ids
+
+    def _nr_apply_subflow_mapping(self, nodes, mapping):
+        """Apply subflow id mapping to node references."""
+        if not mapping:
+            return
+        for node in nodes or []:
+            if not isinstance(node, dict):
+                continue
+            node_type = node.get("type")
+            if not isinstance(node_type, str) or not node_type.startswith("subflow:"):
+                continue
+            subflow_id = node_type.split(":", 1)[1]
+            if subflow_id in mapping:
+                node["type"] = f"subflow:{mapping[subflow_id]}"
+            node_subflow = node.get("subflow")
+            if isinstance(node_subflow, str) and node_subflow in mapping:
+                node["subflow"] = mapping[node_subflow]
+
+    def _nr_collect_strings(self, value, out):
+        """Collect all string values from a nested dict/list structure."""
+        if isinstance(value, dict):
+            for v in value.values():
+                self._nr_collect_strings(v, out)
+        elif isinstance(value, list):
+            for v in value:
+                self._nr_collect_strings(v, out)
+        elif isinstance(value, str):
+            out.add(value)
+
+    def _nr_resolve_global_configs(self, source_instance, refs):
+        """Resolve config nodes from source instance's global flow."""
+        if not source_instance or not refs:
+            return []
+        global_flow = self.env["fts.nr.flow"].search(
+            [("instance_id", "=", source_instance.id), ("nr_id", "=", "global")],
+            limit=1,
+        )
+        if not global_flow or not global_flow.content:
+            return []
+        try:
+            parsed = json.loads(global_flow.content)
+        except Exception:
+            return []
+        if not isinstance(parsed, dict):
+            return []
+        candidates = []
+        for key in ("configs", "subflows", "nodes"):
+            part = parsed.get(key)
+            if isinstance(part, list):
+                candidates.extend([i for i in part if isinstance(i, dict) and i.get("id")])
+        by_id = {i["id"]: i for i in candidates}
+        queue = [rid for rid in refs if rid in by_id]
+        selected = {}
+        while queue:
+            rid = queue.pop(0)
+            if rid in selected:
+                continue
+            node = by_id.get(rid)
+            if not node:
+                continue
+            selected[rid] = node
+            nested_refs = set()
+            self._nr_collect_strings(node, nested_refs)
+            for nested in nested_refs:
+                if nested in by_id and nested not in selected:
+                    queue.append(nested)
+        return list(selected.values())
+
+    def _nr_ensure_payload_configs_from_source_global(self, payload, source_instance):
+        """Ensure payload configs include required configs from source instance's global."""
+        if not isinstance(payload, dict) or not source_instance:
+            return payload
+        nodes = [n for n in (payload.get("nodes") or []) if isinstance(n, dict)]
+        configs = [c for c in (payload.get("configs") or []) if isinstance(c, dict) and c.get("id")]
+        if not nodes:
+            return payload
+
+        refs = set()
+        self._nr_collect_strings(nodes, refs)
+        if not refs:
+            return payload
+
+        existing_ids = {c.get("id") for c in configs if isinstance(c.get("id"), str)}
+        global_configs = self._nr_resolve_global_configs(source_instance, refs)
+        for cfg in global_configs:
+            cfg_id = cfg.get("id") if isinstance(cfg, dict) else None
+            if not cfg_id or cfg_id in existing_ids:
+                continue
+            cfg_copy = dict(cfg)
+            cfg_copy.pop("z", None)
+            configs.append(cfg_copy)
+            existing_ids.add(cfg_id)
+
+        payload["configs"] = configs
+        return payload
+
+    def _nr_set_value_with_reference(self, target, path_parts, value, node_by_id):
+        """Set a value in nested dict, following config node references."""
+        current = target
+        for index, part in enumerate(path_parts):
+            if not isinstance(current, dict) or not part:
+                return False
+            is_last = index == len(path_parts) - 1
+            if is_last:
+                existing = current.get(part)
+                if isinstance(existing, str) and existing in node_by_id and not isinstance(value, (dict, list)):
+                    return False
+                current[part] = value
+                return True
+            nxt = current.get(part)
+            if isinstance(nxt, str) and nxt in node_by_id:
+                current = node_by_id[nxt]
+                continue
+            if not isinstance(nxt, dict):
+                nxt = {}
+                current[part] = nxt
+            current = nxt
+        return False
+
+    def _nr_apply_flow_params_to_payload(self, flow, record, payload):
+        """Apply flow parameters to payload, resolving placeholders against record."""
+        if not flow.param_ids or not isinstance(payload, dict):
+            return payload
+        nodes = [n for n in payload.get("nodes") or [] if isinstance(n, dict)]
+        configs = [c for c in payload.get("configs") or [] if isinstance(c, dict)]
+        all_items = nodes + configs
+        if not all_items:
+            return payload
+        node_by_id = {n.get("id"): n for n in all_items if isinstance(n.get("id"), str)}
+
+        for param in flow.param_ids:
+            name = (param.name or "").strip()
+            if not name:
+                continue
+            path_parts = [p.strip() for p in name.split("/") if p and p.strip()]
+            if len(path_parts) < 2:
+                continue
+            node_type = path_parts[0]
+            target_path = path_parts[1:]
+            target_nodes = [n for n in all_items if n.get("type") == node_type]
+            if not target_nodes:
+                continue
+            value = self._nr_resolve_param_value(record, param)
+            for node in target_nodes:
+                self._nr_set_value_with_reference(node, target_path, value, node_by_id)
+
+        # Sync mqtt credentials into the credentials map
+        credentials_map = payload.get("credentials")
+        if not isinstance(credentials_map, dict):
+            credentials_map = {}
+        for item in all_items:
+            if not isinstance(item, dict) or item.get("type") != "mqtt-broker":
+                continue
+            node_id = item.get("id")
+            if not node_id:
+                continue
+            node_credentials = item.get("credentials") if isinstance(item.get("credentials"), dict) else {}
+            user_value = node_credentials.get("user", item.get("user"))
+            password_value = node_credentials.get("password", item.get("password"))
+            if user_value is None and password_value is None:
+                continue
+            item["credentials"] = {
+                "user": "" if user_value is None else user_value,
+                "password": "" if password_value is None else password_value,
+            }
+            credentials_map[node_id] = dict(item["credentials"])
+        if credentials_map:
+            payload["credentials"] = credentials_map
+        return payload
+
+    def _nr_payload_has_subflow_instances(self, payload):
+        """Check if payload contains subflow instance nodes."""
+        nodes = payload.get("nodes") if isinstance(payload, dict) else []
+        for node in nodes or []:
+            if isinstance(node, dict) and isinstance(node.get("type"), str) and node.get("type").startswith("subflow:"):
+                return True
+        return False
+
+    def _nr_sanitize_main_flow_payload(self, payload):
+        """Remove subflow definitions from main flow payload."""
+        if not isinstance(payload, dict):
+            return payload
+        payload = dict(payload)
+        payload["nodes"] = [
+            node for node in (payload.get("nodes") or [])
+            if isinstance(node, dict) and node.get("id") and node.get("type") != "subflow"
+        ]
+        payload["configs"] = [
+            cfg for cfg in (payload.get("configs") or [])
+            if isinstance(cfg, dict) and cfg.get("id") and cfg.get("type") != "subflow"
+        ]
+        return payload
+
+    def _nr_post_main_flow_payload(self, payload):
+        """Post a main flow payload to Node-RED, handling subflow instances by merging."""
+        self.ensure_one()
+        if not isinstance(payload, dict) or not payload.get("id"):
+            raise UserError(_("Invalid flow payload."))
+
+        if not self._nr_payload_has_subflow_instances(payload):
+            result = self._nr_post_json("/flow", payload)
+            new_nr_id = result.get("id") if isinstance(result, dict) else None
+            return new_nr_id or payload["id"]
+
+        current = self._nr_get_json("/flows")
+        if isinstance(current, dict):
+            current_flows = current.get("flows") or []
+        else:
+            current_flows = current or []
+        current_flows = [f for f in current_flows if isinstance(f, dict) and f.get("id")]
+
+        tab = {
+            "id": payload["id"],
+            "type": "tab",
+            "label": payload.get("label") or "",
+            "disabled": bool(payload.get("disabled", False)),
+            "info": payload.get("info") or "",
+        }
+        if "env" in payload and isinstance(payload.get("env"), list):
+            tab["env"] = payload.get("env")
+
+        elements = [tab]
+        elements.extend([n for n in (payload.get("nodes") or []) if isinstance(n, dict) and n.get("id")])
+        elements.extend([c for c in (payload.get("configs") or []) if isinstance(c, dict) and c.get("id")])
+
+        by_id = {f["id"]: f for f in current_flows if isinstance(f.get("id"), str)}
+        order = [f["id"] for f in current_flows if isinstance(f.get("id"), str)]
+        for el in elements:
+            el_id = el.get("id")
+            if isinstance(el_id, str) and el_id:
+                by_id[el_id] = el
+                if el_id not in order:
+                    order.append(el_id)
+
+        merged = [by_id[i] for i in order if i in by_id]
+        self._nr_post_json("/flows", {"flows": merged})
+        return payload["id"]
+
+    # ========================================================================
+    # Subflow deployment
+    # ========================================================================
+
+    def _nr_runtime_subflow_ids(self):
+        """Get set of subflow IDs currently in NR runtime."""
+        current = self._nr_get_json("/flows")
+        if isinstance(current, dict):
+            flows = current.get("flows") or []
+        else:
+            flows = current or []
+        return {
+            f.get("id")
+            for f in flows
+            if f.get("type") == "subflow" and isinstance(f.get("id"), str) and f.get("id")
+        }
+
+    def _nr_ensure_subflow_template(self, source_instance, subflow_id):
+        """Find and ensure a subflow is published as a template."""
+        Flow = self.env["fts.nr.flow"]
+        source_subflow = Flow.search(
+            [
+                ("instance_id", "=", source_instance.id),
+                ("type", "=", "subflow"),
+                ("nr_id", "=", subflow_id),
+            ],
+            limit=1,
+        )
+        if not source_subflow:
+            raise UserError(_("Subflow '%(id)s' not found in source instance.", id=subflow_id))
+        if not source_subflow.app_store_id:
+            source_subflow.action_publish_app()
+            source_subflow = Flow.search([("id", "=", source_subflow.id)], limit=1)
+        template = source_subflow.app_store_id
+        if not template:
+            raise UserError(
+                _("Subflow '%(name)s' publish failed.", name=source_subflow.display_name)
+            )
+        return source_subflow, template
+
+    def _nr_resolve_deployed_subflow_flow(self, template, source_subflow, expected_nr_id=None, runtime_subflow_ids=None):
+        """Find an already-deployed subflow flow record."""
+        Flow = self.env["fts.nr.flow"]
+        existing = Flow.search(
+            [
+                ("instance_id", "=", self.id),
+                ("type", "=", "subflow"),
+                ("app_store_id", "=", template.id),
+            ],
+            limit=1,
+        )
+        if existing and (runtime_subflow_ids is None or existing.nr_id in runtime_subflow_ids):
+            return existing
+
+        search_names = []
+        for candidate in (source_subflow.name, template.name, source_subflow.display_name):
+            if candidate and candidate not in search_names:
+                search_names.append(candidate)
+
+        domain = [
+            ("instance_id", "=", self.id),
+            ("type", "=", "subflow"),
+        ]
+        if expected_nr_id:
+            found = Flow.search(domain + [("nr_id", "=", expected_nr_id)], limit=1)
+            if found and (runtime_subflow_ids is None or found.nr_id in runtime_subflow_ids):
+                return found
+        for candidate_name in search_names:
+            found = Flow.search(domain + [("name", "=", candidate_name)], limit=1)
+            if found and (runtime_subflow_ids is None or found.nr_id in runtime_subflow_ids):
+                return found
+        return Flow.browse()
+
+    def _nr_parse_flow_content_dict(self, flow):
+        """Parse flow content JSON into a dict."""
+        raw = flow.content or "{}"
+        try:
+            parsed = json.loads(raw) if isinstance(raw, str) else raw
+        except Exception:
+            return {}
+        return parsed if isinstance(parsed, dict) else {}
+
+    def _nr_expand_subflow_deps_configs(self, deps, source_instance):
+        """Expand subflow dependencies with config nodes from source global."""
+        deps = [d for d in deps if isinstance(d, dict)]
+        if not deps or not source_instance:
+            return deps
+
+        Flow = self.env["fts.nr.flow"]
+        global_flow = Flow.search(
+            [
+                ("instance_id", "=", source_instance.id),
+                ("type", "=", "global"),
+                ("nr_id", "=", "global"),
+            ],
+            limit=1,
+        )
+        if not global_flow or not global_flow.content:
+            return deps
+        try:
+            global_parsed = json.loads(global_flow.content)
+        except Exception:
+            return deps
+        if not isinstance(global_parsed, dict):
+            return deps
+
+        candidates = []
+        for key in ("configs", "nodes", "subflows"):
+            part = global_parsed.get(key)
+            if isinstance(part, list):
+                candidates.extend([i for i in part if isinstance(i, dict) and i.get("id")])
+        global_by_id = {i["id"]: i for i in candidates if isinstance(i.get("id"), str)}
+        if not global_by_id:
+            return deps
+
+        def _is_config_node(item):
+            return (
+                isinstance(item, dict)
+                and item.get("id")
+                and item.get("type") not in ("tab", "subflow")
+                and "wires" not in item
+            )
+
+        for dep in deps:
+            configs = dep.get("configs")
+            if not isinstance(configs, list):
+                configs = []
+            configs = [c for c in configs if isinstance(c, dict) and c.get("id")]
+            config_ids = {c.get("id") for c in configs if isinstance(c.get("id"), str)}
+
+            refs = set()
+            self._nr_collect_strings(dep, refs)
+            queue = [rid for rid in refs if rid in global_by_id]
+            seen = set()
+            while queue:
+                rid = queue.pop(0)
+                if rid in seen or rid in config_ids:
+                    continue
+                item = global_by_id.get(rid)
+                if not item:
+                    continue
+                seen.add(rid)
+                if _is_config_node(item):
+                    configs.append(item)
+                    config_ids.add(rid)
+                    nested = set()
+                    self._nr_collect_strings(item, nested)
+                    for nid in nested:
+                        if nid in global_by_id and nid not in seen and nid not in config_ids:
+                            queue.append(nid)
+
+            dep["configs"] = configs
+
+        return deps
+
+    def _nr_collect_ids(self, value, out):
+        """Collect all node IDs from a nested dict/list."""
+        if isinstance(value, dict):
+            node_id = value.get("id")
+            if isinstance(node_id, str) and node_id:
+                out.add(node_id)
+            for v in value.values():
+                self._nr_collect_ids(v, out)
+        elif isinstance(value, list):
+            for v in value:
+                self._nr_collect_ids(v, out)
+
+    def _nr_deploy_subflow_deps(self, deps, base_configs=None):
+        """Deploy subflow dependencies to NR and return id mapping."""
+        self.ensure_one()
+        deps = [d for d in deps if isinstance(d, dict)]
+        if not deps:
+            return {}
+        base_configs = base_configs if isinstance(base_configs, list) else []
+        base_configs = [c for c in base_configs if isinstance(c, dict) and c.get("id")]
+
+        config_pool = {}
+        for dep in deps:
+            dep_configs = dep.get("configs")
+            if not isinstance(dep_configs, list):
+                continue
+            for cfg in dep_configs:
+                if isinstance(cfg, dict) and isinstance(cfg.get("id"), str):
+                    config_pool[cfg["id"]] = cfg
+        for cfg in base_configs:
+            cfg_id = cfg.get("id")
+            if isinstance(cfg_id, str) and cfg_id and cfg_id not in config_pool:
+                config_pool[cfg_id] = cfg
+
+        def _get_subflow_id(dep):
+            subflow_def = dep.get("subflow") if isinstance(dep.get("subflow"), dict) else None
+            if subflow_def and isinstance(subflow_def.get("id"), str) and subflow_def.get("id"):
+                return subflow_def.get("id")
+            if dep.get("type") == "subflow" and isinstance(dep.get("id"), str) and dep.get("id"):
+                return dep.get("id")
+            return None
+
+        subflow_ids = []
+        for dep in deps:
+            sid = _get_subflow_id(dep)
+            if sid:
+                subflow_ids.append(sid)
+
+        subflow_mapping = {}
+        used_new = set()
+        for sid in sorted(set(subflow_ids)):
+            new_id = self._nr_generate_id()
+            while new_id in used_new:
+                new_id = self._nr_generate_id()
+            subflow_mapping[sid] = new_id
+            used_new.add(new_id)
+
+        elements = []
+        for dep in deps:
+            dep_work = dict(dep)
+            dep_configs = dep_work.get("configs")
+            if not isinstance(dep_configs, list):
+                dep_configs = []
+            dep_configs = [c for c in dep_configs if isinstance(c, dict) and c.get("id")]
+            dep_cfg_ids = {c.get("id") for c in dep_configs if isinstance(c.get("id"), str)}
+
+            refs = set()
+            self._nr_collect_strings(dep_work, refs)
+            queue = [rid for rid in refs if rid in config_pool]
+            seen = set()
+            while queue:
+                rid = queue.pop(0)
+                if rid in seen or rid in dep_cfg_ids:
+                    continue
+                cfg = config_pool.get(rid)
+                if not cfg:
+                    continue
+                seen.add(rid)
+                dep_configs.append(cfg)
+                dep_cfg_ids.add(rid)
+                nested = set()
+                self._nr_collect_strings(cfg, nested)
+                for nid in nested:
+                    if nid in config_pool and nid not in seen and nid not in dep_cfg_ids:
+                        queue.append(nid)
+            dep_work["configs"] = dep_configs
+
+            ids = set()
+            self._nr_collect_ids(dep_work, ids)
+            mapping = dict(subflow_mapping)
+            used = set(mapping.values())
+            for old in sorted(ids):
+                if old in mapping:
+                    continue
+                new_id = self._nr_generate_id()
+                while new_id in used:
+                    new_id = self._nr_generate_id()
+                mapping[old] = new_id
+                used.add(new_id)
+
+            remapped = self._nr_replace_ids(dep_work, mapping)
+            if not isinstance(remapped, dict):
+                continue
+
+            subflow_def = remapped.get("subflow") if isinstance(remapped.get("subflow"), dict) else None
+            if not subflow_def and remapped.get("type") == "subflow":
+                subflow_def = remapped
+
+            nodes = remapped.get("nodes") if isinstance(remapped.get("nodes"), list) else []
+            configs = remapped.get("configs") if isinstance(remapped.get("configs"), list) else []
+
+            cred_payload = {"nodes": nodes, "configs": configs}
+            cred_payload = self._nr_inject_iotdb_mqtt_broker_credentials(cred_payload)
+            nodes = cred_payload.get("nodes") if isinstance(cred_payload.get("nodes"), list) else []
+            configs = cred_payload.get("configs") if isinstance(cred_payload.get("configs"), list) else []
+            for c in configs:
+                if isinstance(c, dict) and "z" in c:
+                    c.pop("z", None)
+
+            if isinstance(subflow_def, dict) and subflow_def.get("id"):
+                elements.append(subflow_def)
+            elements.extend([n for n in nodes if isinstance(n, dict) and n.get("id")])
+            elements.extend([c for c in configs if isinstance(c, dict) and c.get("id")])
+
+        if not elements:
+            return subflow_mapping
+
+        current = self._nr_get_json("/flows")
+        if isinstance(current, dict):
+            current_flows = current.get("flows") or []
+        else:
+            current_flows = current or []
+        current_flows = [f for f in current_flows if isinstance(f, dict) and f.get("id")]
+
+        by_id = {f["id"]: f for f in current_flows if isinstance(f.get("id"), str)}
+        order = [f["id"] for f in current_flows if isinstance(f.get("id"), str)]
+        for el in elements:
+            el_id = el.get("id")
+            if isinstance(el_id, str) and el_id:
+                by_id[el_id] = el
+                if el_id not in order:
+                    order.append(el_id)
+
+        merged = [by_id[i] for i in order if i in by_id]
+        self._nr_post_json("/flows", {"flows": merged})
+        return subflow_mapping
+
+    def _nr_deploy_subflow_template(self, template, source_subflow, source_instance):
+        """Deploy a single subflow template to this instance. Returns deployed nr_id."""
+        runtime_subflow_ids = self._nr_runtime_subflow_ids()
+        existing = self._nr_resolve_deployed_subflow_flow(
+            template, source_subflow, runtime_subflow_ids=runtime_subflow_ids
+        )
+        if existing and existing.nr_id:
+            return existing.nr_id
+
+        dep = self._nr_parse_flow_content_dict(template)
+        if not dep:
+            raise UserError(
+                _("Subflow template '%(name)s' has empty content.", name=template.display_name)
+            )
+
+        nested_subflow_ids = self._nr_collect_subflow_refs(dep.get("nodes") or [])
+        nested_mapping = self._nr_ensure_subflows_deployed(source_instance, nested_subflow_ids)
+        self._nr_apply_subflow_mapping(dep.get("nodes") or [], nested_mapping)
+
+        deps = [dep]
+        deps = self._nr_expand_subflow_deps_configs(deps, source_instance)
+        subflow_mapping = self._nr_deploy_subflow_deps(deps)
+        new_subflow_id = subflow_mapping.get(
+            dep.get("subflow", {}).get("id")
+            if isinstance(dep.get("subflow"), dict)
+            else dep.get("id")
+        )
+        if not new_subflow_id:
+            raise UserError(
+                _("Subflow template '%(name)s' deployment failed.", name=template.display_name)
+            )
+
+        self.api_sync_flows()
+        created = self._nr_resolve_deployed_subflow_flow(
+            template,
+            source_subflow,
+            expected_nr_id=new_subflow_id,
+            runtime_subflow_ids=self._nr_runtime_subflow_ids(),
+        )
+        if created:
+            created.write({"app_store_id": template.id})
+            return created.nr_id
+        raise UserError(
+            _("Subflow template '%(name)s' synced flow is not found.", name=template.display_name)
+        )
+
+    def _nr_ensure_subflows_deployed(self, source_instance, subflow_ids):
+        """Ensure all referenced subflows are deployed to this instance. Returns mapping."""
+        mapping = {}
+        if not source_instance:
+            return mapping
+        if subflow_ids:
+            self.api_sync_flows()
+        for subflow_id in subflow_ids or []:
+            if not subflow_id or subflow_id in mapping:
+                continue
+            source_subflow, template = self._nr_ensure_subflow_template(source_instance, subflow_id)
+            deployed_id = self._nr_deploy_subflow_template(template, source_subflow, source_subflow.instance_id)
+            mapping[subflow_id] = deployed_id
+        return mapping
+
+    # ========================================================================
+    # Unified Deploy — single entry point for wizard & data_model
+    # ========================================================================
+
+    def _nr_build_template_flow_payload(self, template_flow):
+        """Build a Node-RED flow payload from a template flow (app store flow).
+        
+        This is the wizard-style payload: resolving configs from global,
+        but without applying placeholders (that's done separately).
+        """
+        raw = template_flow.content or "{}"
+        try:
+            parsed = json.loads(raw) if isinstance(raw, str) else raw
+        except Exception:
+            parsed = {}
+
+        nodes = parsed.get("nodes", []) if isinstance(parsed, dict) else []
+        configs = parsed.get("configs", []) if isinstance(parsed, dict) else []
+        nodes = [n for n in nodes if isinstance(n, dict)]
+        non_subflow_nodes = [n for n in nodes if n.get("type") != "subflow"]
+        flow_content_id = parsed.get("id") if isinstance(parsed, dict) and isinstance(parsed.get("id"), str) else False
+        if flow_content_id:
+            filtered_nodes = [
+                n for n in non_subflow_nodes
+                if not isinstance(n.get("z"), str) or n.get("z") == flow_content_id
+            ]
+            nodes = filtered_nodes or non_subflow_nodes
+        else:
+            nodes = non_subflow_nodes
+        configs = [c for c in configs if isinstance(c, dict) and c.get("id")]
+        if configs:
+            refs = set()
+            self._nr_collect_strings(nodes, refs)
+            by_id = {c.get("id"): c for c in configs if isinstance(c.get("id"), str)}
+            queue = [rid for rid in refs if rid in by_id]
+            resolved = []
+            seen = set()
+            while queue:
+                rid = queue.pop(0)
+                if rid in seen:
+                    continue
+                cfg = by_id.get(rid)
+                if not cfg:
+                    continue
+                seen.add(rid)
+                resolved.append(cfg)
+                nested = set()
+                self._nr_collect_strings(cfg, nested)
+                for nid in nested:
+                    if nid in by_id and nid not in seen:
+                        queue.append(nid)
+            configs = resolved
+        for c in configs:
+            if isinstance(c, dict) and "z" in c:
+                c.pop("z", None)
+
+        if not configs:
+            refs = set()
+            self._nr_collect_strings(nodes, refs)
+            # Can't resolve global configs here without source_instance, 
+            # caller should use _nr_ensure_payload_configs_from_source_global
+            pass
+
+        payload = {
+            "id": self._nr_generate_id(),
+            "label": template_flow.name or "",
+            "nodes": nodes,
+            "configs": configs,
+        }
+        if isinstance(parsed, dict):
+            for key in ("disabled", "info", "env"):
+                if key in parsed:
+                    payload[key] = parsed.get(key)
+        tab_id = payload.get("id")
+        if tab_id:
+            for node in payload.get("nodes") or []:
+                if isinstance(node, dict) and isinstance(node.get("z"), str):
+                    node["z"] = tab_id
+        return payload
+
+    def _nr_deploy_single_flow(self, template_flow, record, source_instance=None):
+        """Deploy a single template flow to this instance.
+        
+        Args:
+            template_flow: fts.nr.flow record (app store template)
+            record: the context record (fts.nr.instance or fts.data.model)
+            source_instance: the source instance if template came from one
+        """
+        self.ensure_one()
+
+        payload = self._nr_build_template_flow_payload(template_flow)
+        payload["label"] = f"{template_flow.name} - {self.name}"
+        payload = self._nr_ensure_payload_configs_from_source_global(payload, source_instance)
+
+        subflow_ids = self._nr_collect_subflow_refs(payload.get("nodes") or [])
+        if subflow_ids and not source_instance:
+            raise UserError(
+                _("Template '%(name)s' has subflows but source flow is not found.",
+                  name=template_flow.display_name)
+            )
+        subflow_mapping = self._nr_ensure_subflows_deployed(source_instance, subflow_ids)
+        self._nr_apply_subflow_mapping(payload.get("nodes") or [], subflow_mapping)
+
+        payload = self._nr_remap_payload_ids(payload, preserve_subflow_refs=True)
+        payload = self._nr_inject_iotdb_mqtt_broker_credentials(payload)
+        payload = self._nr_apply_flow_params_to_payload(template_flow, record, payload)
+        payload, _ = self._apply_remote_instance_mqtt_credentials(payload)
+        payload = self._nr_sanitize_main_flow_payload(payload)
+        new_nr_id = self._nr_post_main_flow_payload(payload)
+        return new_nr_id
+
+    def action_deploy_flows(self, flow_ids=None, record=None):
+        """Public action to deploy flows from wizard or data_model.
+        
+        Args:
+            flow_ids: list of flow records, or template flow ids, or None to use self.flow_ids
+            record: the context record for param resolution (defaults to self)
+        
+        Returns dict suitable for client action notification.
+        """
+        self.ensure_one()
+        if record is None:
+            record = self
+
+        flows = flow_ids
+        if flows is None:
+            flows = self.flow_ids
+
+        if not flows:
+            return {
+                "type": "ir.actions.client",
+                "tag": "display_notification",
+                "params": {
+                    "title": _("Deploy Complete"),
+                    "message": _("No flows to deploy."),
+                    "type": "warning",
+                    "sticky": False,
+                },
+            }
+
+        Flow = self.env["fts.nr.flow"]
+        ok_count = 0
+        fail_count = 0
+        error_messages = []
+        deployed_flow_nr_ids = []
+        deployed_template_ids = {}
+
+        for flow in flows:
+            if not flow:
+                continue
+            try:
+                # Determine source instance for the template
+                source_flow = Flow.search([("app_store_id", "=", flow.id)], limit=1)
+                source_instance = source_flow.instance_id if source_flow and source_flow.instance_id else False
+
+                new_nr_id = self._nr_deploy_single_flow(flow, record, source_instance)
+                deployed_flow_nr_ids.append(new_nr_id)
+                deployed_template_ids[new_nr_id] = flow.id
+                ok_count += 1
+            except Exception as e:
+                fail_count += 1
+                error_messages.append(f"{flow.display_name}: {str(e)}")
+
+        # Sync to create local flow records
+        self.api_sync_flows()
+        created_records = Flow.search(
+            [
+                ("instance_id", "=", self.id),
+                ("type", "=", "tab"),
+                ("nr_id", "in", deployed_flow_nr_ids),
+            ]
+        )
+        for deployed_flow in created_records:
+            template_id = deployed_template_ids.get(deployed_flow.nr_id)
+            if template_id:
+                deployed_flow.write({"app_store_id": template_id})
+
+        message = _("Success: %(ok)s, Failed: %(fail)s", ok=ok_count, fail=fail_count)
+        if error_messages:
+            message = f"{message}\n" + "\n".join(error_messages[:5])
+
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": _("Deploy Complete"),
+                "message": message,
+                "type": "success" if fail_count == 0 else "warning",
+                "sticky": False,
+            },
+        }

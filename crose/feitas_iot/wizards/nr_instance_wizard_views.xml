@@ -7,10 +7,23 @@
             <form string="Manage Instance Flows">
                 <group>
                     <field name="instance_id" readonly="1" invisible="1"/>
+                    <field name="show_params" invisible="1"/>
                     <field name="operation" widget="radio" options="{'horizontal': true}"/>
                 </group>
                 <group invisible="operation != 'add'">
                     <field name="template_flow_ids" colspan="4" widget="many2many_tags">
+                    </field>
+                </group>
+                <group invisible="show_params != True">
+                    <separator string="Parameters Preview" colspan="4"/>
+                    <field name="preview_param_ids" nolabel="1" colspan="4">
+                        <list>
+                            <field name="flow_name"/>
+                            <field name="param_name"/>
+                            <field name="template_value"/>
+                            <field name="resolved_value"/>
+                            <field name="param_type"/>
+                        </list>
                     </field>
                 </group>
                 <group invisible="operation not in ('disable', 'delete')">
@@ -18,6 +31,7 @@
                     </field>
                 </group>
                 <footer>
+                    <button name="action_preview_params" string="Preview Parameters" type="object" class="btn-secondary" invisible="operation != 'add'"/>
                     <button name="action_confirm" string="Confirm" type="object" class="btn-primary"/>
                     <button string="Cancel" special="cancel" class="btn-secondary"/>
                 </footer>

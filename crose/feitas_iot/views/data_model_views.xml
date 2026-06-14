@@ -38,6 +38,9 @@
                     <header>
                         <button name="action_start_demo" type="object" string="Start Demo" class="btn-primary" invisible="is_demo != True"/>
                         <button name="action_open_flow" type="object" string="Open Flow" class="btn-secondary" invisible="not nr_flow_ids"/>
+                        <button name="action_generate_params" type="object" string="Generate Parameters" class="btn-secondary" invisible="is_demo"/>
+                        <button name="action_deploy_to_stage" type="object" string="Deploy to Stage" class="btn-primary" invisible="is_demo"/>
+                        <button name="action_deploy_to_prod" type="object" string="Deploy to Prod" class="btn-primary" invisible="is_demo"/>
                         <button name="action_send_flow" type="object" string="Send Flow" class="btn-primary" invisible="is_demo"/>
                         <field name="state" widget="statusbar" options="{'clickable': '1'}"/>
                     </header>
@@ -62,7 +65,7 @@
                             </group>
                             <group>
                                 <field name="nr_flow_ids" widget="many2many_tags" 
-                                    domain="[('instance_id', '=', nr_instance_id), ('type', '=', 'tab')]"/>
+                                    domain="[('is_template', '=', True)]"/>
                                 <field name="protocol" />
                                 <field name="host" />
                                 <field name="tcp_port" />

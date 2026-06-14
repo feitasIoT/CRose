@@ -13,7 +13,7 @@ from datetime import datetime
 
 
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, UserError
 
 
 _logger = logging.getLogger(__name__)
@@ -614,6 +614,91 @@ class DataModel(models.Model):
             _logger.warning("No inject nodes found in flow %s. Available types: %s", flow.name, types)
         return result
 
+
+    def action_generate_params(self):
+        """
+            Generate parameters for the selected flows based on this data model record.
+            Resolves {{record.field}} placeholders and populates app_param_ids.
+        """
+        self.ensure_one()
+        if not self.nr_flow_ids:
+            raise UserError(_("Please select at least one flow template in Applications."))
+
+        Param = self.env["fts.nr.flow.param"]
+        existing_names = {}
+        for param in self.app_param_ids:
+            if param.name:
+                existing_names[param.name] = param
+
+        new_params_vals = []
+        for flow in self.nr_flow_ids:
+            # Use the staging instance for parameter preview
+            instance = self.nr_instance_id
+            if not instance:
+                instance = self.env["fts.nr.instance"].browse()
+            # Resolve params against data_model record
+            preview = instance._nr_preview_flow_params(flow, self)
+            for item in preview:
+                if item["name"] in existing_names:
+                    # Update existing param
+                    existing = existing_names[item["name"]]
+                    existing.write({
+                        "value": str(item["resolved_value"]) if item["resolved_value"] is not None else "",
+                        "type": item["type"],
+                        "flow_id": flow.id,
+                    })
+                else:
+                    new_params_vals.append((0, 0, {
+                        "name": item["name"],
+                        "value": str(item["resolved_value"]) if item["resolved_value"] is not None else "",
+                        "type": item["type"],
+                        "description": "",
+                        "flow_id": flow.id,
+                    }))
+                    existing_names[item["name"]] = True
+
+        if new_params_vals:
+            self.write({"app_param_ids": new_params_vals})
+
+        param_count = len(self.app_param_ids)
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": _("Parameters Generated"),
+                "message": _("%(count)s parameter(s) generated from selected flows.", count=param_count),
+                "type": "success",
+                "sticky": False,
+            },
+        }
+
+    def action_deploy_to_stage(self):
+        """Deploy selected flows to the staging instance."""
+        self.ensure_one()
+        if not self.nr_instance_id:
+            raise UserError(_("Please select a Stage Instance before deploying."))
+        if not self.nr_flow_ids:
+            raise UserError(_("Please select at least one flow template in Applications."))
+
+        result = self.nr_instance_id.action_deploy_flows(
+            flow_ids=self.nr_flow_ids,
+            record=self,
+        )
+        return result
+
+    def action_deploy_to_prod(self):
+        """Deploy selected flows to the prod instance."""
+        self.ensure_one()
+        if not self.prod_instance_id:
+            raise UserError(_("Please select a Prod Instance before deploying."))
+        if not self.nr_flow_ids:
+            raise UserError(_("Please select at least one flow template in Applications."))
+
+        result = self.prod_instance_id.action_deploy_flows(
+            flow_ids=self.nr_flow_ids,
+            record=self,
+        )
+        return result
 
     def action_send_flow(self):
         """
