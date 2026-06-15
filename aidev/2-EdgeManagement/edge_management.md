@@ -26,8 +26,8 @@
 
 #### 部署
 
-- 能否ping通IP地址1。
-- 能否访问Repository。
+- CRose能否ping通IP地址1。
+- 能否访问Repository。（CRose会检查Repository的状态，所以CRose如果能ping通IP地址1就表示网关可以访问Repository。）
 - 如果勾选Docker，确保能够访问Docker接口。
 - 如果勾选FRPC，确保有FRPC容器并运行。
 - 如果勾选SSH，确保能够使用SSH登录网关。

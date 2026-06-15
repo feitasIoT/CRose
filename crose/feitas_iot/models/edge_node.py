@@ -305,8 +305,26 @@ class FtsEdgeNode(models.Model):
             _logger.warning("Ping to %s timed out", self.ip_address)
             raise UserError(_("Ping to IP Address %(ip)s timed out.", ip=self.ip_address))
 
-        _logger.warning("Ping to %s succeeded", self.ip_address)
-        return True
+        _logger.info("Ping to %s succeeded", self.ip_address)
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Ping Complete'),
+                'message': _('Ping synchronized.'),
+                'type': 'success',
+                'sticky': False
+            }
+        }
+
+    def _check_repository_reachable(self):
+        """
+            Check if the node's Repository (NPM registry) is reachable.
+            部署前预检：能否访问Repository
+            能ping通IP地址1就表示网关可以访问Repository。
+        """
+        self.ensure_one()
+        
 
     def action_deploy(self):
         """
@@ -316,7 +334,8 @@ class FtsEdgeNode(models.Model):
             if node.status != "draft":
                 continue
             node._check_ip_reachable()
-    
+            
+
     def old_action_deploy(self):
         for node in self:
             broker = node.mqtt_broker_id
