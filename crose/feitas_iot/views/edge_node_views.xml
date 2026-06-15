@@ -109,55 +109,62 @@
                             <group>
                                 <field name="name"/>
                                 <!-- <field name="version"/> -->
-                                <field name="is_template"/>
-                                <field name="template_id" invisible="is_template"/>
                                 <field name="os_version"/>
-                                <!-- <field name="nr_node"/> -->
-                                <field name="use_vnc"/>
-                                <field name="vnc_port" invisible="not use_vnc" required="use_vnc"/>
-                                <field name="domain" invisible="not use_vnc"/>
-                                <field name="agent_port"/>
-                                <field name="use_redis" />
+                                <field name="ip_address"/>
+                                <field name="gateway_id" invisible="is_gateway"/>
                             </group>
                             <group>
                                 <field name="is_gateway" />
-                                <field name="gateway_id" invisible="is_gateway"/>
-                                <field name="ip_address"/>
-                                <field name="another_ip_address"/>
-                                <field name="is_frpc" invisible="not is_gateway"/>
-                                <field name="has_nodered" />
-                                <field name="has_docker" />
-                                <field name="has_mqtt_broker" />
-                                <field name="use_frp"/>
+                                
                             </group>
                         </group>
                         <notebook>
-                            <page string="Basic">
+                            <page string="Configuration">
+                                <group col="16">
+                                    <group colspan="2">
+                                        <field name="use_ssh"/>
+                                    </group>
+                                    <group colspan="2">
+                                        <field name="use_vnc"/>
+                                    </group>
+                                    <group colspan="2"><field name="has_docker" /></group>
+                                    <group colspan="2"><field name="has_nodered" /></group>
+                                    <group colspan="2"><field name="has_mqtt_broker" /></group>
+                                    <group colspan="2"><field name="use_frp"/></group>
+                                </group>
                                 <group>
-                                    <group>
+                                    <group string="SSH" invisible="not use_ssh">
                                         <field name="ssh_username"/>
                                         <field name="ssh_password" password="True"/>
                                         <field name="ssh_port"/>
                                     </group>
-                                    
-                                    <group string="Applications">
-                                        <field name="instance_id"/>
-                                        
-
-                                        <field name="flow_ids" nolabel="1" colspan="2">
-                                            <list editable="bottom">
-                                                <field name="flow_id" domain="[('is_template', '=', True)]"/>
-                                            </list>
-                                        </field>
+                                    <group string="VNC" invisible="not use_vnc">
+                                        <field name="domain" invisible="not use_vnc"/>
+                                        <field name="vnc_port" invisible="not use_vnc" required="use_vnc"/>
                                     </group>
-                                    <group string="MQTT Configuration">
+                                    <group string="Node-RED" invisible="not has_nodered">
+                                        <field name="nodered_username" invisible="not has_nodered"/>
+                                        <field name="nodered_password" password="True" invisible="not has_nodered"/>
+                                    </group>
+                                    <group string="MQTT" invisible="not has_mqtt_broker">
                                         <field name="mqtt_broker_id"/>
                                         <field name="mqtt_account_id"/>
                                     </group>
-                                    <group string="Redis Configuration">
+                                </group>
+                            </page>
+                            <page string="Gateway" invisible="not is_gateway">
+                                <group>
+                                    <group string="CRose">
+                                        <field name="another_ip_address"/>
+                                    </group>
+                                    <group string="Internal">
+                                        <field name="is_frpc" invisible="not is_gateway"/>
+                                    </group>
+                                    <group string="Redis">
                                         <field name="redis_account_id" readonly="1" invisible="not use_redis"/>
                                     </group>
                                 </group>
+                                
                             </page>
                             <page string="Deployment">
                                 <group>
@@ -178,9 +185,19 @@
                                         <field name="frpc_webserver_username" invisible="not is_gateway"/>
                                         <field name="frpc_webserver_password" password="True" invisible="not is_gateway"/>
                                     </group>
+                                    
+                                </group>
+                            </page>
+                            <page string="Others">
+                                <group>
                                     <group>
-                                        <field name="nodered_username" invisible="not has_nodered"/>
-                                        <field name="nodered_password" password="True" invisible="not has_nodered"/>
+                                        <field name="is_template"/>
+                                        <field name="template_id" invisible="is_template"/>
+                                    </group>
+                                    <group>
+                                        
+                                        <field name="use_redis" />
+                                    
                                     </group>
                                 </group>
                             </page>

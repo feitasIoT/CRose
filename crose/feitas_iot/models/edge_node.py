@@ -32,21 +32,22 @@ class FtsEdgeNode(models.Model):
     is_template = fields.Boolean(string="Is Template")
     template_id = fields.Many2one("fts.edge.node", string="Template", domain="[('is_template', '=', True)]")
 
-    is_gateway = fields.Boolean(string="Is Gateway")
+    is_gateway = fields.Boolean(string="Gateway")
     gateway_id = fields.Many2one("fts.edge.node", string="Gateway", domain="[('is_gateway', '=', True)]")
     node_ids = fields.One2many("fts.edge.node", "gateway_id", string="Nodes")
     
     ip_address = fields.Char(string="IP Address")
     another_ip_address = fields.Char(string="Another IP Address")
 
+    use_ssh = fields.Boolean(string="SSH")
     ssh_username = fields.Char(string="SSH Username")
     ssh_password = fields.Char(string="SSH Password")
     ssh_port = fields.Integer(string="SSH Port", default=22)
     
-    is_frpc = fields.Boolean(string="Is FRPC")
-    has_mqtt_broker = fields.Boolean(string="Has MQTT Broker")
-    has_nodered = fields.Boolean()
-    has_docker = fields.Boolean()
+    is_frpc = fields.Boolean(string="FRPC")
+    has_mqtt_broker = fields.Boolean(string="MQTT Broker")
+    has_nodered = fields.Boolean(string="Node-RED")
+    has_docker = fields.Boolean(string="Docker")
 
     nodered_username = fields.Char(string="Node-RED Username")
     nodered_password = fields.Char(string="Node-RED Password")
@@ -55,9 +56,9 @@ class FtsEdgeNode(models.Model):
     frpc_webserver_username = fields.Char(string="FRPC Webserver Username", default="admin")
     frpc_webserver_password = fields.Char(string="FRPC Webserver Password", default="admin")
 
-    use_frp = fields.Boolean(string="Use FRP")
-    use_vnc = fields.Boolean(string="Use VNC")
-    use_redis = fields.Boolean(string="Use Redis", help="checked will assign redis database and account.")
+    use_frp = fields.Boolean(string="FRP")
+    use_vnc = fields.Boolean(string="VNC")
+    use_redis = fields.Boolean(string="Redis", help="checked will assign redis database and account.")
 
     domain = fields.Char(string="Domain")
     vnc_port = fields.Integer(string="VNC Port", default=6080)
