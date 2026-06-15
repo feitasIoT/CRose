@@ -1,6 +1,8 @@
 import re
+import os
 import secrets
 import string
+import subprocess
 import requests
 import logging
 from urllib.parse import quote
@@ -28,6 +30,7 @@ class FtsEdgeNode(models.Model):
 
     name = fields.Char(string="Name", required=True)
     version = fields.Char(string="Version")
+    repository_id = fields.Many2one("crose.component", string="Repository")
     # TODO：用于复制边缘网关
     is_template = fields.Boolean(string="Is Template")
     template_id = fields.Many2one("fts.edge.node", string="Template", domain="[('is_template', '=', True)]")
@@ -268,13 +271,54 @@ class FtsEdgeNode(models.Model):
             if node.status != target_status:
                 node.status = target_status
 
-    def action_confirm(self):
+    def _check_ip_reachable(self):
         """
-            gateway节点，确认时自动分配mqtt broker和account
+            Check if the node's IP address is reachable via ping.
+            部署前预检：能否ping通IP地址1
+        """
+        self.ensure_one()
+        if not self.ip_address:
+            raise UserError(_("Please set the edge node IP Address first."))
+
+        param = "-n 1 -w 2000" if os.name == "nt" else "-c 1 -W 2"
+        cmd = f"ping {param} {self.ip_address}"
+        _logger.info("Pinging IP address: %s", self.ip_address)
+
+        try:
+            result = subprocess.run(
+                cmd, shell=True, capture_output=True, text=True, timeout=5
+            )
+            if result.returncode != 0:
+                error_output = result.stderr.strip() or result.stdout.strip()
+                _logger.warning(
+                    "Ping to %(ip)s failed (code %(code)s): %(detail)s",
+                    {"ip": self.ip_address, "code": result.returncode, "detail": error_output},
+                )
+                raise UserError(
+                    _(
+                        "IP Address %(ip)s is not reachable (ping failed).\n%(detail)s",
+                        ip=self.ip_address,
+                        detail=error_output,
+                    )
+                )
+        except subprocess.TimeoutExpired:
+            _logger.warning("Ping to %s timed out", self.ip_address)
+            raise UserError(_("Ping to IP Address %(ip)s timed out.", ip=self.ip_address))
+
+        _logger.warning("Ping to %s succeeded", self.ip_address)
+        return True
+
+    def action_deploy(self):
+        """
+            部署按钮，具体功能参见： edge_management.md
         """
         for node in self:
             if node.status != "draft":
                 continue
+            node._check_ip_reachable()
+    
+    def old_action_deploy(self):
+        for node in self:
             broker = node.mqtt_broker_id
             if not broker or broker.component_type != "mqtt":
                 broker = self.env["crose.component"].search(
@@ -468,6 +512,9 @@ class FtsEdgeNode(models.Model):
                 subtype_xmlid="mail.mt_note",
             )
         return False
+
+    def action_update(self):
+        pass
 
     def action_view_gateway_mqtt_users(self):
         self.ensure_one()
