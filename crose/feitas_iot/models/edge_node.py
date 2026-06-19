@@ -67,7 +67,10 @@ class FtsEdgeNode(models.Model):
     vnc_port = fields.Integer(string="VNC Port", default=6080)
     port = fields.Integer(string="Port", default=6080)
     agent_port = fields.Integer(string="Agent Port", default=18080)
-    os_version = fields.Selection([('rasp', 'Raspberry'), ('ubuntu', 'Ubuntu')], string="OS Distribution")
+    os_version = fields.Selection([
+        ('rasp', 'Raspberry'), 
+        ('ubuntu', 'Ubuntu'),
+        ('win', 'Windows')], string="OS Distribution")
     npm_registry_id = fields.Many2one("crose.component", string="NPM Registry", domain=[('component_type', '=', 'npm')])
     # MQTT Config
     mqtt_broker_id = fields.Many2one("crose.component", string="MQTT Broker", domain=[('component_type', '=', 'mqtt')])
@@ -305,26 +308,51 @@ class FtsEdgeNode(models.Model):
             _logger.warning("Ping to %s timed out", self.ip_address)
             raise UserError(_("Ping to IP Address %(ip)s timed out.", ip=self.ip_address))
 
-        _logger.info("Ping to %s succeeded", self.ip_address)
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': _('Ping Complete'),
-                'message': _('Ping synchronized.'),
-                'type': 'success',
-                'sticky': False
-            }
-        }
+        _logger.warning("Ping to %s succeeded", self.ip_address)
+        return True
 
-    def _check_repository_reachable(self):
+    def _check_docker_installed(self):
         """
-            Check if the node's Repository (NPM registry) is reachable.
-            部署前预检：能否访问Repository
-            能ping通IP地址1就表示网关可以访问Repository。
+            Check if Docker is installed on the edge node via Docker Engine API.
+            部署前预检：通过 Docker API 检查网关是否安装了 Docker
         """
         self.ensure_one()
-        
+
+        if not self.ip_address:
+            raise UserError(_("Please set the edge node IP Address first."))
+
+        docker_port = 2375
+        endpoint = f"http://{self.ip_address}:{docker_port}/version"
+        _logger.info("Checking Docker API: %s", endpoint)
+
+        try:
+            response = requests.get(endpoint, timeout=5)
+            if response.status_code == 200:
+                self.has_docker = True
+                _logger.warning("Docker API reachable on %s", self.ip_address)
+                return True
+            if self.has_docker:
+                raise UserError(
+                    _(
+                        "Docker API on %(ip)s returned HTTP %(code)s.",
+                        ip=self.ip_address,
+                        code=response.status_code,
+                    )
+                )
+        except requests.RequestException as e:
+            _logger.warning("Docker API check failed on %s: %s", self.ip_address, str(e))
+            if self.has_docker and not self.use_ssh:
+                raise UserError(
+                    _(
+                        "Docker is not accessible on %(ip)s:%(port)s.\n"
+                        "Please ensure Docker is installed and its API is exposed on port 2375, "
+                        "or enable SSH for further check.",
+                        ip=self.ip_address,
+                        port=docker_port,
+                    )
+                )
+            if self.has_docker and self.use_ssh:
+                pass#FIXME：通过ssh进一步检查
 
     def action_deploy(self):
         """
@@ -334,7 +362,8 @@ class FtsEdgeNode(models.Model):
             if node.status != "draft":
                 continue
             node._check_ip_reachable()
-            
+            node._check_docker_installed()
+
 
     def old_action_deploy(self):
         for node in self:
