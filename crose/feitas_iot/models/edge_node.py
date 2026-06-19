@@ -51,6 +51,12 @@ class FtsEdgeNode(models.Model):
     has_mqtt_broker = fields.Boolean(string="MQTT Broker")
     has_nodered = fields.Boolean(string="Node-RED")
     has_docker = fields.Boolean(string="Docker")
+    docker_version = fields.Char(string="Docker Version")
+    docker_api_version = fields.Char(string="Docker API Version")
+    docker_arch = fields.Char(string="Docker Architecture")
+    docker_os = fields.Char(string="Docker OS")
+    nodered_version = fields.Char(string="Node-RED Version")
+    nodered_ports = fields.Text(string="Node-RED Ports")
 
     nodered_username = fields.Char(string="Node-RED Username")
     nodered_password = fields.Char(string="Node-RED Password")
@@ -328,7 +334,12 @@ class FtsEdgeNode(models.Model):
         try:
             response = requests.get(endpoint, timeout=5)
             if response.status_code == 200:
+                version_data = response.json()
                 self.has_docker = True
+                self.docker_version = version_data.get("Version", "")
+                self.docker_api_version = version_data.get("ApiVersion", "")
+                self.docker_arch = version_data.get("Arch", "")
+                self.docker_os = version_data.get("Os", "")
                 _logger.warning("Docker API reachable on %s", self.ip_address)
                 return True
             if self.has_docker:
@@ -354,6 +365,101 @@ class FtsEdgeNode(models.Model):
             if self.has_docker and self.use_ssh:
                 pass#FIXME：通过ssh进一步检查
 
+    def _check_nodered_container(self):
+        """
+            Check if a Node-RED container exists on the edge node via Docker API,
+            and record its version and port mappings.
+            部署前预检：通过 Docker API 检查是否有 node-red 容器，记录版本和映射端口
+        """
+        self.ensure_one()
+
+        if not self.ip_address:
+            return
+
+        docker_port = 2375
+        # 列出所有运行中的容器
+        list_endpoint = f"http://{self.ip_address}:{docker_port}/containers/json"
+        _logger.info("Checking Docker containers on %s", self.ip_address)
+
+        try:
+            response = requests.get(list_endpoint, timeout=5)
+            if response.status_code != 200:
+                _logger.warning("Failed to list containers on %s: HTTP %s", self.ip_address, response.status_code)
+                return
+        except requests.RequestException as e:
+            _logger.warning("Failed to list containers on %s: %s", self.ip_address, str(e))
+            return
+
+        containers = response.json()
+        nodered_container = None
+        for container in containers:
+            names = container.get("Names", [])
+            image = container.get("Image", "")
+            # 检查容器名称或镜像是否包含 node-red / nodered
+            for name in names:
+                name_lower = name.lower().strip("/")
+                if "node-red" in name_lower or "nodered" in name_lower:
+                    nodered_container = container
+                    break
+            if nodered_container:
+                break
+            if "node-red" in image.lower() or "nodered" in image.lower():
+                nodered_container = container
+                break
+
+        if not nodered_container:
+            _logger.info("No Node-RED container found on %s", self.ip_address)
+            return
+
+        _logger.info("Node-RED container found on %s: %s", self.ip_address, nodered_container.get("Names"))
+
+        # 检查容器详情，获取版本和端口映射
+        container_id = nodered_container.get("Id")
+        if not container_id:
+            return
+
+        inspect_endpoint = f"http://{self.ip_address}:{docker_port}/containers/{container_id}/json"
+        try:
+            inspect_response = requests.get(inspect_endpoint, timeout=5)
+            if inspect_response.status_code != 200:
+                _logger.warning("Failed to inspect container on %s: HTTP %s", self.ip_address, inspect_response.status_code)
+                return
+        except requests.RequestException as e:
+            _logger.warning("Failed to inspect container on %s: %s", self.ip_address, str(e))
+            return
+
+        inspect_data = inspect_response.json()
+
+        # 从镜像 tag 提取 Node-RED 版本
+        config = inspect_data.get("Config", {})
+        image = config.get("Image", "")
+        version = ""
+        if ":" in image:
+            version = image.split(":")[-1]
+
+        # 获取端口映射（可能有多个）
+        network_settings = inspect_data.get("NetworkSettings", {})
+        ports = network_settings.get("Ports", {})
+        port_mappings = []
+        for container_port, host_bindings in ports.items():
+            if host_bindings:
+                for binding in host_bindings:
+                    host_port = binding.get("HostPort", "")
+                    if host_port:
+                        port_mappings.append(f"{host_port}:{container_port}")
+            else:
+                # 端口已暴露但未映射到宿主机
+                port_mappings.append(container_port)
+
+        self.has_nodered = True
+        self.nodered_version = version
+        self.nodered_ports = ", ".join(port_mappings) if port_mappings else ""
+        _logger.info(
+            "Node-RED container recorded: version=%s, ports=%s",
+            self.nodered_version,
+            self.nodered_ports,
+        )
+
     def action_deploy(self):
         """
             部署按钮，具体功能参见： edge_management.md
@@ -363,6 +469,7 @@ class FtsEdgeNode(models.Model):
                 continue
             node._check_ip_reachable()
             node._check_docker_installed()
+            node._check_nodered_container()
 
 
     def old_action_deploy(self):

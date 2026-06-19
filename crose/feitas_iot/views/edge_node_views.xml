@@ -134,6 +134,12 @@
                                     <group colspan="2"><field name="has_mqtt_broker" /></group>
                                 </group>
                                 <group>
+                                    <group string="Docker" invisible="not has_docker">
+                                        <field name="docker_version"/>
+                                        <field name="docker_api_version"/>
+                                        <field name="docker_arch"/>
+                                        <field name="docker_os"/>
+                                    </group>
                                     <group string="FRP" invisible="not use_frp">
                                         <field name="gateway_id" invisible="is_gateway"/>
                                         <field name="domain"/>
@@ -155,6 +161,8 @@
                                     <group string="Node-RED" invisible="not has_nodered">
                                         <field name="nodered_username" />
                                         <field name="nodered_password" password="True"/>
+                                        <field name="nodered_version" />
+                                        <field name="nodered_ports" />
                                     </group>
                                     <group string="MQTT" invisible="not has_mqtt_broker">
                                         <field name="mqtt_broker_id"/>
