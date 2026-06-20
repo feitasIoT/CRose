@@ -116,6 +116,36 @@ class FeitasIotDownloadController(http.Controller):
         ]
         return request.make_response(data, headers=headers)
 
+    @http.route("/crose/gateway/<int:edge_node_id>", type="http", auth="public", methods=["GET"], csrf=False)
+    def download_gateway_bundle(self, edge_node_id, **kwargs):
+        """
+            下载边缘网关部署压缩包。
+            根据 edge node 的 OS Distribution 选择 static/files 下对应模板目录，
+            替换模板变量后打包为 zip 返回。
+        """
+        EdgeNode = request.env["fts.edge.node"].sudo()
+        node = EdgeNode.browse(edge_node_id)
+        if not node.exists():
+            return request.not_found()
+
+        # 从请求中获取 host（不含端口），作为 {{URL}} / {{url}} 的替换值
+        host_url = (request.httprequest.host or "").split(":")[0]
+
+        rendered_files = node._render_gateway_files(host_url=host_url)
+
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+            for rel_path, content_bytes in rendered_files.items():
+                zf.writestr(rel_path, content_bytes)
+
+        data = zip_buffer.getvalue()
+        zip_name = f"crose_gateway_{node.os_version or 'bundle'}.zip"
+        headers = [
+            ("Content-Type", "application/zip"),
+            ("Content-Disposition", content_disposition(zip_name)),
+        ]
+        return request.make_response(data, headers=headers)
+
     @http.route("/spreadsheet/xlsx", type="http", auth="user", methods=["POST"], csrf=False)
     def download_spreadsheet_xlsx(self, zip_name=None, files=None, **kwargs):
         upload = files or request.httprequest.files.get("files")

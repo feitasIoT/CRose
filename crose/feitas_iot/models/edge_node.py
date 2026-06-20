@@ -352,7 +352,7 @@ class FtsEdgeNode(models.Model):
                 )
         except requests.RequestException as e:
             _logger.warning("Docker API check failed on %s: %s", self.ip_address, str(e))
-            if self.has_docker and not self.use_ssh:
+            if self.has_docker:
                 raise UserError(
                     _(
                         "Docker is not accessible on %(ip)s:%(port)s.\n"
@@ -362,8 +362,51 @@ class FtsEdgeNode(models.Model):
                         port=docker_port,
                     )
                 )
-            if self.has_docker and self.use_ssh:
-                pass#FIXME：通过ssh进一步检查
+
+    def _list_docker_containers(self):
+        """
+            公共方法：通过 Docker API 列出边缘节点上的所有容器。
+            返回容器列表（list of dict），失败时返回空列表。
+        """
+        self.ensure_one()
+
+        if not self.ip_address:
+            return []
+
+        docker_port = 2375
+        list_endpoint = f"http://{self.ip_address}:{docker_port}/containers/json"
+        _logger.info("Listing Docker containers on %s", self.ip_address)
+
+        try:
+            response = requests.get(list_endpoint, timeout=5)
+            if response.status_code != 200:
+                _logger.warning("Failed to list containers on %s: HTTP %s", self.ip_address, response.status_code)
+                return []
+        except requests.RequestException as e:
+            _logger.warning("Failed to list containers on %s: %s", self.ip_address, str(e))
+            return []
+
+        return response.json()
+
+    def _find_docker_container(self, keywords):
+        """
+            公共方法：在容器列表中查找镜像名或容器名包含指定关键字的容器。
+            keywords: 关键字列表（全部转为小写匹配），如 ["node-red", "nodered"]
+            返回匹配的容器 dict，未找到返回 None。
+        """
+        containers = self._list_docker_containers()
+        if not containers:
+            return None
+
+        for container in containers:
+            names = [n.lower().strip("/") for n in container.get("Names", [])]
+            image = container.get("Image", "").lower()
+            for name in names:
+                if any(kw in name for kw in keywords):
+                    return container
+            if any(kw in image for kw in keywords):
+                return container
+        return None
 
     def _check_nodered_container(self):
         """
@@ -376,38 +419,10 @@ class FtsEdgeNode(models.Model):
         if not self.ip_address:
             return
 
-        docker_port = 2375
-        # 列出所有运行中的容器
-        list_endpoint = f"http://{self.ip_address}:{docker_port}/containers/json"
-        _logger.info("Checking Docker containers on %s", self.ip_address)
-
-        try:
-            response = requests.get(list_endpoint, timeout=5)
-            if response.status_code != 200:
-                _logger.warning("Failed to list containers on %s: HTTP %s", self.ip_address, response.status_code)
-                return
-        except requests.RequestException as e:
-            _logger.warning("Failed to list containers on %s: %s", self.ip_address, str(e))
-            return
-
-        containers = response.json()
-        nodered_container = None
-        for container in containers:
-            names = container.get("Names", [])
-            image = container.get("Image", "")
-            # 检查容器名称或镜像是否包含 node-red / nodered
-            for name in names:
-                name_lower = name.lower().strip("/")
-                if "node-red" in name_lower or "nodered" in name_lower:
-                    nodered_container = container
-                    break
-            if nodered_container:
-                break
-            if "node-red" in image.lower() or "nodered" in image.lower():
-                nodered_container = container
-                break
+        nodered_container = self._find_docker_container(["node-red", "nodered"])
 
         if not nodered_container:
+            self.has_nodered = False
             _logger.info("No Node-RED container found on %s", self.ip_address)
             return
 
@@ -418,6 +433,7 @@ class FtsEdgeNode(models.Model):
         if not container_id:
             return
 
+        docker_port = 2375
         inspect_endpoint = f"http://{self.ip_address}:{docker_port}/containers/{container_id}/json"
         try:
             inspect_response = requests.get(inspect_endpoint, timeout=5)
@@ -460,6 +476,164 @@ class FtsEdgeNode(models.Model):
             self.nodered_ports,
         )
 
+    def _check_frpc_container(self):
+        """
+            Check if a FRPC container exists on the edge node via Docker API.
+            部署前预检：通过 Docker API 检查是否有 frpc 容器
+        """
+        self.ensure_one()
+
+        if not self.ip_address:
+            return
+
+        frpc_container = self._find_docker_container(["frpc"])
+
+        if not frpc_container:
+            self.is_frpc = False
+            _logger.info("No FRPC container found on %s", self.ip_address)
+            return
+
+        _logger.info("FRPC container found on %s: %s", self.ip_address, frpc_container.get("Names"))
+        self.is_frpc = True
+
+    def _check_gmqtt_container(self):
+        """
+            Check if a MQTT Broker (gmqtt) container exists on the edge node via Docker API.
+            部署前预检：通过 Docker API 检查是否有 gmqtt 容器
+        """
+        self.ensure_one()
+
+        if not self.ip_address:
+            return
+
+        gmqtt_container = self._find_docker_container(["gmqtt"])
+
+        if not gmqtt_container:
+            self.has_mqtt_broker = False
+            _logger.info("No MQTT Broker (gmqtt) container found on %s", self.ip_address)
+            return
+
+        _logger.info("MQTT Broker (gmqtt) container found on %s: %s", self.ip_address, gmqtt_container.get("Names"))
+        self.has_mqtt_broker = True
+
+    def _get_gateway_template_dir(self):
+        """
+            根据 edge node 的 os_version 返回 static/files 下对应的模板目录路径。
+            目录命名规则：gateway_docker_<os_distribution>
+        """
+        self.ensure_one()
+        os_map = {
+            "rasp": "rasp",
+            "ubuntu": "ubuntu",
+            "win": "win",
+        }
+        os_suffix = os_map.get(self.os_version)
+        if not os_suffix:
+            raise UserError(_("Unsupported OS Distribution: %(os)s", os=self.os_version))
+        return f"static/files/gateway_docker_{os_suffix}"
+
+    def _render_gateway_files(self, host_url=""):
+        """
+            读取模板目录下所有文件，替换模板变量后返回 {相对路径: 文件内容(bytes)} 字典。
+            模板变量：
+              - {{URL}} / {{url}}   → host_url（请求来源的 host，不含端口和路径）
+              - {{Nexus Mapped Port}} → 所选 Repository 的 mapped_port
+              - {{OS Distribution}} → os_version 的显示值
+        """
+        from odoo.modules import get_module_path
+
+        self.ensure_one()
+
+        rel_dir = self._get_gateway_template_dir()
+        module_path = get_module_path("feitas_iot")
+        if not module_path:
+            raise UserError(_("Module feitas_iot not found."))
+        base_dir = os.path.join(module_path, *rel_dir.split("/"))
+        if not os.path.isdir(base_dir):
+            raise UserError(_("Template directory not found: %(dir)s", dir=rel_dir))
+
+        # 收集所有需替换的变量
+        nexus_port = ""
+        if self.repository_id:
+            nexus_port = str(self.repository_id.mapped_port or "")
+        os_distribution = self.os_version or ""
+
+        rendered = {}
+        # 递归遍历目录下所有文件
+        for root, dirs, files in os.walk(base_dir):
+            for filename in files:
+                file_path = os.path.join(root, filename)
+                rel_path = os.path.relpath(file_path, base_dir).replace("\\", "/")
+                try:
+                    with open(file_path, "r", encoding="utf-8") as f:
+                        content = f.read()
+                except UnicodeDecodeError:
+                    with open(file_path, "rb") as f:
+                        content_bytes = f.read()
+                    rendered[rel_path] = content_bytes
+                    continue
+
+                # 替换模板变量
+                content = content.replace("{{URL}}", host_url)
+                content = content.replace("{{url}}", host_url)
+                content = content.replace("{{Nexus Mapped Port}}", nexus_port)
+                content = content.replace("{{OS Distribution}}", os_distribution)
+                rendered[rel_path] = content.encode("utf-8")
+
+        return rendered
+
+    def _build_gateway_download_url(self):
+        """
+            构建当前 edge node 的网关部署包下载 URL。
+            返回完整的下载 URL 字符串，供部署命令和模板变量使用。
+        """
+        self.ensure_one()
+        base_url = (
+            self.env["ir.config_parameter"].sudo().get_param("web.base.url")
+            or "http://localhost:8069"
+        )
+        base_url = base_url.rstrip("/")
+        return f"{base_url}/crose/gateway/{self.id}"
+
+    def _generate_deployment_commands(self):
+        """
+            根据 edge node 的 os_version 生成相应的下载命令，并写入 agent_cmd 字段。
+        """
+        self.ensure_one()
+        download_url = self._build_gateway_download_url()
+
+        os_commands = {
+            "win": [
+                f'Invoke-WebRequest -Uri "{download_url}" -OutFile "crose_gateway.zip"',
+                "Expand-Archive -Path crose_gateway.zip -DestinationPath .",
+                "docker compose up -d",
+            ],
+            "ubuntu": [
+                f'wget -O crose_gateway.zip "{download_url}"',
+                "unzip -o crose_gateway.zip",
+                "docker compose up -d",
+            ],
+            "rasp": [
+                f'wget -O crose_gateway.zip "{download_url}"',
+                "unzip -o crose_gateway.zip",
+                "docker compose up -d",
+            ],
+        }
+        commands = os_commands.get(self.os_version)
+        if not commands:
+            raise UserError(_("Unsupported OS Distribution for deployment commands: %(os)s", os=self.os_version))
+
+        self.agent_cmd = "\n".join(commands)
+
+    def _generate_file_manifest(self):
+        """
+            生成压缩包文件清单，写入 config 字段。
+        """
+        self.ensure_one()
+        files = self._render_gateway_files()
+        lines = [f"{rel_path}" for rel_path in sorted(files.keys())]
+        self.config = "\n".join(lines)
+
     def action_deploy(self):
         """
             部署按钮，具体功能参见： edge_management.md
@@ -470,6 +644,10 @@ class FtsEdgeNode(models.Model):
             node._check_ip_reachable()
             node._check_docker_installed()
             node._check_nodered_container()
+            node._check_frpc_container()
+            node._check_gmqtt_container()
+            node._generate_deployment_commands()
+            node._generate_file_manifest()
 
 
     def old_action_deploy(self):
