@@ -1,0 +1,23 @@
+
+serverAddr = "10.8.9.106"
+serverPort = 17000
+auth.token = "feitascrose2026"
+#transport.loginFailExit = false
+
+webServer.addr = "0.0.0.0"
+## webServer 监听端口。
+webServer.port = 7400
+## HTTP BasicAuth 用户名。
+webServer.user = "admin"
+## HTTP BasicAuth 密码。
+webServer.password = "admin"
+
+[store]
+path = "/etc/frp/dynamic_proxies.json"
+
+[[proxies]]
+name = "test-tcp"
+type = "http"
+localIP = "127.0.0.1"
+localPort = 1880
+customDomains = ["test.edge.local"]

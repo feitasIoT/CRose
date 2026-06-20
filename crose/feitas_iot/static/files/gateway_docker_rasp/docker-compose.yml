@@ -1,0 +1,54 @@
+services:
+  frpc:
+    image: 10.8.9.106:8080/repository/crose/frpc-arm64:v1.0  # 官方镜像
+    container_name: frpc
+    restart: always
+    volumes:
+      # 挂载整个配置文件夹，方便 frpc 写入 dynamic_proxies.json
+      - ./config/frpc:/etc/frp
+      # 如果需要同步系统时间（防止认证失效）
+      - /etc/localtime:/etc/localtime:ro
+    # 容器启动命令，指向挂载后的配置文件路径
+    command: ["-c", "/etc/frp/frpc.toml"]
+    # 如果 frp 需要映射大量随机端口，建议使用 host 模式提升网络效率
+    # 如果只需固定几个端口，可改用 ports 映射
+    network_mode: host
+
+  gmqtt:
+    image: 10.8.9.106:8080/repository/crose/gmqtt:arm64
+    working_dir: /gmqtt_data
+    restart: always
+    ports:
+      - "1883:1883"
+      - "8883:8883"
+      - "8082:8082"
+      - "8083:8083"
+      - "8084:8084"
+    volumes:
+      - ./config/gmqtt:/etc/gmqtt
+      - crose_gmqtt:/gmqtt_data
+    command: ["gmqttd", "start", "-c", "/etc/gmqtt/gmqttd.yml"]
+    networks:
+      - crose-net
+
+  node-red:
+    image: 10.8.9.106:8080/repository/crose/node-red-dev:5.0.0-beta.1
+    restart: always
+    ports:
+      - "1880:1880"
+    volumes:
+      - ./config/node-red/settings.js:/data/settings.js
+      - crose_nodered:/data
+    environment:
+      - npm_config_registry=http://10.8.9.106:8081/repository/nrnpm/
+    networks:
+      - crose-net
+
+
+volumes:
+  crose_gmqtt:
+  crose_nodered:
+
+networks:
+  crose-net:
+    name: crose-net
