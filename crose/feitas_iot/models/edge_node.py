@@ -5,7 +5,6 @@ import string
 import subprocess
 import requests
 import logging
-from urllib.parse import quote
 
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
@@ -194,6 +193,51 @@ class FtsEdgeNode(models.Model):
             return self.mqtt_broker_id._generate_password(length)
         alphabet = string.ascii_letters + string.digits
         return "".join(secrets.choice(alphabet) for _ in range(length))
+
+    def _ensure_gateway_mqtt_user(self, gateway=None, instance=None, require_mqtt_client=False):
+        self.ensure_one()
+        if require_mqtt_client and not self.has_mqtt_client:
+            return False
+
+        gateway = gateway or (self if self.is_gateway else self.gateway_id)
+        if not gateway:
+            raise UserError(_("Please set a Gateway first."))
+        if not gateway.ip_address:
+            raise UserError(_("Please configure Gateway IP Address first."))
+        if not gateway.has_mqtt_broker:
+            raise UserError(_("The selected Gateway has no MQTT broker enabled."))
+
+        GatewayMqttUser = self.env["fts.gateway.mqtt.user"].sudo()
+        mqtt_user = self.mqtt_user_id
+        if mqtt_user and mqtt_user.gateway_id != gateway:
+            mqtt_user = False
+        if not mqtt_user:
+            mqtt_user = GatewayMqttUser.search(
+                [("gateway_id", "=", gateway.id), ("edge_node_id", "=", self.id)],
+                limit=1,
+            )
+
+        username = (mqtt_user.username or "").strip() if mqtt_user else f"nr{self.id}_mqtt"
+        plain_password = mqtt_user._get_plain_password() if mqtt_user else ""
+        if not plain_password:
+            plain_password = self._generate_gateway_mqtt_password()
+
+        vals = {
+            "gateway_id": gateway.id,
+            "edge_node_id": self.id,
+            "instance_id": instance.id if instance else False,
+            "username": username,
+            "password_encrypted": plain_password,
+        }
+        if mqtt_user:
+            mqtt_user.write(vals)
+            mqtt_user._sync_create_to_gmqtt()
+        else:
+            mqtt_user = GatewayMqttUser.create(vals)
+
+        if self.mqtt_user_id != mqtt_user:
+            self.mqtt_user_id = mqtt_user.id
+        return mqtt_user
 
     def _default_instance_domain(self):
         self.ensure_one()
@@ -654,6 +698,8 @@ class FtsEdgeNode(models.Model):
             node._check_gmqtt_container()
             node._generate_deployment_commands()
             node._generate_file_manifest()
+            if node.gateway_id and node.has_mqtt_client and not node.mqtt_user_id:
+                node._ensure_gateway_mqtt_user(require_mqtt_client=True)
 
 
     def old_action_deploy(self):
@@ -696,7 +742,6 @@ class FtsEdgeNode(models.Model):
             3) 调用网关 Gmqtt API为 Node-RED 实例创建 MQTT client 账户
         """
         Instance = self.env["fts.nr.instance"].sudo()
-        GatewayMqttUser = self.env["fts.gateway.mqtt.user"].sudo()
 
         for node in self:
             note_lines = []
@@ -772,43 +817,8 @@ class FtsEdgeNode(models.Model):
                             _("FRPC proxy synchronized: %(proxy)s -> %(domain)s", proxy=vnc_domain.split(".", 1)[0], domain=vnc_domain)
                         )
 
-                username = f"nr{node.id}_mqtt"
-                mqtt_user = GatewayMqttUser.search(
-                    [("gateway_id", "=", gateway.id), ("username", "=", username)],
-                    limit=1,
-                )
-                plain_password = mqtt_user._get_plain_password() if mqtt_user else ""
-                if not plain_password:
-                    alphabet = string.ascii_letters + string.digits
-                    plain_password = "".join(secrets.choice(alphabet) for _ in range(12))
-
-                vals = {
-                    "gateway_id": gateway.id,
-                    "edge_node_id": node.id,
-                    "instance_id": instance.id,
-                    "username": username,
-                    "password_encrypted": plain_password,
-                }
-                if mqtt_user:
-                    mqtt_api_port = gateway._get_gateway_gmqtt_api_port()
-                    mqtt_response = requests.post(
-                        f"http://{gateway.ip_address}:{mqtt_api_port}/v1/accounts/{quote(username)}",
-                        json={"password": plain_password},
-                        timeout=15,
-                    )
-                    if mqtt_response.status_code >= 400:
-                        raise UserError(
-                            _(
-                                "Gateway GMQTT account upsert failed (HTTP %(status)s): %(detail)s",
-                                status=mqtt_response.status_code,
-                                detail=mqtt_response.text,
-                            )
-                        )
-                    mqtt_user.write(vals)
-                    note_lines.append(_("Gateway MQTT user synchronized: %(username)s", username=username))
-                else:
-                    GatewayMqttUser.create(vals)
-                    note_lines.append(_("Gateway MQTT user created: %(username)s", username=username))
+                mqtt_user = node._ensure_gateway_mqtt_user(gateway=gateway, instance=instance)
+                note_lines.append(_("Gateway MQTT user synchronized: %(username)s", username=mqtt_user.username))
 
                 if node.use_redis:
                     redis_comp = self.env["crose.component"].search(
