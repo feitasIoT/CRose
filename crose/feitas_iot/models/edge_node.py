@@ -337,7 +337,8 @@ class FtsEdgeNode(models.Model):
         """
         self.ensure_one()
         if not self.ip_address:
-            raise UserError(_("Please set the edge node IP Address first."))
+            _logger.info("Skip ping check for edge node %s because IP address is empty", self.display_name)
+            return False
 
         param = "-n 1 -w 2000" if os.name == "nt" else "-c 1 -W 2"
         cmd = f"ping {param} {self.ip_address}"
@@ -375,7 +376,8 @@ class FtsEdgeNode(models.Model):
         self.ensure_one()
 
         if not self.ip_address:
-            raise UserError(_("Please set the edge node IP Address first."))
+            _logger.info("Skip Docker check for edge node %s because IP address is empty", self.display_name)
+            return False
 
         docker_port = 2375
         endpoint = f"http://{self.ip_address}:{docker_port}/version"
@@ -688,18 +690,65 @@ class FtsEdgeNode(models.Model):
         """
             部署按钮，具体功能参见： edge_management.md
         """
+        supported_os_versions = {"win", "ubuntu", "rasp"}
         for node in self:
             if node.status != "draft":
                 continue
-            node._check_ip_reachable()
-            node._check_docker_installed()
-            node._check_nodered_container()
-            node._check_frpc_container()
-            node._check_gmqtt_container()
-            node._generate_deployment_commands()
-            node._generate_file_manifest()
-            if node.gateway_id and node.has_mqtt_client and not node.mqtt_user_id:
-                node._ensure_gateway_mqtt_user(require_mqtt_client=True)
+            note_lines = []
+            try:
+                if node.ip_address:
+                    node._check_ip_reachable()
+                    node._check_docker_installed()
+                    node._check_nodered_container()
+                    node._check_frpc_container()
+                    node._check_gmqtt_container()
+                    note_lines.append(_("Deploy prechecks completed."))
+                else:
+                    _logger.info("Skip deploy prechecks for edge node %s because IP address is empty", node.display_name)
+                    note_lines.append(_("Deploy prechecks skipped: IP Address is empty."))
+
+                if node.os_version in supported_os_versions:
+                    node._generate_deployment_commands()
+                    node._generate_file_manifest()
+                    note_lines.append(_("Deployment package generated for OS: %(os)s", os=node.os_version))
+                else:
+                    _logger.info(
+                        "Skip deployment package generation for edge node %s because OS distribution is not supported or empty: %s",
+                        node.display_name,
+                        node.os_version,
+                    )
+                    note_lines.append(
+                        _("Deployment package generation skipped: OS Distribution is empty or unsupported.")
+                    )
+
+                if not node.has_mqtt_client:
+                    note_lines.append(_("Gateway MQTT user skipped: MQTT Client is not enabled."))
+                elif node.mqtt_user_id:
+                    note_lines.append(_("Gateway MQTT user reused: %(username)s", username=node.mqtt_user_id.username))
+                elif not node.gateway_id:
+                    note_lines.append(_("Gateway MQTT user skipped: Gateway is not set."))
+                elif not node.gateway_id.ip_address:
+                    note_lines.append(_("Gateway MQTT user skipped: Gateway IP Address is empty."))
+                elif not node.gateway_id.has_mqtt_broker:
+                    note_lines.append(_("Gateway MQTT user skipped: Gateway MQTT Broker is not enabled."))
+                else:
+                    mqtt_user = node._ensure_gateway_mqtt_user(require_mqtt_client=True)
+                    note_lines.append(_("Gateway MQTT user created: %(username)s", username=mqtt_user.username))
+            except Exception as e:
+                note_lines.append(_("Deploy failed: %(error)s", error=str(e)))
+                node.message_post(
+                    body="<br/>".join(note_lines),
+                    message_type="comment",
+                    subtype_xmlid="mail.mt_note",
+                )
+                raise
+
+            if note_lines:
+                node.message_post(
+                    body="<br/>".join(note_lines),
+                    message_type="comment",
+                    subtype_xmlid="mail.mt_note",
+                )
 
 
     def old_action_deploy(self):
