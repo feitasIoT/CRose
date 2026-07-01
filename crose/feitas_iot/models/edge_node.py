@@ -49,6 +49,7 @@ class FtsEdgeNode(models.Model):
     
     is_frpc = fields.Boolean(string="FRPC")
     has_mqtt_broker = fields.Boolean(string="MQTT Broker")
+    has_mqtt_client = fields.Boolean(string="MQTT Client")
     has_nodered = fields.Boolean(string="Node-RED")
     has_docker = fields.Boolean(string="Docker")
     docker_version = fields.Char(string="Docker Version")
@@ -76,15 +77,20 @@ class FtsEdgeNode(models.Model):
     os_version = fields.Selection([
         ('rasp', 'Raspberry'), 
         ('ubuntu', 'Ubuntu'),
-        ('win', 'Windows')], string="OS Distribution")
+        ('win', 'Windows'),
+        ('android', 'Android')], string="OS Distribution")
     npm_registry_id = fields.Many2one("crose.component", string="NPM Registry", domain=[('component_type', '=', 'npm')])
-    # MQTT Config
+    # MQTT Config，当边缘节点为网关并且勾选了MQTT Broker，则会得到CRose的MQTT账户。
     mqtt_broker_id = fields.Many2one("crose.component", string="MQTT Broker", domain=[('component_type', '=', 'mqtt')])
     mqtt_account_id = fields.Many2one(
         "crose.component.account",
         string="MQTT Account",
         domain="[('component_id', '=', mqtt_broker_id)]",
     )
+    # 当边缘节点选择了网关并且勾选MQTT Client，则会得到Gateway MQTT账户。
+    mqtt_user_id = fields.Many2one('fts.gateway.mqtt.user')
+    mqtt_topic = fields.Char()
+
     redis_account_id = fields.Many2one(
         "crose.component.account",
         string="Redis Account",

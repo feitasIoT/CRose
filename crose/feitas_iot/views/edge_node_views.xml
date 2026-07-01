@@ -99,7 +99,7 @@
                             <button name="action_view_instances" type="object" class="oe_stat_button" icon="fa-th-large">
                                 <field name="instance_count" widget="statinfo" string="Instances"/>
                             </button>
-                            <button name="action_view_gateway_mqtt_users" type="object" class="oe_stat_button" icon="fa-users" invisible="not is_gateway">
+                            <button name="action_view_gateway_mqtt_users" type="object" class="oe_stat_button" icon="fa-users" >
                                 <field name="gateway_mqtt_user_count" widget="statinfo" string="MQTT Users"/>
                             </button>
                         </div>
@@ -112,26 +112,23 @@
                                 <field name="repository_id" domain="[('component_type', '=', 'npm')]" />
                             </group>
                             <group>
-                                <field name="is_gateway" />
+                                <field name="is_gateway" invisible="gateway_id"/>
+                                <field name="gateway_id" invisible="is_gateway"/>
                                 <field name="ip_address"/>
                                 <field name="another_ip_address" invisible="not is_gateway"/>
                             </group>
                         </group>
                         <notebook>
                             <page string="Configuration">
-                                <group col="16">
+                                <!-- 系统 -->
+                                <group col="16" string="Environment">
                                     <group colspan="2"><field name="has_docker" /></group>
-                                    <group colspan="2" invisible="is_gateway"><field name="use_frp"/></group>
-                                    <group colspan="2" invisible="not is_gateway"><field name="is_frpc"/></group>
                                     <group colspan="2">
                                         <field name="use_ssh"/>
                                     </group>
                                     <group colspan="2">
                                         <field name="use_vnc"/>
                                     </group>
-                                    
-                                    <group colspan="2"><field name="has_nodered" /></group>
-                                    <group colspan="2"><field name="has_mqtt_broker" /></group>
                                 </group>
                                 <group>
                                     <group string="Docker" invisible="not has_docker">
@@ -140,16 +137,6 @@
                                         <field name="docker_arch"/>
                                         <field name="docker_os"/>
                                     </group>
-                                    <group string="FRP" invisible="not use_frp">
-                                        <field name="gateway_id" invisible="is_gateway"/>
-                                        <field name="domain"/>
-                                    </group>
-                                    <group string="FRPC" invisible="not is_frpc">
-                                        <field name="frpc_webserver_port" invisible="not is_gateway"/>
-                                        <field name="frpc_webserver_username" invisible="not is_gateway"/>
-                                        <field name="frpc_webserver_password" password="True" invisible="not is_gateway"/>
-                                    </group>
-                                    
                                     <group string="SSH" invisible="not use_ssh">
                                         <field name="ssh_username"/>
                                         <field name="ssh_password" password="True"/>
@@ -158,6 +145,29 @@
                                     <group string="VNC" invisible="not use_vnc">
                                         <field name="vnc_port" required="use_vnc"/>
                                     </group>
+                                </group>
+                            </page>
+                            <page name="application" string="Application">
+                                <!-- 应用 -->
+                                <group col="16" string="Application">
+                                    <group colspan="2" invisible="is_gateway"><field name="use_frp"/></group>
+                                    <group colspan="2" invisible="not is_gateway"><field name="is_frpc"/></group>
+                                    <group colspan="2"><field name="has_nodered" /></group>
+                                    <group colspan="2"><field name="has_mqtt_broker" /></group>
+                                    <group colspan="2"><field name="has_mqtt_client" /></group>
+                                    <group colspan="2"><field name="use_redis" /></group>
+                                </group>
+                                <group>
+                                    <group string="FRP" invisible="not use_frp">
+                                        
+                                        <field name="domain"/>
+                                    </group>
+                                    <group string="FRPC" invisible="not is_frpc">
+                                        <field name="frpc_webserver_port" invisible="not is_gateway"/>
+                                        <field name="frpc_webserver_username" invisible="not is_gateway"/>
+                                        <field name="frpc_webserver_password" password="True" invisible="not is_gateway"/>
+                                    </group>
+                                    
                                     <group string="Node-RED" invisible="not has_nodered">
                                         <field name="nodered_username" />
                                         <field name="nodered_password" password="True"/>
@@ -167,6 +177,10 @@
                                     <group string="MQTT" invisible="not has_mqtt_broker">
                                         <field name="mqtt_broker_id"/>
                                         <field name="mqtt_account_id"/>
+                                    </group>
+                                    <group string="MQTT Client" invisible="not has_mqtt_client">
+                                        <field name="mqtt_user_id"/>
+                                        <field name="mqtt_topic"/>
                                     </group>
                                 </group>
                             </page>
@@ -181,12 +195,6 @@
                                     
                                 </group>
                                 
-                            </page>
-                            <page string="Components">
-                                <group>
-                                    
-                                    
-                                </group>
                             </page>
                             <page string="Others">
                                 <group>

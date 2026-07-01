@@ -8,8 +8,7 @@
 
 > 边缘网关是部署在网络边缘的智能设备，负责终端设备与云端的连接，同时具备数据采集、处理、协议转换和本地计算能力。
 
-当前，CRose中边缘节点分为：网关、边缘节点。
-
+当前，CRose中边缘网关是一种特殊的边缘节点。
 
 ### 网关
 - 名称
@@ -25,6 +24,10 @@
 - MQTT Broker
 
 #### 部署
+
+对于一台裸网关，CRose在知道其系统、IP之后，会探查网关是否安装了Docker：
+- 已安装，会继续探查相关容器。
+- 未安装，提示用户自行安装或勾选SSH并填写账户密码后由CRose来安装。
 
 - CRose能否ping通IP地址1。
 - 能否访问Repository。（CRose会检查Repository的状态，所以CRose如果能ping通IP地址1就表示网关可以访问Repository。）
@@ -53,6 +56,10 @@
 - VNC
 - Node-RED
 - MQTT Broker
+
+
+PDA也是一种边缘节点。它通常是Android系统，通过WIFI接入企业生产内网与MES等系统进行交互。CRose负责为PDA分配MQTT账号、监控PDA的状态。
+
 
 #### 确认
 
