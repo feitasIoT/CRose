@@ -27,58 +27,93 @@ class FtsEdgeNode(models.Model):
     _description = "Edge Node"
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
+    # main fields ---------------------------------------
     name = fields.Char(string="Name", required=True)
-    version = fields.Char(string="Version")
-    repository_id = fields.Many2one("crose.component", string="Repository")
-    # TODO：用于复制边缘网关
-    is_template = fields.Boolean(string="Is Template")
-    template_id = fields.Many2one("fts.edge.node", string="Template", domain="[('is_template', '=', True)]")
-
-    is_gateway = fields.Boolean(string="Gateway")
-    gateway_id = fields.Many2one("fts.edge.node", string="Gateway", domain="[('is_gateway', '=', True)]")
-    node_ids = fields.One2many("fts.edge.node", "gateway_id", string="Nodes")
-    
-    ip_address = fields.Char(string="IP Address")
-    another_ip_address = fields.Char(string="Another IP Address")
-
-    use_ssh = fields.Boolean(string="SSH")
-    ssh_username = fields.Char(string="SSH Username")
-    ssh_password = fields.Char(string="SSH Password")
-    ssh_port = fields.Integer(string="SSH Port", default=22)
-    
-    is_frpc = fields.Boolean(string="FRPC")
-    has_mqtt_broker = fields.Boolean(string="MQTT Broker")
-    has_mqtt_client = fields.Boolean(string="MQTT Client")
-    has_nodered = fields.Boolean(string="Node-RED")
-    has_docker = fields.Boolean(string="Docker")
-    docker_version = fields.Char(string="Docker Version")
-    docker_api_version = fields.Char(string="Docker API Version")
-    docker_arch = fields.Char(string="Docker Architecture")
-    docker_os = fields.Char(string="Docker OS")
-    nodered_version = fields.Char(string="Node-RED Version")
-    nodered_ports = fields.Text(string="Node-RED Ports")
-
-    nodered_username = fields.Char(string="Node-RED Username")
-    nodered_password = fields.Char(string="Node-RED Password")
-
-    frpc_webserver_port = fields.Integer(string="FRPC Webserver Port", default=7400)
-    frpc_webserver_username = fields.Char(string="FRPC Webserver Username", default="admin")
-    frpc_webserver_password = fields.Char(string="FRPC Webserver Password", default="admin")
-
-    use_frp = fields.Boolean(string="FRP")
-    use_vnc = fields.Boolean(string="VNC")
-    use_redis = fields.Boolean(string="Redis", help="checked will assign redis database and account.")
-
-    domain = fields.Char(string="Domain")
-    vnc_port = fields.Integer(string="VNC Port", default=6080)
-    port = fields.Integer(string="Port", default=6080)
-    agent_port = fields.Integer(string="Agent Port", default=18080)
     os_version = fields.Selection([
         ('rasp', 'Raspberry'), 
         ('ubuntu', 'Ubuntu'),
         ('win', 'Windows'),
         ('android', 'Android')], string="OS Distribution")
-    npm_registry_id = fields.Many2one("crose.component", string="NPM Registry", domain=[('component_type', '=', 'npm')])
+    repository_id = fields.Many2one("crose.component", string="Repository")
+    is_gateway = fields.Boolean(string="Gateway")
+    gateway_id = fields.Many2one("fts.edge.node", string="Gateway", domain="[('is_gateway', '=', True)]")
+    ip_address = fields.Char(string="IP Address")
+    another_ip_address = fields.Char(string="Another IP Address")
+    status = fields.Selection(
+        [
+            ("draft", "Draft"),
+            ("confirm", "Confirm"),
+            ("online", "Online"),
+            ("offline", "Offline"),
+            ("error", "Error"),
+        ],
+        string="Status",
+        default="draft",
+        required=True,
+    )
+
+    # environment fields --------------------------------
+    use_ssh = fields.Boolean(string="SSH")
+    ssh_username = fields.Char(string="SSH Username")
+    ssh_password = fields.Char(string="SSH Password")
+    ssh_port = fields.Integer(string="SSH Port", default=22)
+
+    use_vnc = fields.Boolean(string="VNC")
+    vnc_port = fields.Integer(string="VNC Port", default=6080)
+
+    has_docker = fields.Boolean(string="Docker")
+    docker_version = fields.Char(string="Docker Version")
+    docker_api_version = fields.Char(string="Docker API Version")
+    docker_arch = fields.Char(string="Docker Architecture")
+    docker_os = fields.Char(string="Docker OS")
+
+    # application fields -------------------------------
+    is_frpc = fields.Boolean(string="FRPC")
+    frpc_webserver_port = fields.Integer(string="FRPC Webserver Port", default=7400)
+    frpc_webserver_username = fields.Char(string="FRPC Webserver Username", default="admin")
+    frpc_webserver_password = fields.Char(string="FRPC Webserver Password", default="admin")
+
+    has_nodered = fields.Boolean(string="Node-RED")
+    nodered_version = fields.Char(string="Node-RED Version")
+    nodered_ports = fields.Text(string="Node-RED Ports")
+    nodered_username = fields.Char(string="Node-RED Username")
+    nodered_password = fields.Char(string="Node-RED Password")
+
+    # one2many fields -----------------------------------
+
+
+    # others fields --------------------------------------
+    version = fields.Char(string="Version")
+    # TODO：用于复制边缘网关
+    is_template = fields.Boolean(string="Is Template")
+    template_id = fields.Many2one("fts.edge.node", string="Template", domain="[('is_template', '=', True)]")
+
+
+    flow_ids = fields.One2many("agent.flow.line", "agent_id", string="Flows")
+    node_ids = fields.One2many("fts.edge.node", "gateway_id", string="Nodes")
+    instance_ids = fields.One2many(
+        "fts.nr.instance",
+        "edge_node_id",
+        string="Instances",
+    )
+    gateway_mqtt_user_ids = fields.One2many(
+        "fts.gateway.mqtt.user",
+        "gateway_id",
+        string="Gateway MQTT Users",
+    )
+    
+    has_mqtt_broker = fields.Boolean(string="MQTT Broker")
+    has_mqtt_client = fields.Boolean(string="MQTT Client")
+
+    use_frp = fields.Boolean(string="FRP")
+    
+    use_redis = fields.Boolean(string="Redis", help="checked will assign redis database and account.")
+
+    domain = fields.Char(string="Domain")
+    
+    port = fields.Integer(string="Port", default=6080)
+    agent_port = fields.Integer(string="Agent Port", default=18080)
+    
     # MQTT Config，当边缘节点为网关并且勾选了MQTT Broker，则会得到CRose的MQTT账户。
     mqtt_broker_id = fields.Many2one("crose.component", string="MQTT Broker", domain=[('component_type', '=', 'mqtt')])
     mqtt_account_id = fields.Many2one(
@@ -97,16 +132,7 @@ class FtsEdgeNode(models.Model):
     )
 
     # Instance Config
-    instance_ids = fields.One2many(
-        "fts.nr.instance",
-        "edge_node_id",
-        string="Instances",
-    )
-    gateway_mqtt_user_ids = fields.One2many(
-        "fts.gateway.mqtt.user",
-        "gateway_id",
-        string="Gateway MQTT Users",
-    )
+    
     instance_count = fields.Integer(string="Instance Count", compute="_compute_instance_count")
     gateway_mqtt_user_count = fields.Integer(
         string="Gateway MQTT User Count",
@@ -122,19 +148,10 @@ class FtsEdgeNode(models.Model):
 
     config = fields.Text("Configuration File")
     agent_cmd = fields.Text("Command")
-    status = fields.Selection(
-        [
-            ("draft", "Draft"),
-            ("confirm", "Confirm"),
-            ("online", "Online"),
-            ("offline", "Offline"),
-            ("error", "Error"),
-        ],
-        string="Status",
-        default="draft",
-        required=True,
-    )
-    flow_ids = fields.One2many("agent.flow.line", "agent_id", string="Flows")
+
+    # deprecated fields ----------------------------------
+    npm_registry_id = fields.Many2one("crose.component", string="NPM Registry", domain=[('component_type', '=', 'npm')])
+    
 
 #-------------onchange--------------
     @api.depends("instance_ids")

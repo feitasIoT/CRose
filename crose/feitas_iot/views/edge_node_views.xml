@@ -111,7 +111,7 @@
                                 <!-- <field name="version"/> -->
                                 <field name="os_version"/>
                                 <!-- FIXME: npm改为repository -->
-                                <field name="repository_id" domain="[('component_type', '=', 'npm')]" />
+                                <field name="repository_id" domain="[('component_type', '=', 'npm')]" invisible="not is_gateway"/>
                             </group>
                             <group>
                                 <field name="is_gateway" invisible="gateway_id"/>
