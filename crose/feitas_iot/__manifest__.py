@@ -3,16 +3,19 @@
     "version": "1.0",
     "summary": "CRose IoT platform for building connected applications",
     "description": """
-    CRose makes IoT development simpler and smarter.
-    =====================================================
-    Simpler
-    -------
-    - Build IoT applications with a visual flow editor
-    - Support multiple protocols, including MQTT, HTTP, and CoAP
-    Extensible
-    ----------
-    - Extend with add-on modules such as AI capabilities
-    - Support NPM package management without manual dependency installation
+CRose makes IoT development simpler and smarter.
+=====================================================
+Simpler
+-------
+- Build IoT applications with a visual flow editor
+- Support multiple protocols, including MQTT, HTTP, and CoAP
+
+Extensible
+----------
+- Extend with add-on modules such as AI capabilities
+- Support NPM package management without manual dependency installation
+
+
     """,
     "category": "Tools",
     "author": "Feitas",

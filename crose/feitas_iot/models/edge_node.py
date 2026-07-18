@@ -35,7 +35,7 @@ class FtsEdgeNode(models.Model):
         ('win', 'Windows'),
         ('android', 'Android')], string="OS Distribution")
     repository_id = fields.Many2one("crose.component", string="Repository")
-    is_gateway = fields.Boolean(string="Gateway")
+    is_gateway = fields.Boolean(string="Is Gateway")
     gateway_id = fields.Many2one("fts.edge.node", string="Gateway", domain="[('is_gateway', '=', True)]")
     ip_address = fields.Char(string="IP Address")
     another_ip_address = fields.Char(string="Another IP Address")
@@ -102,8 +102,8 @@ class FtsEdgeNode(models.Model):
         string="Gateway MQTT Users",
     )
     
-    has_mqtt_broker = fields.Boolean(string="MQTT Broker")
-    has_mqtt_client = fields.Boolean(string="MQTT Client")
+    has_mqtt_broker = fields.Boolean(string="Is MQTT Broker")
+    has_mqtt_client = fields.Boolean(string="Is MQTT Client")
 
     use_frp = fields.Boolean(string="FRP")
     

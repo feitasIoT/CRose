@@ -1,5 +1,6 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_fts_edge_node,fts.edge.node,model_fts_edge_node,base.group_user,1,1,1,1
+access_fts_edge_agent,access_fts_edge_agent,feitas_iot.model_fts_edge_agent,base.group_user,1,0,0,0
 access_fts_nr_instance,fts.nr.instance,model_fts_nr_instance,base.group_user,1,1,1,1
 access_fts_nr_flow,fts.nr.flow,model_fts_nr_flow,base.group_user,1,1,1,1
 access_fts_nr_node,fts.nr.node,model_fts_nr_node,base.group_user,1,1,1,1

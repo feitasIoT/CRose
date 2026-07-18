@@ -3,11 +3,13 @@
     "version": "1.0",
     "summary": "AI features for CRose IoT platform",
     "description": """
-    AI add-on for CRose IoT Platform.
-    ==================================
-    - Manage AI models, prompts, datasets, and training tasks
-    - Build and query AI knowledge bases
-    - Enable AI chat and AI-assisted flow generation
+AI add-on for CRose IoT Platform.
+==================================
+- Manage AI models, prompts, datasets, and training tasks
+- Build and query AI knowledge bases
+- Enable AI chat and AI-assisted flow generation
+
+
     """,
     "category": "Tools",
     "author": "Feitas",
