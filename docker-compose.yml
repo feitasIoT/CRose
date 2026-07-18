@@ -46,6 +46,7 @@ services:
     ports:
       - "18069:8069"
     restart: always
+    command: -u feitas_iot
     volumes:
       - ./config/crose/odoo.conf:/etc/odoo/odoo.conf
       - ./crose:/mnt/extra-addons/crose

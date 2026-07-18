@@ -271,6 +271,7 @@ class FtsNrInstance(models.Model):
         }
 
     def action_open_editor(self):
+        # FIXME：check component(nginx and frps) status before open editor
         self.ensure_one()
         action = self.env.ref("feitas_iot.action_node_red_editor_client", raise_if_not_found=False)
         if action:

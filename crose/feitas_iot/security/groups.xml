@@ -24,5 +24,23 @@
             <field name="privilege_id" ref="feitas_iot.res_groups_privilege_feitas_iot"/>
             <field name="implied_ids" eval="[(4, ref('base.group_portal'))]"/>
         </record>
+
+        <record model="res.groups.privilege" id="res_groups_privilege_edge_management">
+            <field name="name">边缘管理</field>
+            <field name="sequence">31</field>
+            <field name="category_id" ref="base.module_category_productivity"/>
+        </record>
+
+        <record id="group_edge_management_admin" model="res.groups">
+            <field name="name">边缘管理-管理员</field>
+            <field name="privilege_id" ref="feitas_iot.res_groups_privilege_edge_management"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_system'))]"/>
+        </record>
+
+        <record id="group_edge_management_user" model="res.groups">
+            <field name="name">边缘管理-用户</field>
+            <field name="privilege_id" ref="feitas_iot.res_groups_privilege_edge_management"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
     </data>
 </odoo>

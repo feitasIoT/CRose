@@ -91,7 +91,9 @@
             <field name="arch" type="xml">
                 <form string="Node">
                     <header>
-                        <button name="action_deploy" type="object" string="Deploy" class="oe_highlight" />
+                        <button name="%(feitas_iot.action_edge_node_deploy_wizard)d" type="action"
+                            string="Deploy" class="oe_highlight"
+                            groups="feitas_iot.group_edge_management_admin"/>
                         <field name="status" widget="statusbar" options="{'clickable': '1'}"/>
                     </header>
                     <sheet>
@@ -214,15 +216,6 @@
                     <chatter/>
                 </form>
             </field>
-        </record>
-
-        <record id="action_fts_edge_node_initialize" model="ir.actions.server">
-            <field name="name">Initialize</field>
-            <field name="model_id" ref="model_fts_edge_node"/>
-            <field name="binding_model_id" ref="model_fts_edge_node"/>
-            <field name="binding_type">action</field>
-            <field name="state">code</field>
-            <field name="code">action = records.action_initialize()</field>
         </record>
     </data>
 </odoo>

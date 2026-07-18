@@ -783,7 +783,7 @@ class FtsEdgeNode(models.Model):
                 }
             )
 
-    def action_initialize(self):
+    def action_initialize(self, deploy_nodered=True, deploy_mqtt_broker=True, deploy_redis=True):
         """
             初始化边缘节点：
             1) 创建 Node-RED 实例
@@ -794,82 +794,87 @@ class FtsEdgeNode(models.Model):
 
         for node in self:
             note_lines = []
+            instance = None
+            gateway = None
             try:
                 if not node.ip_address:
                     raise UserError(_("Please set the edge node IP Address first."))
 
-                gateway = node if node.is_gateway else node.gateway_id
-                if not gateway:
-                    raise UserError(_("Please set a Gateway first."))
-                if not gateway.ip_address:
-                    raise UserError(_("Please configure Gateway IP Address first."))
-                if not gateway.has_mqtt_broker:
-                    raise UserError(_("The selected Gateway has no MQTT broker enabled."))
+                if deploy_nodered or deploy_mqtt_broker:
+                    gateway = node if node.is_gateway else node.gateway_id
+                    if not gateway:
+                        raise UserError(_("Please set a Gateway first."))
+                    if not gateway.ip_address:
+                        raise UserError(_("Please configure Gateway IP Address first."))
+                    if not gateway.has_mqtt_broker:
+                        raise UserError(_("The selected Gateway has no MQTT broker enabled."))
 
-                instance_domain = node._default_instance_domain()
-                instance_proxy_name = instance_domain.split(".", 1)[0]
-                instance_host = instance_domain if node.use_frp else node.ip_address
-                instance_name = f"{node.name}-NR"
+                if deploy_nodered:
+                    instance_domain = node._default_instance_domain()
+                    instance_proxy_name = instance_domain.split(".", 1)[0]
+                    instance_host = instance_domain if node.use_frp else node.ip_address
+                    instance_name = f"{node.name}-NR"
 
-                instance = Instance.search(
-                    [("edge_node_id", "=", node.id), ("instance_type", "=", "remote"), ("name", "=", instance_name)],
-                    limit=1,
-                )
-                if instance:
-                    update_vals = {}
-                    if instance.ip_address != instance_host:
-                        update_vals["ip_address"] = instance_host
-                    if not instance.port:
-                        update_vals["port"] = 1880
-                    if update_vals:
-                        instance.write(update_vals)
-                    note_lines.append(_("Node-RED instance reused: %(name)s", name=instance.display_name))
-                else:
-                    vals = {
-                        "name": instance_name,
-                        "instance_type": "remote",
-                        "edge_node_id": node.id,
-                        "ip_address": instance_host,
-                        "port": 1880,
-                    }
-                    if node.mqtt_broker_id:
-                        vals["mqtt_broker_id"] = node.mqtt_broker_id.id
-                    instance = Instance.create(vals)
-                    note_lines.append(_("Node-RED instance created: %(name)s", name=instance.display_name))
-
-                if node.is_gateway or not node.use_frp:
-                    note_lines.append(_("Gateway node: FRPC proxy step skipped."))
-                else:
-                    node._upsert_gateway_frpc_http_proxy(
-                        gateway,
-                        instance_proxy_name,
-                        node.ip_address,
-                        int(instance.port or 1880),
-                        instance_domain,
+                    instance = Instance.search(
+                        [("edge_node_id", "=", node.id), ("instance_type", "=", "remote"), ("name", "=", instance_name)],
+                        limit=1,
                     )
-                    note_lines.append(
-                        _("FRPC proxy synchronized: %(proxy)s -> %(domain)s", proxy=instance_proxy_name, domain=instance_domain)
-                    )
+                    if instance:
+                        update_vals = {}
+                        if instance.ip_address != instance_host:
+                            update_vals["ip_address"] = instance_host
+                        if not instance.port:
+                            update_vals["port"] = 1880
+                        if update_vals:
+                            instance.write(update_vals)
+                        note_lines.append(_("Node-RED instance reused: %(name)s", name=instance.display_name))
+                    else:
+                        vals = {
+                            "name": instance_name,
+                            "instance_type": "remote",
+                            "edge_node_id": node.id,
+                            "ip_address": instance_host,
+                            "port": 1880,
+                        }
+                        if node.mqtt_broker_id:
+                            vals["mqtt_broker_id"] = node.mqtt_broker_id.id
+                        instance = Instance.create(vals)
+                        note_lines.append(_("Node-RED instance created: %(name)s", name=instance.display_name))
 
-                    if node.use_vnc:
-                        vnc_domain = (node.domain or "").strip() or node._default_vnc_domain()
-                        if node.domain != vnc_domain:
-                            node.domain = vnc_domain
+                    if node.is_gateway or not node.use_frp:
+                        note_lines.append(_("Gateway node: FRPC proxy step skipped."))
+                    else:
                         node._upsert_gateway_frpc_http_proxy(
                             gateway,
-                            vnc_domain.split(".", 1)[0],
+                            instance_proxy_name,
                             node.ip_address,
-                            int(node.vnc_port or node.port or 680),
-                            vnc_domain,
+                            int(instance.port or 1880),
+                            instance_domain,
                         )
                         note_lines.append(
-                            _("FRPC proxy synchronized: %(proxy)s -> %(domain)s", proxy=vnc_domain.split(".", 1)[0], domain=vnc_domain)
+                            _("FRPC proxy synchronized: %(proxy)s -> %(domain)s", proxy=instance_proxy_name, domain=instance_domain)
                         )
 
-                mqtt_user = node._ensure_gateway_mqtt_user(gateway=gateway, instance=instance)
-                note_lines.append(_("Gateway MQTT user synchronized: %(username)s", username=mqtt_user.username))
+                        if node.use_vnc:
+                            vnc_domain = (node.domain or "").strip() or node._default_vnc_domain()
+                            if node.domain != vnc_domain:
+                                node.domain = vnc_domain
+                            node._upsert_gateway_frpc_http_proxy(
+                                gateway,
+                                vnc_domain.split(".", 1)[0],
+                                node.ip_address,
+                                int(node.vnc_port or node.port or 680),
+                                vnc_domain,
+                            )
+                            note_lines.append(
+                                _("FRPC proxy synchronized: %(proxy)s -> %(domain)s", proxy=vnc_domain.split(".", 1)[0], domain=vnc_domain)
+                            )
 
-                if node.use_redis:
+                if deploy_mqtt_broker:
+                    mqtt_user = node._ensure_gateway_mqtt_user(gateway=gateway, instance=instance)
+                    note_lines.append(_("Gateway MQTT user synchronized: %(username)s", username=mqtt_user.username))
+
+                if deploy_redis and node.use_redis:
                     redis_comp = self.env["crose.component"].search(
                         [("component_type", "=", "redis"), ("status", "=", "online")], limit=1
                     )

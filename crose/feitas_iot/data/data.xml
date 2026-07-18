@@ -126,7 +126,7 @@
         <field name="instance_type">local</field>
         <field name="ip_address">nodered</field>
         <field name="port">1880</field>
-        <field name="editor_port">8880</field>
+        <field name="editor_port">11880</field>
         <field name="component_id" ref="component_nodered" />
         <field name="mqtt_broker_id" ref="component_mqtt_broker" />
     </record>
@@ -136,7 +136,7 @@
         <field name="instance_type">local</field>
         <field name="ip_address">nodered-staging</field>
         <field name="port">1880</field>
-        <field name="editor_port">8881</field>
+        <field name="editor_port">11881</field>
         <field name="component_id" ref="component_nodered_staging" />
         <field name="mqtt_broker_id" ref="component_mqtt_broker" />
     </record>

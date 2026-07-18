@@ -26,6 +26,7 @@
         "security/ir.model.access.csv",
 
         "wizards/nr_instance_wizard_views.xml",
+        "wizards/edge_node_deploy_wizard_views.xml",
         "views/nr_instance_views.xml",
         "views/editor_views.xml",
         "views/crose_component_views.xml",
