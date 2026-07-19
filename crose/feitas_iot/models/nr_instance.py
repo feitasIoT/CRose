@@ -60,6 +60,7 @@ class FtsNrInstance(models.Model):
         tracking=True
     )
     flow_ids = fields.One2many("fts.nr.flow", "instance_id", string="Flows")
+    flow_count = fields.Integer(compute="_compute_flow_count", string="Flow Count")
     flow_line_ids = fields.One2many("instance.flow.line", "instance_id", string="Flow Lines")
     npm_registry_id = fields.Many2one("crose.component", string="NPM Registry", domain=[('component_type', '=', 'npm')])
 
@@ -224,6 +225,7 @@ class FtsNrInstance(models.Model):
     def action_start(self):
         """
         Start the instance.
+        FIXME: Development is suspended as this feature may be replaced by Node-RED workflows in the future, rendering it obsolete at that time.
         """
         self.ensure_one()
         if not self.edge_node_id:
@@ -293,6 +295,10 @@ class FtsNrInstance(models.Model):
             return res
         return {}
 
+    def _compute_flow_count(self):
+        for record in self:
+            record.flow_count = len(record.flow_ids)
+
     def action_view_flows(self):
         self.ensure_one()
         flows = self.flow_ids
@@ -312,10 +318,12 @@ class FtsNrInstance(models.Model):
             "type": "ir.actions.act_window",
             "name": _("Flows"),
             "res_model": "fts.nr.flow",
-            "view_mode": "list,form",
+            "view_mode": "kanban,list,form",
             "target": "current",
             "domain": [("id", "in", flows.ids)],
-            "context": {},
+            "context": {
+                "kanban_view_ref": "feitas_iot.view_fts_nr_flow_kanban"
+            },
         }
 
     def action_view_logs(self):
@@ -367,58 +375,6 @@ class FtsNrInstance(models.Model):
             }
         }
 
-    def action_apply_flows(self):
-        """
-            Push the selected applications of the instance to Node-RED.
-        """
-        self.ensure_one()
-        if not self.flow_ids:
-            return {
-                "type": "ir.actions.client",
-                "tag": "display_notification",
-                "params": {
-                    "title": _("Application Complete"),
-                    "message": _("No applications are configured."),
-                    "type": "warning",
-                    "sticky": False,
-                },
-            }
-
-        ok_count, fail_count, error_messages = self._apply_flows_internal()
-
-        message = _("Success: %(ok)s, Failed: %(fail)s", ok=ok_count, fail=fail_count)
-        if error_messages:
-            message = f"{message}\n" + "\n".join(error_messages[:5])
-
-        return {
-            "type": "ir.actions.client",
-            "tag": "display_notification",
-            "params": {
-                "title": _("Application Complete"),
-                "message": message,
-                "type": "success" if fail_count == 0 else "warning",
-                "sticky": False,
-            },
-        }
-
-    def _apply_flows_internal(self):
-        self.ensure_one()
-        ok_count = 0
-        fail_count = 0
-        error_messages = []
-
-        for flow in self.flow_ids:
-            if not flow:
-                continue
-            try:
-                payload = self._nr_build_flow_payload(flow)
-                self._nr_post_json("/flow", payload, timeout=30)
-                ok_count += 1
-            except Exception as e:
-                fail_count += 1
-                error_messages.append(f"{flow.display_name}: {str(e)}")
-
-        return ok_count, fail_count, error_messages
 
     def api_sync_flows(self):
         """

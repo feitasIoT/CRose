@@ -59,8 +59,8 @@
                                     </div>
                                     <div class="d-flex align-items-center justify-content-between">
                                         <div class="d-flex align-items-center gap-2">
-                                            <span t-if="record.is_frpc.raw_value" class="fa fa-random text-success" title="FRPC"/>
-                                            <span t-else="" class="fa fa-random text-muted" title="FRPC"/>
+                                            <span t-if="record.is_frpc.raw_value" class="fa fa-exchange text-success" title="FRPC"/>
+                                            <span t-else="" class="fa fa-exchange text-muted" title="FRPC"/>
 
                                             <span t-if="record.has_mqtt_broker.raw_value" class="fa fa-rss text-success" title="MQTT Broker"/>
                                             <span t-else="" class="fa fa-rss text-muted" title="MQTT Broker"/>
