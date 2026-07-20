@@ -23,6 +23,7 @@ class FtsNrFlow(models.Model):
 
     tag_ids = fields.Many2many("fts.nr.tag", string="Tags")
     param_ids = fields.One2many("fts.nr.flow.param", "flow_id", string="Parameters")
+    automation_ids = fields.One2many("base.automation", "flow_id", string="Automation Rules")
     heat = fields.Integer("Heat")
     description = fields.Html("Description")
     prompt = fields.Text("Prompt")

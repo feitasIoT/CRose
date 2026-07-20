@@ -1,0 +1,28 @@
+.feitas_iot_terminal_action {
+    background: #1e1e1e;
+}
+
+.feitas_iot_terminal_container {
+    flex: 1;
+    overflow: hidden;
+    min-height: 0; // allow flex shrink
+    padding: 2px;
+
+    .xterm {
+        height: 100%;
+        width: 100%;
+    }
+
+    .xterm-viewport {
+        scroll-behavior: auto;
+    }
+
+    .xterm-screen {
+        position: relative;
+    }
+
+    // Override xterm default padding to maximize usable space
+    .xterm-rows {
+        padding: 0 4px;
+    }
+}

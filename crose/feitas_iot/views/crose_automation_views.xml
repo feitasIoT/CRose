@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_crose_automation_tree" model="ir.ui.view">
+            <field name="name">base.automation.tree</field>
+            <field name="model">base.automation</field>
+            <field name="arch" type="xml">
+                <list string="Automation Rules">
+                    <field name="name"/>
+                    <field name="model_id"/>
+                    <field name="trigger"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_crose_automation_form" model="ir.ui.view">
+            <field name="name">base.automation.form</field>
+            <field name="model">base.automation</field>
+            <field name="arch" type="xml">
+                <form string="Automation Rule">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name"/>
+                                <field name="model_id"/>
+                                <field name="trigger"/>
+                                <field name="flow_id"/>
+                                <field name="active"/>
+                            </group>
+                            <group>
+                                <field name="filter_domain" widget="domain"/>
+                                <field name="action_server_ids" widget="many2many_tags"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>

@@ -1,5 +1,6 @@
 from . import res_partner
 from . import crose_component
+from . import crose_automation
 from . import crose_nr_package
 from . import nr_instance
 from . import edge_node

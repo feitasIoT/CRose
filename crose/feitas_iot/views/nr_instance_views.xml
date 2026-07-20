@@ -1,132 +1,141 @@
 <odoo>
-    <data>
+<data>
 
-        <!-- List view -->
-        <record id="view_fts_instance_tree" model="ir.ui.view">
-            <field name="name">fts.nr.instance.tree</field>
-            <field name="model">fts.nr.instance</field>
-            <field name="arch" type="xml">
-                <list>
-                    <field name="instance_type" />
-                    <field name="name"/>
-                    <field name="ip_address"/>
-                    <field name="port"/>
-                    <field name="editor_port"/>
-                    <field name="status" widget="badge" decoration-success="status == 'online'" decoration-warning="status == 'error'" decoration-muted="status == 'offline'"/>
-                    <button name="action_restart" type="object" icon="fa-refresh" title="Restart" />
-                    <button name="action_open_editor" type="object" icon="fa-external-link" title="Open"  />
-                    <button name="action_view_flows" type="object" icon="fa-th-large" title="Flows" />
-                    <button name="action_view_logs" type="object" icon="fa-file-text-o" title="Logs" />
-                    <button name="action_test" type="object" icon="fa-flask" title="Test" />
-                </list>
-            </field>
-        </record>
+    <record id="view_fts_instance_search" model="ir.ui.view">
+        <field name="name">fts.nr.instance.search</field>
+        <field name="model">fts.nr.instance</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="ip_address"/>
+                <field name="instance_type"/>
+                <group>
+                    <filter string="Instance Type" name="group_by_instance_type" context="{'group_by': 'instance_type'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
 
-        <record id="view_fts_instance_kanban" model="ir.ui.view">
-            <field name="name">fts.nr.instance.kanban</field>
-            <field name="model">fts.nr.instance</field>
-            <field name="arch" type="xml">
-                <kanban>
-                    <field name="name"/>
-                    <field name="status"/>
-                    <field name="instance_type"/>
-                    <field name="ip_address"/>
-                    <field name="port"/>
-                    <templates>
-                        <t t-name="card">
-                            <div class="oe_kanban_global_click o_kanban_record feitas_iot_instance_kanban_card">
-                                <div class="d-flex flex-column gap-1">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <span t-attf-class="feitas_iot_status_dot feitas_iot_status_{{ record.status.raw_value }}"/>
-                                        <strong class="text-truncate">
-                                            <field name="name"/>
-                                        </strong>
-                                    </div>
-                                    <div class="text-muted text-truncate">
-                                        <span t-esc="record.ip_address.value"/>:<span t-esc="record.port.value"/>
-                                    </div>
-                                    <div class="d-flex align-items-center justify-content-between">
-                                        <span class="badge text-bg-light">
-                                            <field name="instance_type"/>
-                                        </span>
-                                        <div class="feitas_iot_instance_kanban_actions d-flex align-items-center gap-1">
-                                            <button type="object" name="action_open_editor" class="btn btn-link btn-sm p-0 oe_kanban_action" title="Open" icon="fa-external-link"/>
-                                            <button type="object" name="action_view_flows" class="btn btn-link btn-sm p-0 oe_kanban_action" title="Flows" icon="fa-random"/>
-                                            <button type="object" name="action_view_logs" class="btn btn-link btn-sm p-0 oe_kanban_action" title="Logs" icon="fa-file-text-o"/>
-                                        </div>
+    <!-- List view -->
+    <record id="view_fts_instance_tree" model="ir.ui.view">
+        <field name="name">fts.nr.instance.tree</field>
+        <field name="model">fts.nr.instance</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="instance_type" />
+                <field name="name"/>
+                <field name="ip_address"/>
+                <field name="port"/>
+                <field name="editor_port"/>
+                <field name="status" widget="badge" decoration-success="status == 'online'" decoration-warning="status == 'error'" decoration-muted="status == 'offline'"/>
+                <button name="action_restart" type="object" icon="fa-refresh" title="Restart" />
+                <button name="action_open_editor" type="object" icon="fa-external-link" title="Open"  />
+                <button name="action_view_flows" type="object" icon="fa-th-large" title="Flows" />
+                <button name="action_view_logs" type="object" icon="fa-file-text-o" title="Logs" />
+                <button name="action_test" type="object" icon="fa-flask" title="Test" />
+            </list>
+        </field>
+    </record>
+
+    <record id="view_fts_instance_kanban" model="ir.ui.view">
+        <field name="name">fts.nr.instance.kanban</field>
+        <field name="model">fts.nr.instance</field>
+        <field name="arch" type="xml">
+            <kanban>
+                <field name="name"/>
+                <field name="status"/>
+                <field name="instance_type"/>
+                <field name="ip_address"/>
+                <field name="port"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="oe_kanban_global_click o_kanban_record feitas_iot_instance_kanban_card">
+                            <div class="d-flex flex-column gap-1">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span t-attf-class="feitas_iot_status_dot feitas_iot_status_{{ record.status.raw_value }}"/>
+                                    <strong class="text-truncate">
+                                        <field name="name"/>
+                                    </strong>
+                                </div>
+                                <div class="text-muted text-truncate">
+                                    <span t-esc="record.ip_address.value"/>:<span t-esc="record.port.value"/>
+                                </div>
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <span class="badge text-bg-light">
+                                        <field name="instance_type"/>
+                                    </span>
+                                    <div class="feitas_iot_instance_kanban_actions d-flex align-items-center gap-1">
+                                        <button type="object" name="action_open_editor" class="btn btn-link btn-sm p-0 oe_kanban_action" 
+                                            title="Open" icon="fa-external-link"/>
+                                        <button type="object" name="action_view_flows" class="btn btn-link btn-sm p-0 oe_kanban_action" 
+                                            title="Flows" icon="fa-random"/>
+                                        <button type="object" name="action_view_logs" class="btn btn-link btn-sm p-0 oe_kanban_action" 
+                                            title="Logs" icon="fa-file-text-o"/>
                                     </div>
                                 </div>
                             </div>
-                        </t>
-                    </templates>
-                </kanban>
-            </field>
-        </record>
-
-        <!-- Form view -->
-        <record id="view_fts_instance_form" model="ir.ui.view">
-            <field name="name">fts.nr.instance.form</field>
-            <field name="model">fts.nr.instance</field>
-            <field name="arch" type="xml">
-                <form string="Instance">
-                    <header>
-                        <button name="%(feitas_iot.action_fts_nr_instance_wizard)d" type="action" string="Manage Flows" class="btn-secondary"/>
-                        <button name="action_open_editor" type="object" string="Editor" />
-                        <field name="status" widget="statusbar" options="{'clickable': '1'}"/>
-                    </header>
-                    <sheet>
-                        <div class="oe_button_box" name="button_box">
-                            <button name="action_view_flows" type="object" class="oe_stat_button" icon="fa-random">
-                                <field name="flow_count" widget="statinfo" string="Flows"/>
-                            </button>
                         </div>
-                        <group>
-                            <group string="Instance">
-                                <field name="instance_type"/>
-                                <field name="name"/>
-                                <field name="port"/>
-                                <field name="editor_port"/>
-                            </group>
-                            <group string="Agent">
-                                <field name="edge_node_id" invisible="instance_type == 'local'"/>
-                                <field name="ip_address"/>
-                                <field name="component_id" invisible="instance_type == 'remote'"/>
-                                <field name="npm_registry_id"/>
-                                <field name="mqtt_broker_id" />
-                                <field name="mqtt_account_id" />
-                            </group>
-                        </group>
-                        
-                    </sheet>
-                    <chatter/>
-                </form>
-            </field>
-        </record>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
 
-        <record id="view_fts_instance_search" model="ir.ui.view">
-            <field name="name">fts.nr.instance.search</field>
-            <field name="model">fts.nr.instance</field>
-            <field name="arch" type="xml">
-                <search>
-                    <field name="name"/>
-                    <field name="ip_address"/>
-                    <field name="instance_type"/>
+    <!-- Form view -->
+    <record id="view_fts_instance_form" model="ir.ui.view">
+        <field name="name">fts.nr.instance.form</field>
+        <field name="model">fts.nr.instance</field>
+        <field name="arch" type="xml">
+            <form string="Instance">
+                <header>
+                    <button name="%(feitas_iot.action_fts_nr_instance_wizard)d" type="action" 
+                        string="Manage Flows" class="btn-secondary"/>
+                    <button name="action_open_editor" type="object" string="Editor" />
+                    <field name="status" widget="statusbar" options="{'clickable': '1'}"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_flows" type="object" class="oe_stat_button" icon="fa-random">
+                            <field name="flow_count" widget="statinfo" string="Flows"/>
+                        </button>
+                    </div>
                     <group>
-                        <filter string="Instance Type" name="group_by_instance_type" context="{'group_by': 'instance_type'}"/>
+                        <group string="Instance">
+                            <field name="name"/>
+                            <field name="version" />
+                            <field name="port"/>
+                            <field name="editor_port"/>
+                        </group>
+                        <group string="Edge node">
+                            <field name="edge_node_id" invisible="instance_type == 'local'"/>
+                            <field name="ip_address"/>
+                            <field name="component_id" invisible="instance_type == 'remote'"/>
+                        </group>
+                        <group string="Others" >
+                            <field name="instance_type"/>
+                            <field name="npm_registry_id"/>
+                            <field name="mqtt_broker_id" />
+                            <field name="mqtt_account_id" />
+                        </group>
                     </group>
-                </search>
-            </field>
-        </record>
+                    
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
 
-        <record id="action_fts_nr_instance_sync_flows" model="ir.actions.server">
-            <field name="name">Synchronize Flow List</field>
-            <field name="model_id" ref="model_fts_nr_instance"/>
-            <field name="binding_model_id" ref="model_fts_nr_instance"/>
-            <field name="binding_type">action</field>
-            <field name="state">code</field>
-            <field name="code">action = records.api_sync_flows()</field>
-        </record>
-        
-        
-    </data>
+    
+
+    <record id="action_fts_nr_instance_sync_flows" model="ir.actions.server">
+        <field name="name">Synchronize Flow List</field>
+        <field name="model_id" ref="model_fts_nr_instance"/>
+        <field name="binding_model_id" ref="model_fts_nr_instance"/>
+        <field name="binding_type">action</field>
+        <field name="state">code</field>
+        <field name="code">action = records.api_sync_flows()</field>
+    </record>
+    
+    
+</data>
 </odoo>

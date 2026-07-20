@@ -13,4 +13,11 @@
         <field name="context">{"dialog_size": "xl", "footer": false}</field>
     </record>
 
+    <record id="action_terminal_client" model="ir.actions.client">
+        <field name="name">Terminal</field>
+        <field name="tag">feitas_iot.terminal</field>
+        <field name="target">new</field>
+        <field name="context">{"dialog_size": "xl", "footer": false}</field>
+    </record>
+
 </odoo>

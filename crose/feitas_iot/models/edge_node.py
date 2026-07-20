@@ -9,6 +9,8 @@ import logging
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 from odoo.tools.misc import file_open
+from odoo.tools import html2plaintext, plaintext2html
+
 
 _logger = logging.getLogger(__name__)
 
@@ -37,8 +39,8 @@ class FtsEdgeNode(models.Model):
     repository_id = fields.Many2one("crose.component", string="Repository")
     is_gateway = fields.Boolean(string="Is Gateway")
     gateway_id = fields.Many2one("fts.edge.node", string="Gateway", domain="[('is_gateway', '=', True)]")
-    ip_address = fields.Char(string="IP Address")
-    another_ip_address = fields.Char(string="Another IP Address")
+    ip_address = fields.Char(string="IP Address", help="same as the network segment where crose is located.")
+    another_ip_address = fields.Char(string="Another IP Address", help="same as the network segment where edge nodes are located.")
     status = fields.Selection(
         [
             ("draft", "Draft"),
@@ -817,7 +819,7 @@ class FtsEdgeNode(models.Model):
                 if not node.ip_address:
                     raise UserError(_("Please set the edge node IP Address first."))
 
-                if deploy_nodered or deploy_mqtt_broker:
+                if deploy_mqtt_broker:
                     gateway = node if node.is_gateway else node.gateway_id
                     if not gateway:
                         raise UserError(_("Please set a Gateway first."))
@@ -927,7 +929,7 @@ class FtsEdgeNode(models.Model):
                 note_lines.append(_("Initialization failed: %(error)s", error=str(e)))
 
             node.message_post(
-                body="<br/>".join(note_lines),
+                body=plaintext2html("\n".join(note_lines)),
                 message_type="comment",
                 subtype_xmlid="mail.mt_note",
             )
@@ -1021,6 +1023,50 @@ class FtsEdgeNode(models.Model):
                 "use_edge_proxy": use_edge_proxy,
                 "edge_proxy_port": edge_proxy_port,
                 "rewrite_browser_host": False,
+            }
+            return res
+        return {}
+
+    def action_open_terminal(self):
+        """Open a web-based SSH terminal for this edge node."""
+        self.ensure_one()
+
+        if not self.use_ssh:
+            raise UserError(_("SSH is not enabled for this edge node."))
+
+        # Determine the gateway that runs Node-RED
+        if self.is_gateway:
+            gateway = self
+        else:
+            gateway = self.gateway_id
+            if not gateway:
+                raise UserError(_(
+                    "No gateway configured for this edge node. "
+                    "Terminal access requires a gateway with Node-RED."
+                ))
+        if not gateway.ip_address:
+            raise UserError(_("Gateway IP address is not set."))
+
+        # SSH target: gateway SSHes to itself; regular node SSHes to the node
+        ssh_target = (self.ip_address or "").strip()
+        if not ssh_target:
+            raise UserError(_("Edge node IP address is not set."))
+
+        action = self.env.ref(
+            "feitas_iot.action_terminal_client", raise_if_not_found=False
+        )
+        if action:
+            res = action.read()[0]
+            res["display_name"] = _("Terminal - %(name)s", name=self.name)
+            res["name"] = _("Terminal - %(name)s", name=self.name)
+            res["params"] = {
+                "node_id": self.id,
+                "title": _("Terminal - %(name)s", name=self.name),
+                "ws_url": f"ws://{gateway.ip_address}:1880/ws/terminal",
+                "ssh_host": ssh_target,
+                "ssh_port": self.ssh_port or 22,
+                "ssh_username": self.ssh_username or "",
+                "ssh_password": self.ssh_password or "",
             }
             return res
         return {}

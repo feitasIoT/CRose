@@ -70,16 +70,21 @@ class EdgeNodeDeployWizard(models.TransientModel):
 
     def action_confirm(self):
         self.ensure_one()
+
         active_id = self.env.context.get("active_id")
         if not active_id:
             raise UserError(_("No edge node selected."))
+
         node = self.env["fts.edge.node"].browse(active_id)
         if not node.exists():
             raise UserError(_("Edge node not found."))
-        if node.status != "draft":
-            raise UserError(_("Deploy is only available for nodes in 'Draft' status."))
+
+        # Note: 部署是增量的，所以不能只是在draft状态部署。
+        # if node.status != "draft":
+        #     raise UserError(_("Deploy is only available for nodes in 'Draft' status."))
 
         # Step 1: Run deploy prechecks and generate deployment package
+        # FIXME: split action_deploy to _deploy_prechecks and _generate_deployment_package ？
         node.action_deploy()
 
         # Step 2: Run initialization steps controlled by user's checkboxes

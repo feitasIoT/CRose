@@ -16,6 +16,20 @@
             </field>
         </record>
 
+        <record id="view_fts_nr_flow_tree" model="ir.ui.view">
+            <field name="name">fts.nr.flow.tree</field>
+            <field name="model">fts.nr.flow</field>
+            <field name="arch" type="xml">
+                <list string="Node-RED Flow">
+                    <field name="name"/>
+                    <field name="instance_id"/>
+                    <field name="nr_id"/>
+                    <field name="type"/>
+                    <button name="action_view_nodes" type="object" icon="fa-sitemap" title="Nodes"/>
+                </list>
+            </field>
+        </record>
+
         <!-- Kanban view for app(template)-->
         <record id="view_fts_nr_flow_app_kanban" model="ir.ui.view">
             <field name="name">fts.nr.flow.app.kanban</field>
@@ -108,20 +122,6 @@
             </field>
         </record>
 
-        <record id="view_fts_nr_flow_tree" model="ir.ui.view">
-            <field name="name">fts.nr.flow.tree</field>
-            <field name="model">fts.nr.flow</field>
-            <field name="arch" type="xml">
-                <list string="Node-RED Flow">
-                    <field name="name"/>
-                    <field name="instance_id"/>
-                    <field name="nr_id"/>
-                    <field name="type"/>
-                    <button name="action_view_nodes" type="object" icon="fa-sitemap" title="Nodes"/>
-                </list>
-            </field>
-        </record>
-
         <record id="view_fts_nr_flow_form" model="ir.ui.view">
             <field name="name">fts.nr.flow.form</field>
             <field name="model">fts.nr.flow</field>
@@ -163,6 +163,15 @@
                                         <field name="value"/>
                                         <field name="type"/>
                                         <field name="description"/>
+                                    </list>
+                                </field>
+                            </page>
+                            <page string="Automation">
+                                <field name="automation_ids" nolabel="1">
+                                    <list>
+                                        <field name="name"/>
+                                        <field name="model_id"/>
+                                        <field name="trigger"/>
                                     </list>
                                 </field>
                             </page>

@@ -12,8 +12,10 @@
                     <field name="domain" optional="hide"/>
                     <field name="vnc_port" optional="hide"/>
                     <field name="agent_port"/>
+                    <field name="use_ssh" optional="hide"/>
                     <field name="status" widget="badge" decoration-success="status == 'online'" decoration-warning="status == 'error'" decoration-muted="status == 'offline'"/>
-                    <button name="action_open_vnc" type="object" icon="fa-eye" title="Remote Desktop" invisible="not use_vnc"/>
+                    <button name="action_open_vnc" type="object" icon="fa-desktop" title="Remote Desktop" invisible="not use_vnc"/>
+                    <button name="action_open_terminal" type="object" icon="fa-terminal" title="Terminal" invisible="not use_ssh"/>
                     <button name="action_view_instances" type="object" string="Instances"/>
                 </list>
             </field>
@@ -35,6 +37,7 @@
                     <field name="has_docker"/>
                     <field name="ip_address"/>
                     <field name="use_vnc"/>
+                    <field name="use_ssh"/>
                     <field name="domain"/>
                     <field name="vnc_port"/>
                     <field name="agent_port"/>
@@ -72,7 +75,8 @@
                                             <span t-else="" class="fa fa-cubes text-muted" title="Docker"/>
                                         </div>
                                         <div class="feitas_iot_instance_kanban_actions d-flex align-items-center gap-1">
-                                            <button type="object" name="action_open_vnc" class="btn btn-link btn-sm p-0 oe_kanban_action" title="Remote Desktop" icon="fa-eye" invisible="not use_vnc"/>
+                                            <button type="object" name="action_open_vnc" class="btn btn-link btn-sm p-0 oe_kanban_action" title="Remote Desktop" icon="fa-desktop" invisible="not use_vnc"/>
+                                            <button type="object" name="action_open_terminal" class="btn btn-link btn-sm p-0 oe_kanban_action" title="Terminal" icon="fa-terminal" invisible="not use_ssh"/>
                                             <button type="object" name="action_view_instances" class="btn btn-link btn-sm p-0 oe_kanban_action" title="Instances" icon="fa-th-large"/>
                                             <button type="object" name="action_view_logs" class="btn btn-link btn-sm p-0 oe_kanban_action" title="Logs" icon="fa-file-text-o"/>
                                         </div>
@@ -143,6 +147,9 @@
                                         <field name="ssh_username"/>
                                         <field name="ssh_password" password="True"/>
                                         <field name="ssh_port"/>
+                                        <button name="action_open_terminal" type="object"
+                                            string="Open Terminal" class="btn-link" icon="fa-terminal"
+                                            help="Open a web-based SSH terminal to this edge node"/>
                                     </group>
                                     <group string="VNC" invisible="not use_vnc">
                                         <field name="vnc_port" required="use_vnc"/>

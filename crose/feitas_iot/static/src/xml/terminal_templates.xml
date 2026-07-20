@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="feitas_iot.TerminalAction">
+        <div class="o_action d-flex flex-column feitas_iot_terminal_action" style="height: 100%; min-height: 400px;">
+            <div t-if="state.error" class="alert alert-danger m-2" role="alert">
+                <t t-esc="state.error"/>
+            </div>
+            <div t-if="state.connecting and !state.error"
+                 class="d-flex align-items-center justify-content-center text-muted p-4">
+                <span class="fa fa-spinner fa-spin me-2"/>
+                <span>Connecting to edge node terminal...</span>
+            </div>
+            <div t-ref="terminal" class="feitas_iot_terminal_container"/>
+        </div>
+    </t>
+</templates>

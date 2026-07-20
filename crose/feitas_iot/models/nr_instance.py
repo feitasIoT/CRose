@@ -19,6 +19,7 @@ class FtsNrInstance(models.Model):
     ip_address = fields.Char(string="IP Address", required=True)
     port = fields.Integer(string="Port", required=True, default=1880)
     editor_port = fields.Integer(string="Editor Port")
+    version = fields.Char(string="Version")
     instance_type = fields.Selection(
         [
             ("local", "Local Instance"),
