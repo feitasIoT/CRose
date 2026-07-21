@@ -1,0 +1,115 @@
+// ---------------------------------------------------------------------------
+// Node-RED Flow Viewer Widget Styles
+// ---------------------------------------------------------------------------
+
+.feitas_iot_nr_flow_viewer {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 300px;
+    overflow: hidden;
+    background: #fafafa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+
+    // Error / empty states
+    &.feitas_iot_nr_flow_viewer_error {
+        background: #fff8f0;
+    }
+    &.feitas_iot_nr_flow_viewer_empty {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+// SVG canvas wrapper — fills the parent
+.feitas_iot_nr_flow_canvas_wrapper {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.feitas_iot_nr_flow_svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 300px;
+    cursor: grab;
+
+    &:active {
+        cursor: grabbing;
+    }
+}
+
+// ---- Group rectangles ----
+.feitas_nr_groups {
+    .feitas_nr_group_rect {
+        pointer-events: none;
+    }
+}
+
+// ---- Node rectangles ----
+.feitas_nr_normal_node {
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.08));
+    transition: filter 0.15s;
+
+    &:hover {
+        filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.15));
+    }
+}
+
+.feitas_nr_comment_node {
+    stroke-dasharray: 4 2;
+    opacity: 0.85;
+}
+
+// ---- Node labels ----
+.feitas_nr_node_label {
+    font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    white-space: nowrap;
+}
+
+// ---- Wires ----
+.feitas_nr_wires path {
+    transition: stroke-width 0.15s;
+
+    &:hover {
+        stroke-width: 2.5;
+        stroke: #4299e1;
+    }
+}
+
+// ---- Zoom controls overlay (bottom-right) ----
+.feitas_nr_zoom_controls {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 4px 6px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    z-index: 10;
+
+    .btn {
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        line-height: 1;
+        border-radius: 4px;
+    }
+
+    .feitas_nr_zoom_label {
+        min-width: 40px;
+        text-align: center;
+        user-select: none;
+    }
+}
