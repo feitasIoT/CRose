@@ -19,6 +19,8 @@ class TerminalAction extends Component {
         this._fitAddon = null;
         this._resizeObserver = null;
         this._sshCredentials = null;
+        this._gatewayReady = false;  // Only allow sending after first response from Node-RED
+        this._clientId = crypto.randomUUID();  // Unique session ID for Node-RED flow routing
 
         onWillStart(async () => {
             const params = this.props.action.params || {};
@@ -165,18 +167,18 @@ class TerminalAction extends Component {
             this._resizeObserver.observe(container);
         }
 
-        // Forward keystrokes to WebSocket
+        // Forward keystrokes to WebSocket — gated until gateway responds
         this._terminal.onData((data) => {
-            if (this._ws && this._ws.readyState === WebSocket.OPEN) {
+            if (this._gatewayReady && this._ws && this._ws.readyState === WebSocket.OPEN) {
                 this._ws.send(data);
             }
         });
 
-        // Handle terminal resize from PTY
+        // Handle terminal resize from PTY — gated until gateway responds
         this._terminal.onResize(({ cols, rows }) => {
-            if (this._ws && this._ws.readyState === WebSocket.OPEN) {
+            if (this._gatewayReady && this._ws && this._ws.readyState === WebSocket.OPEN) {
                 this._ws.send(
-                    JSON.stringify({ type: "resize", cols, rows })
+                    JSON.stringify({ type: "resize", client_id: this._clientId, cols, rows })
                 );
             }
         });
@@ -208,9 +210,10 @@ class TerminalAction extends Component {
             this.state.connected = true;
             this.state.connecting = false;
 
-            // Send SSH credentials as first message
+            // Send SSH credentials as first message (with client_id for session routing)
             const connectMsg = JSON.stringify({
                 type: "connect",
+                client_id: this._clientId,
                 host: this._sshCredentials.host,
                 port: this._sshCredentials.port,
                 username: this._sshCredentials.username,
@@ -227,12 +230,21 @@ class TerminalAction extends Component {
             if (!this._terminal) {
                 return;
             }
+
+            // First response from gateway — now safe to send user input
+            if (!this._gatewayReady) {
+                this._gatewayReady = true;
+            }
+
             if (event.data instanceof ArrayBuffer) {
                 this._terminal.write(new Uint8Array(event.data));
             } else if (typeof event.data === "string") {
-                // Try to detect JSON status messages from the bridge
                 try {
                     const msg = JSON.parse(event.data);
+                    // websocket-out sends the full msg object; payload holds actual terminal output
+                    if (msg.payload !== undefined) {
+                        this._terminal.write(String(msg.payload));
+                    }
                     if (msg.type === "error") {
                         this._terminal.writeln(
                             `\r\n\x1b[31m[ERROR] ${msg.message}\x1b[0m`
@@ -243,7 +255,7 @@ class TerminalAction extends Component {
                         );
                     }
                 } catch (_) {
-                    // Plain text output, write directly to terminal
+                    // Plain text (legacy or non-JSON), write directly to terminal
                     this._terminal.write(event.data);
                 }
             }
@@ -259,6 +271,7 @@ class TerminalAction extends Component {
 
         this._ws.onclose = (event) => {
             this.state.connected = false;
+            this._gatewayReady = false;
             if (this._terminal) {
                 this._terminal.writeln(
                     `\r\n\x1b[33m*** Connection closed (code ${event.code}) ***\x1b[0m`
