@@ -144,7 +144,7 @@ function parseFlow(raw) {
 // ---------------------------------------------------------------------------
 class NrFlowViewerField extends Component {
     static template = "feitas_iot.NrFlowViewer";
-    static props = "*";
+    static props = ["*"];
 
     setup() {
         this.containerRef = useRef("container");

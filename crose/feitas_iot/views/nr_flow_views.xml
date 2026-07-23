@@ -157,7 +157,9 @@
                                 <field name="content" widget="code" options="{'mode': 'javascript'}" nolabel="1"/>
                             </page>
                             <page string="Flow Diagram">
-                                <field name="content" widget="nr_flow_viewer" nolabel="1"/>
+                                <group>
+                                    <field name="content" widget="nr_flow_viewer" nolabel="1" colspan="2"/>
+                                </group>
                             </page>
                             <page string="Parameters">
                                 <field name="param_ids" nolabel="1">

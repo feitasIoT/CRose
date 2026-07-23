@@ -5,7 +5,7 @@
 .feitas_iot_nr_flow_viewer {
     position: relative;
     width: 100%;
-    height: 100%;
+    height: 500px;
     min-height: 300px;
     overflow: hidden;
     background: #fafafa;
@@ -25,16 +25,17 @@
 
 // SVG canvas wrapper — fills the parent
 .feitas_iot_nr_flow_canvas_wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    position: relative;
 }
 
 .feitas_iot_nr_flow_svg {
     display: block;
     width: 100%;
     height: 100%;
-    min-height: 300px;
     cursor: grab;
 
     &:active {
