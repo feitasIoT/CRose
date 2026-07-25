@@ -64,10 +64,31 @@ const NODE_COLORS = {
 const DEFAULT_FILL = "#dde4ea";
 const NODE_HEIGHT = 30;
 const NODE_RX = 5;
-const CHAR_WIDTH = 7.5;    // approximate px per character
+const CJK_CHAR_WIDTH = 13;    // approximate px per CJK character at 12px font
+const ASCII_CHAR_WIDTH = 7.5; // approximate px per ASCII character at 12px font
 const MIN_NODE_WIDTH = 100;
 const LABEL_PAD = 16;       // padding for label on each side
 const ICON_WIDTH = 30;      // width of the left icon square
+
+// ---------------------------------------------------------------------------
+// Measure rendered text width accounting for CJK vs ASCII characters
+// ---------------------------------------------------------------------------
+function measureTextWidth(text) {
+    let width = 0;
+    for (const ch of text) {
+        const code = ch.codePointAt(0);
+        if ((code >= 0x4E00 && code <= 0x9FFF) ||   // CJK Unified Ideographs
+            (code >= 0x3400 && code <= 0x4DBF) ||   // CJK Extension A
+            (code >= 0x3000 && code <= 0x303F) ||   // CJK Symbols/Punctuation
+            (code >= 0xFF00 && code <= 0xFFEF) ||   // Halfwidth/Fullwidth Forms
+            (code >= 0xAC00 && code <= 0xD7AF)) {   // Korean Hangul
+            width += CJK_CHAR_WIDTH;
+        } else {
+            width += ASCII_CHAR_WIDTH;
+        }
+    }
+    return width;
+}
 const INPUT_PORT_X = 0;
 const OUTPUT_PORT_X_OFFSET = 0; // will be node width
 
@@ -221,7 +242,7 @@ class NrFlowViewerField extends Component {
     _nodeWidth(node) {
         if (node.type === "comment") return 160;
         const label = node.name || node.type || "node";
-        const textW = label.length * CHAR_WIDTH;
+        const textW = measureTextWidth(label);
         return Math.max(MIN_NODE_WIDTH, ICON_WIDTH + textW + LABEL_PAD);
     }
 
@@ -517,7 +538,7 @@ class NrFlowViewerField extends Component {
 
             // Label
             let labelText = n.name || n.type || "node";
-            const maxLen = isComment ? 55 : Math.max(3, Math.floor((w - ICON_WIDTH - LABEL_PAD) / CHAR_WIDTH));
+            const maxLen = isComment ? 55 : Math.max(3, Math.floor((w - ICON_WIDTH - LABEL_PAD) / ASCII_CHAR_WIDTH));
             if (labelText.length > maxLen) labelText = labelText.slice(0, maxLen - 3) + "...";
 
             const label = {
