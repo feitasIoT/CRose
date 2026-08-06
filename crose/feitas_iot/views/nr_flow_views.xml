@@ -147,19 +147,13 @@
                             </group>
                         </group>
                         <notebook>
-                            <page string="Description">
-                                <field name="image" widget="image" nolabel="1"/>
-                            </page>
-                            <!-- <page string="Prompt">
-                                <field name="prompt" nolabel="1"/>
-                            </page> -->
-                            <page string="Content">
-                                <field name="content" widget="code" options="{'mode': 'javascript'}" nolabel="1"/>
-                            </page>
                             <page string="Flow Diagram">
                                 <group>
                                     <field name="content" widget="nr_flow_viewer" nolabel="1" colspan="2"/>
                                 </group>
+                            </page>
+                            <page string="Content">
+                                <field name="content" widget="code" options="{'mode': 'javascript'}" nolabel="1"/>
                             </page>
                             <page string="Parameters">
                                 <field name="param_ids" nolabel="1">

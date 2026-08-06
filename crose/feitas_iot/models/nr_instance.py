@@ -1,13 +1,17 @@
-import json
 import re
+import json
 import time
 import uuid
+import logging
+import requests
 from urllib.parse import quote
 
-import requests
 
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
+
+
+_logger = logging.getLogger(__name__)
 
 
 class FtsNrInstance(models.Model):
@@ -749,8 +753,12 @@ class FtsNrInstance(models.Model):
         raise UserError(_("Failed to call Node-RED API: %(error)s", error=str(last_error)))
 
     def _nr_post_json(self, path, body, timeout=15):
+        """
+        FIXME: 为什么要遍历出base_url？
+        """
         self.ensure_one()
         last_error = None
+        _logger.info(body)
         for base_url in self._nr_candidate_base_urls():
             url = f"{base_url}{path}"
             try:
