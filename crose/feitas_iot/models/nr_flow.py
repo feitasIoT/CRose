@@ -1,5 +1,5 @@
-import json
 import re
+import json
 import uuid
 
 from odoo import models, fields, api, _

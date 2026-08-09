@@ -1,5 +1,6 @@
 <odoo>
     <data>
+        <!-- FIXME: 缺少search view -->
 
         <record id="view_fts_edge_node_tree" model="ir.ui.view">
             <field name="name">fts.edge.node.tree</field>
@@ -41,6 +42,7 @@
                     <field name="domain"/>
                     <field name="vnc_port"/>
                     <field name="agent_port"/>
+                    <field name="gateway_id"/>
                     <templates>
                         <t t-name="card">
                             <div class="oe_kanban_global_click o_kanban_record feitas_iot_instance_kanban_card">
@@ -51,15 +53,15 @@
                                             <field name="name"/>
                                         </strong>
                                         <span t-if="record.is_gateway.raw_value" class="badge text-bg-info ms-auto">Gateway</span>
+                                        <span t-else="" class="badge text-bg-success ms-auto" t-esc="record.gateway_id.value"/>
                                     </div>
+
                                     <div class="text-muted text-truncate">
                                         <span t-if="record.domain.raw_value and record.use_vnc.raw_value" t-esc="record.domain.value"/>
                                         <span t-else="" t-esc="record.ip_address.value"/>
                                         <span t-if="record.use_vnc.raw_value">:<span t-esc="record.vnc_port.value"/></span>
                                     </div>
-                                    <div class="text-muted text-truncate">
-                                        Agent: <span t-esc="record.ip_address.value"/>:<span t-esc="record.agent_port.value"/>
-                                    </div>
+
                                     <div class="d-flex align-items-center justify-content-between">
                                         <div class="d-flex align-items-center gap-2">
                                             <span t-if="record.is_frpc.raw_value" class="fa fa-exchange text-success" title="FRPC"/>

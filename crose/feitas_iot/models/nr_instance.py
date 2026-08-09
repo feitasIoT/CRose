@@ -2099,6 +2099,135 @@ class FtsNrInstance(models.Model):
                     node["z"] = tab_id
         return payload
 
+    # ------------------------------------------------------------------------
+    # Payload Validation
+    # ------------------------------------------------------------------------
+    _NR_ID_RE = re.compile(r"^(?:[0-9a-fA-F]{7}\.[0-9a-fA-F]{7}|[0-9a-fA-F]{16})$")
+    _NR_REF_IGNORED_KEYS = frozenset({"id", "z", "links", "x", "y", "wires", "hw", "info"})
+
+    def _nr_collect_config_ref_ids(self, value, out):
+        """Collect strings that look like Node-RED config node references.
+
+        Skips known structural keys (id, z, wires, etc.) so we only capture
+        property values that reference other nodes (e.g. mqtt-broker config).
+        """
+        if isinstance(value, dict):
+            for key, item in value.items():
+                if key in self._NR_REF_IGNORED_KEYS:
+                    continue
+                self._nr_collect_config_ref_ids(item, out)
+        elif isinstance(value, list):
+            for item in value:
+                self._nr_collect_config_ref_ids(item, out)
+        elif isinstance(value, str):
+            text = value.strip()
+            if self._NR_ID_RE.match(text):
+                out.add(text)
+
+    def _nr_validate_deploy_payload(self, payload, template_flow):
+        """Validate deploy payload before sending to Node-RED.
+
+        Checks that:
+        1. The payload has deployable nodes (non-empty)
+        2. Config nodes referenced by nodes are present in configs
+
+        Raises UserError with a diagnostic explanation on failure.
+        """
+        if not isinstance(payload, dict):
+            raise UserError(_("Invalid flow payload."))
+
+        nodes = [n for n in (payload.get("nodes") or []) if isinstance(n, dict)]
+        configs = [c for c in (payload.get("configs") or []) if isinstance(c, dict) and c.get("id")]
+        existing_config_ids = {c.get("id") for c in configs if isinstance(c.get("id"), str)}
+
+        # --- 1. Validate nodes are not empty ---
+        if not nodes:
+            raw = template_flow.content or ""
+            try:
+                parsed = json.loads(raw) if isinstance(raw, str) else raw
+            except Exception:
+                parsed = {}
+
+            if not raw or (isinstance(parsed, dict) and not parsed):
+                # content was not parsed, re-read with explicit parse for diagnostics
+                raw_nodes_list = []
+            elif isinstance(parsed, dict):
+                raw_nodes_list = [n for n in (parsed.get("nodes") or []) if isinstance(n, dict)]
+            else:
+                raise UserError(
+                    _("Flow '%(name)s' content is not a valid flow object and cannot be deployed.",
+                      name=template_flow.display_name)
+                )
+
+            if not raw_nodes_list:
+                raise UserError(
+                    _("Flow '%(name)s' has no deployable content.\n"
+                      "The flow contains no nodes and cannot be sent to Node-RED.\n"
+                      "Please check that the flow has been configured with valid nodes.",
+                      name=template_flow.display_name)
+                )
+
+            # Had nodes but all were filtered out — check if they are all subflows
+            subflow_count = sum(1 for n in raw_nodes_list if n.get("type") == "subflow")
+            if subflow_count == len(raw_nodes_list):
+                raise UserError(
+                    _("Flow '%(name)s' only contains subflow nodes and has no "
+                      "deployable regular nodes.",
+                      name=template_flow.display_name)
+                )
+
+            raise UserError(
+                _("Flow '%(name)s' nodes are invalid or could not be processed for deployment.",
+                  name=template_flow.display_name)
+            )
+
+        # --- 2. Validate configs: nodes should not reference missing config IDs ---
+        # Collect wire IDs to exclude (wires are node-to-node connections, not config refs)
+        wire_ids = set()
+        for node in nodes:
+            wires = node.get("wires")
+            if isinstance(wires, list):
+                for wire_list in wires:
+                    if isinstance(wire_list, list):
+                        for wid in wire_list:
+                            if isinstance(wid, str):
+                                wire_ids.add(wid)
+
+        # Collect potential config node reference IDs from node property values
+        refs = set()
+        for node in nodes:
+            self._nr_collect_config_ref_ids(node, refs)
+
+        # Filter: exclude wire targets (node connections) and own IDs
+        node_own_ids = {n.get("id") for n in nodes if isinstance(n.get("id"), str)}
+        config_refs = refs - wire_ids - node_own_ids
+
+        missing_config_refs = config_refs - existing_config_ids
+        if not missing_config_refs:
+            return
+
+        # Format missing IDs for display
+        missing_sorted = sorted(missing_config_refs)
+        missing_display = ", ".join(missing_sorted[:10])
+        if len(missing_sorted) > 10:
+            missing_display += _(" ... (+%(count)s more)", count=len(missing_sorted) - 10)
+
+        if not configs:
+            raise UserError(
+                _("Flow '%(name)s' references config nodes but has no configs.\n"
+                  "Missing config IDs: %(ids)s\n\n"
+                  "This usually means the flow template has no source instance to "
+                  "resolve config nodes from. Try re-publishing the flow from its "
+                  "source instance.",
+                  name=template_flow.display_name, ids=missing_display)
+            )
+        else:
+            raise UserError(
+                _("Flow '%(name)s' is missing required config nodes:\n"
+                  "Missing IDs: %(ids)s",
+                  name=template_flow.display_name, ids=missing_display)
+            )
+
     def _nr_deploy_single_flow(self, template_flow, record, source_instance=None):
         """Deploy a single template flow to this instance.
         
@@ -2112,6 +2241,9 @@ class FtsNrInstance(models.Model):
         payload = self._nr_build_template_flow_payload(template_flow)
         payload["label"] = f"{template_flow.name} - {self.name}"
         payload = self._nr_ensure_payload_configs_from_source_global(payload, source_instance)
+
+        # Validate payload before further processing
+        self._nr_validate_deploy_payload(payload, template_flow)
 
         subflow_ids = self._nr_collect_subflow_refs(payload.get("nodes") or [])
         if subflow_ids and not source_instance:
