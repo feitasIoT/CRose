@@ -7,6 +7,7 @@ services:
     restart: always
     ports:
       - "18888:80"
+      - "18069:18069"
     volumes:
       - ./config/nginx:/etc/nginx/conf.d
     networks:
@@ -43,8 +44,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    ports:
-      - "18069:8069"
     restart: always
     command: -u feitas_iot
     volumes:
