@@ -20,7 +20,7 @@ Extensible
     "category": "Tools",
     "author": "Feitas",
     "license": "LGPL-3",
-    "depends": ["base", "web", "mail", "spreadsheet", "base_automation"],
+    "depends": ["base", "web", "mail", "spreadsheet", "base_automation", "queue_job"],
     "data": [
         "data/data.xml",
         "data/crons.xml",
@@ -30,6 +30,7 @@ Extensible
 
         "wizards/nr_instance_wizard_views.xml",
         "wizards/edge_node_deploy_wizard_views.xml",
+        "wizards/edge_node_run_flow_wizard_views.xml",
         "views/nr_instance_views.xml",
         "views/editor_views.xml",
         "views/crose_component_views.xml",

@@ -7,17 +7,39 @@
             <field name="model">fts.edge.node</field>
             <field name="arch" type="xml">
                 <list string="Edge Node">
-                    <field name="name"/>
-                    <field name="ip_address"/>
-                    <field name="use_vnc" optional="hide"/>
-                    <field name="domain" optional="hide"/>
-                    <field name="vnc_port" optional="hide"/>
-                    <field name="agent_port"/>
-                    <field name="use_ssh" optional="hide"/>
-                    <field name="status" widget="badge" decoration-success="status == 'online'" decoration-warning="status == 'error'" decoration-muted="status == 'offline'"/>
-                    <button name="action_open_vnc" type="object" icon="fa-desktop" title="Remote Desktop" invisible="not use_vnc"/>
-                    <button name="action_open_terminal" type="object" icon="fa-terminal" title="Terminal" invisible="not use_ssh"/>
-                    <button name="action_view_instances" type="object" string="Instances"/>
+                    <field name="name" />
+                    <field name="ip_address" />
+                    <field name="use_vnc" optional="hide" />
+                    <field name="domain" optional="hide" />
+                    <field name="vnc_port" optional="hide" />
+                    <field name="agent_port" />
+                    <field name="use_ssh" optional="hide" />
+                    <field
+                        name="status"
+                        widget="badge"
+                        decoration-success="status == 'online'"
+                        decoration-warning="status == 'error'"
+                        decoration-muted="status == 'offline'"
+                    />
+                    <button
+                        name="action_open_vnc"
+                        type="object"
+                        icon="fa-desktop"
+                        title="Remote Desktop"
+                        invisible="not use_vnc"
+                    />
+                    <button
+                        name="action_open_terminal"
+                        type="object"
+                        icon="fa-terminal"
+                        title="Terminal"
+                        invisible="not use_ssh"
+                    />
+                    <button
+                        name="action_view_instances"
+                        type="object"
+                        string="Instances"
+                    />
                 </list>
             </field>
         </record>
@@ -27,60 +49,147 @@
             <field name="model">fts.edge.node</field>
             <field name="arch" type="xml">
                 <kanban>
-                    <field name="name"/>
-                    <field name="version"/>
-                    <field name="is_gateway"/>
-                    <field name="status"/>
-                    <field name="os_version"/>
-                    <field name="is_frpc"/>
-                    <field name="has_mqtt_broker"/>
-                    <field name="has_nodered"/>
-                    <field name="has_docker"/>
-                    <field name="ip_address"/>
-                    <field name="use_vnc"/>
-                    <field name="use_ssh"/>
-                    <field name="domain"/>
-                    <field name="vnc_port"/>
-                    <field name="agent_port"/>
-                    <field name="gateway_id"/>
+                    <field name="name" />
+                    <field name="version" />
+                    <field name="is_gateway" />
+                    <field name="status" />
+                    <field name="os_version" />
+                    <field name="is_frpc" />
+                    <field name="has_mqtt_broker" />
+                    <field name="has_nodered" />
+                    <field name="has_docker" />
+                    <field name="ip_address" />
+                    <field name="use_vnc" />
+                    <field name="use_ssh" />
+                    <field name="domain" />
+                    <field name="vnc_port" />
+                    <field name="agent_port" />
+                    <field name="gateway_id" />
                     <templates>
                         <t t-name="card">
-                            <div class="oe_kanban_global_click o_kanban_record feitas_iot_instance_kanban_card">
+                            <div
+                                class="oe_kanban_global_click o_kanban_record feitas_iot_instance_kanban_card"
+                            >
                                 <div class="d-flex flex-column gap-1">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <span t-attf-class="feitas_iot_status_dot feitas_iot_status_{{ record.status.raw_value }}"/>
+                                    <div
+                                        class="d-flex align-items-center gap-2"
+                                    >
+                                        <span
+                                            t-attf-class="feitas_iot_status_dot feitas_iot_status_{{ record.status.raw_value }}"
+                                        />
                                         <strong class="text-truncate">
-                                            <field name="name"/>
+                                            <field name="name" />
                                         </strong>
-                                        <span t-if="record.is_gateway.raw_value" class="badge text-bg-info ms-auto">Gateway</span>
-                                        <span t-else="" class="badge text-bg-success ms-auto" t-esc="record.gateway_id.value"/>
+                                        <span
+                                            t-if="record.is_gateway.raw_value"
+                                            class="badge text-bg-info ms-auto"
+                                        >Gateway</span>
+                                        <span
+                                            t-else=""
+                                            class="badge text-bg-success ms-auto"
+                                            t-esc="record.gateway_id.value"
+                                        />
                                     </div>
 
                                     <div class="text-muted text-truncate">
-                                        <span t-if="record.domain.raw_value and record.use_vnc.raw_value" t-esc="record.domain.value"/>
-                                        <span t-else="" t-esc="record.ip_address.value"/>
-                                        <span t-if="record.use_vnc.raw_value">:<span t-esc="record.vnc_port.value"/></span>
+                                        <span
+                                            t-if="record.domain.raw_value and record.use_vnc.raw_value"
+                                            t-esc="record.domain.value"
+                                        />
+                                        <span
+                                            t-else=""
+                                            t-esc="record.ip_address.value"
+                                        />
+                                        <span
+                                            t-if="record.use_vnc.raw_value"
+                                        >:<span
+                                                t-esc="record.vnc_port.value"
+                                            /></span>
                                     </div>
 
-                                    <div class="d-flex align-items-center justify-content-between">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <span t-if="record.is_frpc.raw_value" class="fa fa-exchange text-success" title="FRPC"/>
-                                            <span t-else="" class="fa fa-exchange text-muted" title="FRPC"/>
+                                    <div
+                                        class="d-flex align-items-center justify-content-between"
+                                    >
+                                        <div
+                                            class="d-flex align-items-center gap-2"
+                                        >
+                                            <span
+                                                t-if="record.is_frpc.raw_value"
+                                                class="fa fa-exchange text-success"
+                                                title="FRPC"
+                                            />
+                                            <span
+                                                t-else=""
+                                                class="fa fa-exchange text-muted"
+                                                title="FRPC"
+                                            />
 
-                                            <span t-if="record.has_mqtt_broker.raw_value" class="fa fa-rss text-success" title="MQTT Broker"/>
-                                            <span t-else="" class="fa fa-rss text-muted" title="MQTT Broker"/>
+                                            <span
+                                                t-if="record.has_mqtt_broker.raw_value"
+                                                class="fa fa-rss text-success"
+                                                title="MQTT Broker"
+                                            />
+                                            <span
+                                                t-else=""
+                                                class="fa fa-rss text-muted"
+                                                title="MQTT Broker"
+                                            />
 
-                                            <span t-if="record.has_nodered.raw_value" class="fa fa-sitemap text-success" title="Node-RED"/>
-                                            <span t-else="" class="fa fa-sitemap text-muted" title="Node-RED"/>
+                                            <span
+                                                t-if="record.has_nodered.raw_value"
+                                                class="fa fa-sitemap text-success"
+                                                title="Node-RED"
+                                            />
+                                            <span
+                                                t-else=""
+                                                class="fa fa-sitemap text-muted"
+                                                title="Node-RED"
+                                            />
 
-                                            <span t-if="record.has_docker.raw_value" class="fa fa-cubes text-success" title="Docker"/>
-                                            <span t-else="" class="fa fa-cubes text-muted" title="Docker"/>
+                                            <span
+                                                t-if="record.has_docker.raw_value"
+                                                class="fa fa-cubes text-success"
+                                                title="Docker"
+                                            />
+                                            <span
+                                                t-else=""
+                                                class="fa fa-cubes text-muted"
+                                                title="Docker"
+                                            />
                                         </div>
-                                        <div class="feitas_iot_instance_kanban_actions d-flex align-items-center gap-1">
-                                            <button type="object" name="action_open_vnc" class="btn btn-link btn-sm p-0 oe_kanban_action" title="Remote Desktop" icon="fa-desktop" invisible="not use_vnc"/>
-                                            <button type="object" name="action_open_terminal" class="btn btn-link btn-sm p-0 oe_kanban_action" title="Terminal" icon="fa-terminal" invisible="not use_ssh"/>
-                                            <button type="object" name="action_view_instances" class="btn btn-link btn-sm p-0 oe_kanban_action" title="Instances" icon="fa-th-large"/>
-                                            <button type="object" name="action_view_logs" class="btn btn-link btn-sm p-0 oe_kanban_action" title="Logs" icon="fa-file-text-o"/>
+                                        <div
+                                            class="feitas_iot_instance_kanban_actions d-flex align-items-center gap-1"
+                                        >
+                                            <button
+                                                type="object"
+                                                name="action_open_vnc"
+                                                class="btn btn-link btn-sm p-0 oe_kanban_action"
+                                                title="Remote Desktop"
+                                                icon="fa-desktop"
+                                                invisible="not use_vnc"
+                                            />
+                                            <button
+                                                type="object"
+                                                name="action_open_terminal"
+                                                class="btn btn-link btn-sm p-0 oe_kanban_action"
+                                                title="Terminal"
+                                                icon="fa-terminal"
+                                                invisible="not use_ssh"
+                                            />
+                                            <button
+                                                type="object"
+                                                name="action_view_instances"
+                                                class="btn btn-link btn-sm p-0 oe_kanban_action"
+                                                title="Instances"
+                                                icon="fa-th-large"
+                                            />
+                                            <button
+                                                type="object"
+                                                name="action_view_logs"
+                                                class="btn btn-link btn-sm p-0 oe_kanban_action"
+                                                title="Logs"
+                                                icon="fa-file-text-o"
+                                            />
                                         </div>
                                     </div>
                                 </div>
@@ -97,132 +206,248 @@
             <field name="arch" type="xml">
                 <form string="Node">
                     <header>
-                        <button name="%(feitas_iot.action_edge_node_deploy_wizard)d" type="action"
-                            string="Deploy" class="oe_highlight"
-                            groups="feitas_iot.group_edge_management_admin"/>
-                        <field name="status" widget="statusbar" options="{'clickable': '1'}"/>
+                        <button
+                            name="%(feitas_iot.action_edge_node_deploy_wizard)d"
+                            type="action"
+                            string="Deploy"
+                            class="oe_highlight"
+                            groups="feitas_iot.group_edge_management_admin"
+                        />
+                        <button
+                            name="%(feitas_iot.action_edge_node_run_flow_wizard)d"
+                            type="action"
+                            string="Run Flow"
+                            class="oe_highlight"
+                            groups="feitas_iot.group_edge_management_admin"
+                        />
+                        <field
+                            name="status"
+                            widget="statusbar"
+                            options="{'clickable': '1'}"
+                        />
                     </header>
                     <sheet>
                         <div class="oe_button_box" name="button_box">
-                            <button name="action_view_instances" type="object" class="oe_stat_button" icon="fa-th-large">
-                                <field name="instance_count" widget="statinfo" string="Instances"/>
+                            <button
+                                name="action_view_instances"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-th-large"
+                            >
+                                <field
+                                    name="instance_count"
+                                    widget="statinfo"
+                                    string="Instances"
+                                />
                             </button>
-                            <button name="action_view_gateway_mqtt_users" type="object" class="oe_stat_button" icon="fa-users" >
-                                <field name="gateway_mqtt_user_count" widget="statinfo" string="MQTT Users"/>
+                            <button
+                                name="action_view_gateway_mqtt_users"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-users"
+                            >
+                                <field
+                                    name="gateway_mqtt_user_count"
+                                    widget="statinfo"
+                                    string="MQTT Users"
+                                />
                             </button>
                         </div>
                         <group>
                             <group>
-                                <field name="name"/>
+                                <field name="name" />
                                 <!-- <field name="version"/> -->
-                                <field name="os_version"/>
+                                <field name="os_version" />
                                 <!-- FIXME: npm改为repository -->
-                                <field name="repository_id" domain="[('component_type', '=', 'npm')]" invisible="not is_gateway"/>
+                                <field
+                                    name="repository_id"
+                                    domain="[('component_type', '=', 'npm')]"
+                                    invisible="not is_gateway"
+                                />
                             </group>
                             <group>
-                                <field name="is_gateway" invisible="gateway_id"/>
-                                <field name="gateway_id" invisible="is_gateway"/>
-                                <field name="ip_address"/>
-                                <field name="another_ip_address" invisible="not is_gateway"/>
+                                <field
+                                    name="is_gateway"
+                                    invisible="gateway_id"
+                                />
+                                <field
+                                    name="gateway_id"
+                                    invisible="is_gateway"
+                                />
+                                <field name="ip_address" />
+                                <field
+                                    name="another_ip_address"
+                                    invisible="not is_gateway"
+                                />
                             </group>
                         </group>
                         <notebook>
                             <page string="Configuration">
                                 <!-- 系统 -->
                                 <group col="16" string="Environment">
-                                    <group colspan="2"><field name="has_docker" /></group>
+                                    <group colspan="2"><field
+                                            name="has_docker"
+                                        /></group>
                                     <group colspan="2">
-                                        <field name="use_ssh"/>
+                                        <field name="use_ssh" />
                                     </group>
                                     <group colspan="2">
-                                        <field name="use_vnc"/>
+                                        <field name="use_vnc" />
                                     </group>
                                 </group>
                                 <group>
-                                    <group string="Docker" invisible="not has_docker">
-                                        <field name="docker_version"/>
-                                        <field name="docker_api_version"/>
-                                        <field name="docker_arch"/>
-                                        <field name="docker_os"/>
+                                    <group
+                                        string="Docker"
+                                        invisible="not has_docker"
+                                    >
+                                        <field name="docker_version" />
+                                        <field name="docker_api_version" />
+                                        <field name="docker_arch" />
+                                        <field name="docker_os" />
                                     </group>
                                     <group string="SSH" invisible="not use_ssh">
-                                        <field name="ssh_username"/>
-                                        <field name="ssh_password" password="True"/>
-                                        <field name="ssh_port"/>
-                                        <button name="action_open_terminal" type="object"
-                                            string="Open Terminal" class="btn-link" icon="fa-terminal"
-                                            help="Open a web-based SSH terminal to this edge node"/>
+                                        <field name="ssh_username" />
+                                        <field
+                                            name="ssh_password"
+                                            password="True"
+                                        />
+                                        <field name="ssh_port" />
+                                        <button
+                                            name="action_open_terminal"
+                                            type="object"
+                                            string="Open Terminal"
+                                            class="btn-link"
+                                            icon="fa-terminal"
+                                            help="Open a web-based SSH terminal to this edge node"
+                                        />
                                     </group>
                                     <group string="VNC" invisible="not use_vnc">
-                                        <field name="vnc_port" required="use_vnc"/>
+                                        <field
+                                            name="vnc_port"
+                                            required="use_vnc"
+                                        />
                                     </group>
                                 </group>
                             </page>
                             <page name="application" string="Application">
                                 <!-- 应用 -->
                                 <group col="16" string="Application">
-                                    <group colspan="2" invisible="is_gateway"><field name="use_frp"/></group>
-                                    <group colspan="2" invisible="not is_gateway"><field name="is_frpc"/></group>
-                                    <group colspan="2"><field name="has_nodered" /></group>
-                                    <group colspan="2"><field name="has_mqtt_broker" /></group>
-                                    <group colspan="2"><field name="has_mqtt_client" /></group>
-                                    <group colspan="2"><field name="use_redis" /></group>
+                                    <group
+                                        colspan="2"
+                                        invisible="is_gateway"
+                                    ><field name="use_frp" /></group>
+                                    <group
+                                        colspan="2"
+                                        invisible="not is_gateway"
+                                    ><field name="is_frpc" /></group>
+                                    <group colspan="2"><field
+                                            name="has_nodered"
+                                        /></group>
+                                    <group colspan="2"><field
+                                            name="has_mqtt_broker"
+                                        /></group>
+                                    <group colspan="2"><field
+                                            name="has_mqtt_client"
+                                        /></group>
+                                    <group colspan="2"><field
+                                            name="use_redis"
+                                        /></group>
                                 </group>
                                 <group>
                                     <group string="FRP" invisible="not use_frp">
-                                        
-                                        <field name="domain"/>
+
+                                        <field name="domain" />
                                     </group>
-                                    <group string="FRPC" invisible="not is_frpc">
-                                        <field name="frpc_webserver_port" invisible="not is_gateway"/>
-                                        <field name="frpc_webserver_username" invisible="not is_gateway"/>
-                                        <field name="frpc_webserver_password" password="True" invisible="not is_gateway"/>
+                                    <group
+                                        string="FRPC"
+                                        invisible="not is_frpc"
+                                    >
+                                        <field
+                                            name="frpc_webserver_port"
+                                            invisible="not is_gateway"
+                                        />
+                                        <field
+                                            name="frpc_webserver_username"
+                                            invisible="not is_gateway"
+                                        />
+                                        <field
+                                            name="frpc_webserver_password"
+                                            password="True"
+                                            invisible="not is_gateway"
+                                        />
                                     </group>
-                                    
-                                    <group string="Node-RED" invisible="not has_nodered">
+
+                                    <group
+                                        string="Node-RED"
+                                        invisible="not has_nodered"
+                                    >
                                         <field name="nodered_username" />
-                                        <field name="nodered_password" password="True"/>
+                                        <field
+                                            name="nodered_password"
+                                            password="True"
+                                        />
                                         <field name="nodered_version" />
                                         <field name="nodered_ports" />
                                     </group>
-                                    <group string="MQTT" invisible="not has_mqtt_broker">
-                                        <field name="mqtt_broker_id"/>
-                                        <field name="mqtt_account_id"/>
+                                    <group
+                                        string="MQTT"
+                                        invisible="not has_mqtt_broker"
+                                    >
+                                        <field name="mqtt_broker_id" />
+                                        <field name="mqtt_account_id" />
                                     </group>
-                                    <group string="MQTT Client" invisible="not has_mqtt_client">
-                                        <field name="mqtt_user_id"/>
-                                        <field name="mqtt_topic"/>
+                                    <group
+                                        string="MQTT Client"
+                                        invisible="not has_mqtt_client"
+                                    >
+                                        <field name="mqtt_user_id" />
+                                        <field name="mqtt_topic" />
                                     </group>
                                 </group>
                             </page>
                             <page string="Deployment">
                                 <group>
                                     <group string="Deployment Command">
-                                        <field name="agent_cmd" nolabel="1" colspan="2"/>
+                                        <field
+                                            name="agent_cmd"
+                                            nolabel="1"
+                                            colspan="2"
+                                        />
                                     </group>
                                     <group string="Configuration File">
-                                        <field name="config" nolabel="1" colspan="2"/>
+                                        <field
+                                            name="config"
+                                            nolabel="1"
+                                            colspan="2"
+                                        />
                                     </group>
-                                    
+
                                 </group>
-                                
+
                             </page>
                             <page string="Others">
                                 <group>
                                     <group>
-                                        <field name="is_template"/>
-                                        <field name="template_id" invisible="is_template"/>
+                                        <field name="is_template" />
+                                        <field
+                                            name="template_id"
+                                            invisible="is_template"
+                                        />
                                     </group>
                                     <group>
-                                        
+
                                         <field name="use_redis" />
-                                        <field name="redis_account_id" readonly="1" invisible="not use_redis"/>
+                                        <field
+                                            name="redis_account_id"
+                                            readonly="1"
+                                            invisible="not use_redis"
+                                        />
                                     </group>
                                 </group>
                             </page>
                         </notebook>
                     </sheet>
-                    <chatter/>
+                    <chatter />
                 </form>
             </field>
         </record>

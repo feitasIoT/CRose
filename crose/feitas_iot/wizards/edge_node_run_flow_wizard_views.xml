@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_edge_node_run_flow_wizard_form" model="ir.ui.view">
+        <field name="name">fts.edge.node.run.flow.wizard.form</field>
+        <field name="model">fts.edge.node.run.flow.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Run Flows">
+                <group>
+                    <field name="node_id" readonly="1"/>
+                </group>
+                <field name="line_ids" nolabel="1">
+                    <list editable="bottom">
+                        <field name="sequence" widget="handle"/>
+                        <field name="flow_id" domain="[('instance_id', 'in', parent.allowed_instance_ids)]"/>
+                    </list>
+                </field>
+                <footer>
+                    <button name="action_confirm" string="Execute" type="object" class="btn-primary"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_edge_node_run_flow_wizard" model="ir.actions.act_window">
+        <field name="name">Run Flows</field>
+        <field name="res_model">fts.edge.node.run.flow.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="view_id" ref="view_edge_node_run_flow_wizard_form"/>
+    </record>
+</odoo>

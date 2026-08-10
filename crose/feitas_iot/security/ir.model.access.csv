@@ -24,3 +24,5 @@ access_crose_component_account_admin,crose.component.account,model_crose_compone
 access_fts_nr_instance_wizard,fts.nr.instance.wizard,model_fts_nr_instance_wizard,base.group_user,1,1,1,1
 access_fts_gateway_mqtt_user,fts.gateway.mqtt.user,model_fts_gateway_mqtt_user,base.group_user,1,1,1,1
 access_edge_node_deploy_wizard,edge.node.deploy.wizard,model_edge_node_deploy_wizard,feitas_iot.group_edge_management_admin,1,1,1,1
+access_fts_edge_node_run_flow_wizard,fts.edge.node.run.flow.wizard,model_fts_edge_node_run_flow_wizard,feitas_iot.group_edge_management_admin,1,1,1,1
+access_fts_edge_node_run_flow_wizard_line,fts.edge.node.run.flow.wizard.line,model_fts_edge_node_run_flow_wizard_line,feitas_iot.group_edge_management_admin,1,1,1,1
